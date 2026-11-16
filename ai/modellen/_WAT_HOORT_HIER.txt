@@ -1,0 +1,1 @@
+Hier bewaart de lokale AI (Ollama) zijn modellen. Wordt door het setupscript gevuld.

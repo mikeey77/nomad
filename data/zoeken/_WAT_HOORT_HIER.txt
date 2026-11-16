@@ -1,0 +1,1 @@
+Hier komt de Photon-adresdatabase (photon-db-planet, ~95 GB uitgepakt). Uitpakken in deze map, zodat er een map 'photon_data' ontstaat.

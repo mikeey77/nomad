@@ -1,0 +1,1 @@
+Hier komt de satellietlaag (satellite.pmtiles). Wordt later door het NOMAD-setupscript gevuld.

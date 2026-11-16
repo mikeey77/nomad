@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>PROJECT NOMAD</title>
+<link rel="stylesheet" href="/web/style.css">
+<link rel="stylesheet" href="/web/vendor/maplibre-gl.css">
+</head>
+<body>
+<div id="bg"></div>
+<div id="app">
+  <nav id="rail">
+    <div class="brand" data-go="home" title="NOMAD">N</div>
+    <button class="tab on" data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>HOME</button>
+    <button class="tab" data-go="lib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5a1 1 0 011-1h4v16H5a1 1 0 01-1-1zM9 4h5v16H9zM14 5l4-1 3 15-4 1z"/></svg>BIEB</button>
+    <button class="tab" data-go="map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>KAART</button>
+    <button class="tab" data-go="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M9 12h.01M15 12h.01M9 16h6"/></svg>AI</button>
+    <div class="rail-sp"></div>
+    <button class="tab" data-go="upd"><span class="badge" id="updBadge"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 11-3-6.7M21 4v5h-5"/></svg>UPDATE</button>
+  </nav>
+
+  <header id="top">
+    <div class="title">PROJECT NOMAD<small id="viewName">// COMMANDOCENTRUM</small></div>
+    <div class="omni" id="omni"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Zoek in alles…<span class="kbd">Ctrl K</span></div>
+    <button class="btn" id="bRand" title="Willekeurig artikel (R)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section class="view on" id="v-home">
+      <div class="dash">
+        <div class="hero">
+          <h1>NOMAD</h1>
+          <p>NODE FOR OFFLINE MEDIA,<br>ARCHIVES AND DATA · v<span id="ver"></span></p>
+        </div>
+        <div class="bigsearch" id="omni2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Wat wil je weten of vinden?<span class="kbd">Ctrl K</span></div>
+        <div class="grid" id="mods"></div>
+        <div class="sec-t">OPSLAG</div>
+        <div class="card" style="cursor:default" id="disk"></div>
+      </div>
+    </section>
+
+    <!-- BIBLIOTHEEK -->
+    <section class="view" id="v-lib">
+      <aside id="lib-side">
+        <div class="block"><div class="hud">COLLECTIES</div><div id="books"></div></div>
+        <div class="block"><div class="hud">SECTIES</div><div id="toc"><div class="empty">Geen artikel geopend</div></div></div>
+        <div class="block"><div class="hud">HISTORIE</div><div id="hist"></div></div>
+      </aside>
+      <div id="lib-main">
+        <div id="progress"></div>
+        <div id="shelf"></div>
+        <iframe id="frame" title="artikel"></iframe>
+      </div>
+    </section>
+
+    <!-- KAART -->
+    <section class="view" id="v-map">
+      <div id="map"></div>
+      <div class="mapui glass" id="mapsearch">
+        <input id="mapq" placeholder="Zoek een plaats of adres…" autocomplete="off" spellcheck="false">
+        <div id="maphits"></div>
+      </div>
+      <div class="mapui glass" id="maplayers">
+        <div class="hud" style="margin:2px 6px 6px">LAGEN</div>
+        <div class="tog on" data-l="streets"><i></i>Kaart</div>
+        <div class="tog" data-l="satellite"><i></i>Satelliet</div>
+        <div class="tog" data-l="hillshade"><i></i>Reliëf</div>
+        <div class="tog" data-l="terrain3d"><i></i>3D-terrein</div>
+      </div>
+      <div class="mapui glass" id="mapcoord">—</div>
+      <div id="mapempty"><div class="note" style="max-width:560px">
+        <b style="color:var(--acc);font-family:var(--mono);letter-spacing:.2em">GEEN WERELDKAART GEVONDEN</b><br><br>
+        Zet de Protomaps-wereldkaart in <code>NOMAD\data\kaart\basis\world.pmtiles</code> en herlaad deze pagina.
+        Hoogtekaart: <code>data\kaart\hoogte\terrain.pmtiles</code> · Satelliet: <code>data\kaart\satelliet\satellite.pmtiles</code>
+      </div></div>
+    </section>
+
+    <!-- AI -->
+    <section class="view" id="v-ai">
+      <div id="chat"></div>
+      <div id="composer">
+        <div class="comp">
+          <textarea id="prompt" rows="1" placeholder="Stel een vraag… (Enter = versturen, Shift+Enter = nieuwe regel)"></textarea>
+          <button class="btn pri" id="send" style="height:48px;padding:0 18px">VERSTUUR</button>
+        </div>
+        <div class="opts">
+          <div class="tog on" id="useWiki" style="padding:2px 0"><i></i>Antwoord met Wikipedia als bron</div>
+          <span id="aiModel" style="margin-left:auto;font-family:var(--mono)"></span>
+          <button class="btn" id="newChat" style="height:28px">NIEUW GESPREK</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- UPDATES -->
+    <section class="view" id="v-upd"><div class="dash" style="max-width:900px">
+      <div class="sec-t" style="margin-top:0">UPDATES</div>
+      <div id="updInfo" class="sub" style="color:var(--dim);margin-bottom:18px"></div>
+      <div id="updList"></div>
+      <div style="margin-top:16px;display:flex;gap:10px"><button class="btn" id="updCheck">NU CONTROLEREN</button><button class="btn" id="rescan">BIBLIOTHEEK OPNIEUW SCANNEN</button></div>
+    </div></section>
+  </main>
+
+  <footer>
+    <span><span class="dot" id="netDot"></span><span id="netTxt">…</span></span>
+    <span id="fLib"></span>
+    <span id="fDoc"></span>
+    <span class="r" id="clock"></span>
+  </footer>
+</div>
+
+<div id="palette">
+  <div class="pal">
+    <div class="pal-in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="q" autocomplete="off" spellcheck="false" placeholder="Artikel, boek, plaats…"></div>
+    <div id="sugg"></div>
+    <div class="pal-foot"><span>↑↓ kiezen</span><span>ENTER openen</span><span>SHIFT+ENTER zoek in alle tekst</span><span>ESC sluiten</span></div>
+  </div>
+</div>
+
+<script src="/web/vendor/maplibre-gl.js"></script>
+<script src="/web/vendor/pmtiles.js"></script>
+<script src="/web/vendor/basemaps.js"></script>
+<script src="/web/app.js"></script>
+</body>
+</html>

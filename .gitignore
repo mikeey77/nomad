@@ -1,0 +1,14 @@
+# data, tools en modellen staan alleen op de SSD
+data/**
+!data/**/
+!data/**/_WAT_HOORT_HIER.txt
+tools/**
+!tools/_WAT_HOORT_HIER.txt
+ai/**
+!ai/**/
+!ai/**/_WAT_HOORT_HIER.txt
+downloads/**
+!downloads/_WAT_HOORT_HIER.txt
+app/config.json
+__pycache__/
+*.pyc

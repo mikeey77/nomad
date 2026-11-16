@@ -1,0 +1,32 @@
+PROJECT NOMAD - downloadlinks (zet elk bestand in de juiste map)
+=================================================================
+
+TIP: download grote bestanden via de .torrent-link (staat naast elk bestand)
+     met bv. qBittorrent. Dan kun je pauzeren/hervatten en is het sneller.
+
+1) WIKIPEDIA (Engels, maxi, ~111 GB)  ->  NOMAD\data\bibliotheek\
+   https://download.kiwix.org/zim/wikipedia/
+   Kies de NIEUWSTE: wikipedia_en_all_maxi_JJJJ-MM.zim  (of de .torrent ernaast)
+   Snellere NL-mirror: https://ftp.nluug.nl/pub/kiwix/zim/wikipedia/
+
+2) BIBLIOTHEEK-EXTRA'S (telkens de nieuwste versie)  ->  NOMAD\data\bibliotheek\
+   Boeken (Gutenberg):   https://download.kiwix.org/zim/gutenberg/     gutenberg_en_all_...
+   Reparatie (iFixit):   https://download.kiwix.org/zim/ifixit/        ifixit_en_all_...
+   Leerboeken:           https://download.kiwix.org/zim/libretexts/    (kies vakken)
+   Wikibooks:            https://download.kiwix.org/zim/wikibooks/     wikibooks_en_all_maxi_...
+   Wikiversity:          https://download.kiwix.org/zim/wikiversity/   wikiversity_en_all_maxi_...
+   Medisch (mdwiki):     https://download.kiwix.org/zim/other/         mdwiki_en_all_maxi_...
+   Reisgids (Wikivoyage):https://download.kiwix.org/zim/wikivoyage/    wikivoyage_en_all_maxi_...
+   StackExchange:        https://download.kiwix.org/zim/stack_exchange/ (bv. electronics, diy)
+
+3) WERELDKAART (Protomaps, ~115-120 GB)  ->  NOMAD\data\kaart\basis\world.pmtiles
+   https://maps.protomaps.com/builds/   (nieuwste .pmtiles)
+
+4) HOOGTEKAART (JAXA Terrarium z0-11, ~91 GB, torrent)  ->  NOMAD\data\kaart\hoogte\terrain.pmtiles
+   https://techidiots.net/downloads/open-base-map-torrents/pmtiles/jaxa_terrarium0-11/JAXA_AW3D30_2025_Terrarium_z0-Z11_cubic_webp_pmtiles.torrent
+
+5) ADRES ZOEKEN (Photon planet, ~95 GB uitgepakt)  ->  NOMAD\data\zoeken\
+   https://download1.graphhopper.com/public/
+   Bestand: photon-db-planet-1.0-latest.tar.bz2  (uitpakken in data\zoeken)
+
+6) SATELLIET, AI, TOOLS: worden door het NOMAD-setupscript geregeld.

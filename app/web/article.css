@@ -1,0 +1,126 @@
+/* NOMAD — artikelthema (overschrijft de Kiwix/MediaWiki-stijl) */
+html.nexus{
+  --cyan:#3dffa0; --mag:#b6ff4a; --txt:#d6efe2; --dim:#7a9a8a; --line:rgba(80,255,170,.16);
+  --panel:rgba(10,26,19,.6);
+  --mono:"Cascadia Code","JetBrains Mono",Consolas,ui-monospace,monospace;
+  background:transparent !important; color-scheme:dark; scroll-behavior:smooth;
+}
+html.nexus body{
+  background:transparent !important; color:var(--txt) !important;
+  font-family:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif !important;
+  font-size:17px !important; line-height:1.72 !important;
+  max-width:980px !important; margin:0 auto !important; padding:56px 44px 160px !important;
+}
+html.nexus ::selection{background:rgba(61,255,160,.3)}
+html.nexus ::-webkit-scrollbar{width:10px}
+html.nexus ::-webkit-scrollbar-thumb{background:linear-gradient(var(--cyan),var(--mag));border-radius:10px;border:3px solid #030806}
+html.nexus ::-webkit-scrollbar-track{background:transparent}
+
+/* alle MediaWiki-containers transparant */
+html.nexus #content, html.nexus #mw-content-text, html.nexus .mw-body, html.nexus .mw-parser-output,
+html.nexus #bodyContent, html.nexus .content, html.nexus main, html.nexus section, html.nexus div{
+  background-color:transparent; color:inherit;
+}
+
+/* titel */
+html.nexus h1, html.nexus #firstHeading, html.nexus .article-header h1{
+  font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif !important;
+  font-size:clamp(34px,5vw,54px) !important; font-weight:700 !important; line-height:1.1 !important;
+  letter-spacing:-.01em; margin:0 0 28px !important; padding:0 0 18px !important; border:0 !important;
+  background:linear-gradient(90deg,#fff 0%,#c8ffe2 40%,var(--cyan) 75%,var(--mag)) !important;
+  -webkit-background-clip:text !important; background-clip:text !important; color:transparent !important;
+  position:relative;
+}
+html.nexus h1::after{content:"";position:absolute;left:0;bottom:0;width:120px;height:2px;
+  background:linear-gradient(90deg,var(--cyan),var(--mag));box-shadow:0 0 14px var(--cyan)}
+
+/* koppen */
+html.nexus h2{
+  font-family:var(--mono) !important; font-size:14px !important; font-weight:600 !important;
+  letter-spacing:.24em !important; text-transform:uppercase; color:var(--cyan) !important;
+  border:0 !important; margin:56px 0 18px !important; padding:0 0 10px !important;
+  display:flex; align-items:center; gap:14px; text-shadow:0 0 14px rgba(61,255,160,.35);
+}
+html.nexus h2::before{content:"◆";font-size:10px;color:var(--mag);text-shadow:0 0 10px var(--mag)}
+html.nexus h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(61,255,160,.4),transparent)}
+html.nexus h3{font-size:20px !important;font-weight:600 !important;color:#fff !important;margin:34px 0 10px !important;border:0 !important}
+html.nexus h4,html.nexus h5,html.nexus h6{color:#e8f2ff !important;border:0 !important}
+html.nexus summary{list-style:none;cursor:pointer}
+html.nexus summary::-webkit-details-marker{display:none}
+
+/* tekst & links */
+html.nexus p, html.nexus li, html.nexus dd{color:var(--txt) !important}
+html.nexus b, html.nexus strong{color:#fff}
+html.nexus a, html.nexus a:visited{color:var(--cyan) !important;text-decoration:none !important;
+  border-bottom:1px solid rgba(61,255,160,.22);transition:.15s}
+html.nexus a:hover{color:#fff !important;border-bottom-color:var(--cyan);text-shadow:0 0 10px rgba(61,255,160,.6)}
+html.nexus a.new{color:#ff7a8a !important}
+html.nexus a.ext::after{content:"↗";font-size:.75em;margin-left:2px;opacity:.6}
+html.nexus a.image, html.nexus a.mw-file-description, html.nexus figure a{border:0 !important}
+html.nexus sup.reference a{border:0 !important;font-family:var(--mono);font-size:.72em;color:var(--mag) !important}
+html.nexus blockquote{border-left:2px solid var(--mag);margin:20px 0;padding:6px 20px;background:rgba(182,255,74,.05);border-radius:0 8px 8px 0}
+html.nexus code, html.nexus pre, html.nexus tt, html.nexus kbd{font-family:var(--mono) !important;background:rgba(61,255,160,.07) !important;
+  color:#c8ffe2 !important;border:1px solid var(--line) !important;border-radius:5px}
+html.nexus pre{padding:14px 16px !important;overflow:auto}
+html.nexus hr{border:0;height:1px;background:var(--line)}
+
+/* afbeeldingen */
+html.nexus img{border-radius:6px;max-width:100%;height:auto}
+html.nexus figure, html.nexus .thumb, html.nexus .thumbinner, html.nexus .gallerybox{
+  background:var(--panel) !important;border:1px solid var(--line) !important;border-radius:12px !important;
+  padding:8px !important;color:var(--dim) !important;
+}
+html.nexus figcaption, html.nexus .thumbcaption, html.nexus .gallerytext{color:var(--dim) !important;font-size:13px !important;line-height:1.5 !important;padding:6px 4px 2px !important}
+html.nexus figure[typeof~="mw:File/Thumb"], html.nexus figure.mw-default-size{max-width:340px}
+/* formules zijn zwart op transparant → omkeren */
+html.nexus .mwe-math-fallback-image-inline, html.nexus .mwe-math-fallback-image-display,
+html.nexus img[src*="math"], html.nexus .mwe-math-element img{filter:invert(1) hue-rotate(180deg) brightness(1.15);background:transparent !important}
+
+/* infobox en tabellen */
+html.nexus table{border-collapse:separate !important;border-spacing:0 !important;color:var(--txt) !important;
+  background:var(--panel) !important;border:1px solid var(--line) !important;border-radius:12px !important;overflow:hidden;font-size:14.5px}
+html.nexus th, html.nexus td{border:0 !important;border-bottom:1px solid var(--line) !important;padding:8px 12px !important;
+  background:transparent !important;color:inherit !important;vertical-align:top}
+html.nexus th{color:#fff !important;font-weight:600 !important;background:rgba(61,255,160,.06) !important}
+html.nexus tr:last-child > td, html.nexus tr:last-child > th{border-bottom:0 !important}
+html.nexus tr:hover > td{background:rgba(61,255,160,.03) !important}
+html.nexus table.infobox{float:right;clear:right;width:320px !important;margin:0 0 24px 28px !important;
+  box-shadow:0 0 0 1px rgba(61,255,160,.12),0 20px 60px rgba(0,0,0,.45),0 0 40px rgba(61,255,160,.06) !important;
+  font-size:13.5px !important;line-height:1.5}
+html.nexus table.infobox caption, html.nexus .infobox-title, html.nexus .infobox-above{
+  font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;font-size:13px !important;color:var(--cyan) !important;
+  padding:14px 12px !important;background:linear-gradient(90deg,rgba(61,255,160,.12),rgba(182,255,74,.08)) !important;text-align:center}
+html.nexus .infobox-header, html.nexus .infobox th[colspan]{color:var(--mag) !important;font-family:var(--mono);
+  font-size:11px !important;letter-spacing:.18em;text-transform:uppercase;background:rgba(182,255,74,.06) !important;text-align:center}
+html.nexus .infobox-image{text-align:center}
+html.nexus table.wikitable{margin:22px 0 !important}
+html.nexus .navbox, html.nexus .navbox-inner, html.nexus .navbox-subgroup{background:var(--panel) !important}
+html.nexus .navbox-title, html.nexus .navbox-group{background:rgba(61,255,160,.08) !important;color:#fff !important}
+html.nexus .navbox-list{background:transparent !important}
+
+/* boxen en hatnotes */
+html.nexus .hatnote, html.nexus .dablink, html.nexus .rellink{color:var(--dim) !important;font-style:italic;
+  border-left:2px solid var(--line);padding-left:12px !important;margin:6px 0 18px !important}
+html.nexus .ambox, html.nexus .mbox-small, html.nexus .ombox, html.nexus .tmbox, html.nexus .cmbox{
+  background:rgba(255,184,77,.06) !important;border:1px solid rgba(255,184,77,.25) !important;border-radius:10px !important;color:var(--txt) !important}
+html.nexus .toc, html.nexus #toc{display:none !important} /* staat al in het zijpaneel */
+html.nexus .mw-editsection, html.nexus .noprint.mw-editsection{display:none !important}
+
+/* referenties */
+html.nexus .reflist, html.nexus .references, html.nexus ol.references{font-size:13.5px !important;color:var(--dim) !important}
+html.nexus .references li{color:var(--dim) !important}
+html.nexus .references li:target{background:rgba(182,255,74,.1) !important;border-radius:6px}
+
+/* kleuren in inline-stijlen (wit/lichtgrijs) dempen */
+html.nexus [style*="background:#f"], html.nexus [style*="background-color:#f"],
+html.nexus [style*="background: #f"], html.nexus [style*="background-color: #f"],
+html.nexus [style*="background:white"], html.nexus [style*="background-color:white"]{
+  background:rgba(61,255,160,.05) !important;color:var(--txt) !important}
+
+/* Kiwix-footer */
+html.nexus footer, html.nexus .mw-footer, html.nexus #footer{color:var(--dim) !important;font-size:12px;border-top:1px solid var(--line);margin-top:60px;padding-top:16px}
+
+@media (max-width:760px){
+  html.nexus body{padding:32px 18px 120px !important;font-size:16px !important}
+  html.nexus table.infobox{float:none;width:100% !important;margin:0 0 24px !important}
+}
