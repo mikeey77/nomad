@@ -22,10 +22,9 @@ git clone https://github.com/mikeey77/nomad.git X:\NOMAD
 (of download de zip en pak uit naar `X:\NOMAD`)
 
 1. Download de data: zie **LINKS.txt** en de `_WAT_HOORT_HIER.txt` in elke map.
-2. Dubbelklik **Setup NOMAD.bat**: zet portable Python, Ollama + AI-model, Java en Photon in `tools\`.
-3. Download **[NOMAD.exe](https://github.com/mikeey77/nomad/releases/latest/download/NOMAD.exe)**, zet hem in de NOMAD-map en dubbelklik.
-   NOMAD opent in een eigen venster, met een tray-icoon onderin (openen, herstarten, setup, afsluiten).
-   (Zonder exe kan het ook: `Start NOMAD.bat` → http://localhost:8090)
+2. Download **[NOMAD.exe](https://github.com/mikeey77/nomad/releases/latest/download/NOMAD.exe)**, zet hem in de NOMAD-map en dubbelklik.
+   De eerste keer start hij de setup (portable Python, Ollama + AI-model, Java, Photon in `tools\`).
+   Daarna opent NOMAD in een eigen venster, met een tray-icoon onderin (openen, herstarten, setup, afsluiten).
    Op je telefoon/iPad (zelfde wifi): scan de QR-code op het dashboard en kies *Zet op beginscherm*.
    Windows vraagt de eerste keer of Python op het netwerk mag: kies **Privénetwerken → Toegang toestaan**.
 
@@ -46,7 +45,7 @@ NOMAD\
 
 ## Updates
 
-- **App**: `Start NOMAD.bat` haalt bij elke start automatisch de nieuwste app-code van GitHub
+- **App**: `NOMAD.exe` haalt bij elke start automatisch de nieuwste app-code van GitHub
   (alleen `app\`, je data en tools blijven staan). Setup hoeft nooit opnieuw.
 - **Data** (`.zim`-collecties, AI-model): als er internet is kijkt NOMAD elke 30 min of er
   nieuwere versies zijn. Je krijgt een melding bij **Update** en downloadt pas als je zelf klikt.

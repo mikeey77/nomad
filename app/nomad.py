@@ -4,7 +4,7 @@ PROJECT NOMAD — persoonlijke offline kennis- en wereldserver.
 Alles staat op de SSD:  NOMAD\\app (deze code), NOMAD\\data (inhoud),
 NOMAD\\tools (python, ollama, java, photon), NOMAD\\ai (modellen).
 
-Start via "Start NOMAD.bat". Opties:
+Start via NOMAD.exe. Opties:
     --lan          ook bereikbaar op je netwerk (iPad/telefoon)
     --port 8090    andere poort
     --no-browser   geen browser openen
@@ -28,7 +28,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.4.0"
+VERSION = "0.4.1"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -599,7 +599,8 @@ class Handler(BaseHTTPRequestHandler):
             if p == "/manifest.webmanifest":
                 return self.static(os.path.join(WEB, "manifest.webmanifest"))
             if p.startswith("/web/"):
-                return self.static(os.path.join(WEB, p[5:]), cache=True)
+                long = p.startswith(("/web/vendor/", "/web/assets/")) or p.endswith(".png")
+                return self.static(os.path.join(WEB, p[5:]), cache=long)
             if p.startswith("/kaart/"):
                 f = map_file(p[7:].split("/")[0].replace(".pmtiles", ""))
                 return self.ranged(f) if f else self.send(404, "geen kaartbestand")
@@ -661,6 +662,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json(features.start_download(self.body_json().get("id")))
             if p == "/api/download/cancel":
                 return self.json(features.cancel_download(self.body_json().get("id")))
+            if p == "/api/shutdown" and self.client_address[0] == "127.0.0.1":
+                self.json({"ok": True})
+                threading.Thread(target=lambda: (time.sleep(0.3), stop_services(), os._exit(0)), daemon=True).start()
+                return
             if p == "/api/rescan":
                 scan_library()
                 return self.json({"ok": True, "books": len(BOOKS)})
@@ -832,7 +837,7 @@ class Handler(BaseHTTPRequestHandler):
     def api_chat(self, body):
         port = CFG["ollama_port"]
         if not port_open(port):
-            return self.json({"error": "AI staat uit (" + STATE["ai"] + "). Draai 'Setup NOMAD.bat'."}, 503)
+            return self.json({"error": "AI staat uit (" + STATE["ai"] + "). Start de setup via NOMAD.exe (tray → Run setup)."}, 503)
         msgs = body.get("messages", [])[-12:]
         sources = []
         system = ("Je bent NOMAD, een behulpzame offline assistent. Antwoord in de taal van de gebruiker, "
@@ -880,7 +885,7 @@ class Handler(BaseHTTPRequestHandler):
         except urllib.error.HTTPError as e:
             msg = e.read().decode("utf-8", "replace")
             if "not found" in msg:
-                msg = f"Model '{payload['model']}' is nog niet gedownload. Draai 'Setup NOMAD.bat'."
+                msg = f"Model '{payload['model']}' is nog niet gedownload. Start de setup via NOMAD.exe (tray → Run setup)."
             self.wfile.write((json.dumps({"error": msg}) + "\n").encode())
         except Exception as e:
             self.wfile.write((json.dumps({"error": str(e)}) + "\n").encode())

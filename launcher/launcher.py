@@ -59,7 +59,47 @@ def open_window(path=""):
 
 
 def run_setup():
-    subprocess.Popen(["cmd", "/c", "start", "", os.path.join(ROOT, "Setup NOMAD.bat")], cwd=ROOT)
+    ps1 = os.path.join(ROOT, "app", "setup.ps1")
+    subprocess.Popen(["cmd", "/c", "start", "NOMAD setup", "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                      "-NoExit", "-File", ps1], cwd=ROOT)
+
+
+def local_version():
+    try:
+        import re
+        src = open(os.path.join(ROOT, "app", "nomad.py"), encoding="utf-8").read()
+        return re.search(r'VERSION = "([^"]+)"', src).group(1)
+    except Exception:
+        return None
+
+
+def running_version():
+    import json
+    import urllib.request
+    try:
+        return json.loads(urllib.request.urlopen(URL + "api/status", timeout=3).read()).get("version")
+    except Exception:
+        return None
+
+
+def shutdown_running():
+    import urllib.request
+    try:
+        urllib.request.urlopen(urllib.request.Request(URL + "api/shutdown", data=b"{}", method="POST"), timeout=3)
+    except Exception:
+        pass
+    for _ in range(20):
+        if not port_open():
+            return True
+        time.sleep(0.3)
+    # oude versie zonder shutdown: proces op de poort stoppen
+    out = subprocess.run(["netstat", "-ano", "-p", "TCP"], capture_output=True, text=True, creationflags=NOWIN).stdout
+    for line in out.splitlines():
+        parts = line.split()
+        if len(parts) >= 5 and parts[1].endswith(f":{PORT}") and parts[3] == "LISTENING":
+            subprocess.run(["taskkill", "/T", "/F", "/PID", parts[4]], capture_output=True, creationflags=NOWIN)
+    time.sleep(1)
+    return not port_open()
 
 
 def start_server():
@@ -120,11 +160,8 @@ def tray():
 
 def main():
     os.makedirs(os.path.join(ROOT, "downloads"), exist_ok=True)
-    if port_open():  # draait al
-        open_window()
-        return
     if not os.path.exists(PY):
-        if msg("NOMAD is nog niet ingesteld op deze schijf.\n\nNu 'Setup NOMAD' starten?", "NOMAD", 0x04 | 0x20) == 6:
+        if msg("NOMAD is nog niet ingesteld op deze schijf.\n\nNu de setup starten?", "NOMAD", 0x04 | 0x20) == 6:
             run_setup()
         return
     # 1. app bijwerken (stil, max 90 s)
@@ -133,7 +170,12 @@ def main():
                        stdout=open(os.path.join(ROOT, "downloads", "update.log"), "w"), stderr=subprocess.STDOUT)
     except Exception:
         pass
-    # 2. server starten
+    # 2. draait er al een NOMAD? Zelfde versie: alleen venster openen. Oude versie: vervangen.
+    if port_open():
+        if running_version() == local_version():
+            open_window()
+            return
+        shutdown_running()
     start_server()
     if not splash_wait():
         msg("NOMAD kon niet starten.\nKijk in downloads\\nomad.log voor details.", "NOMAD", 0x10)

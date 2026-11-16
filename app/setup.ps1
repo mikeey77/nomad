@@ -106,5 +106,5 @@ Say ("Bibliotheek: {0} .zim-bestand(en)" -f $zims)
 Say ("Wereldkaart: " + ($(if ($world) { "ja" } else { "nee (data\kaart\basis\world.pmtiles)" })))
 Say ("Hoogtekaart: " + ($(if ($terr) { "ja" } else { "nee (data\kaart\hoogte\terrain.pmtiles)" })))
 Write-Host ""
-Say "Start NOMAD nu met 'Start NOMAD.bat'." "Cyan"
+Say "Start NOMAD nu met NOMAD.exe." "Cyan"
 Write-Host ""

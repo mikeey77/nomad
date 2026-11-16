@@ -72,10 +72,10 @@ def set_autostart(on):
     if not f:
         return
     if on:
-        bat = os.path.join(N.ROOT, "Start NOMAD.bat")
+        exe = os.path.join(N.ROOT, "NOMAD.exe")
         # start alleen als de SSD er is (stationsletter kan veranderen: dan gewoon niets)
         with open(f, "w", encoding="utf-8") as h:
-            h.write(f'@echo off\r\nif exist "{bat}" start "NOMAD" /min cmd /c ""{bat}" --no-browser"\r\n')
+            h.write(f'@echo off\r\nif exist "{exe}" start "" "{exe}"\r\n')
     elif os.path.exists(f):
         os.remove(f)
 

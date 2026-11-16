@@ -25,7 +25,7 @@ HOOGTEKAART  ->  NOMAD\data\kaart\hoogte\terrain.pmtiles   (~91 GB, alleen torre
 
 ADRES ZOEKEN  ->  NOMAD\downloads\   (~66 GB download, ~95 GB uitgepakt)
   https://download1.graphhopper.com/public/photon-db-planet-1.0-latest.tar.bz2
-  -> daarna "Setup NOMAD.bat" draaien, die pakt hem uit naar data\zoeken
+  -> daarna de setup opnieuw draaien (NOMAD.exe → tray → Run setup), die pakt hem uit naar data\zoeken
 
 SATELLIET: nog geen gratis wereldbron gevonden (volgt).
-AI, PYTHON, JAVA, PHOTON-PROGRAMMA: regelt "Setup NOMAD.bat" zelf.
+AI, PYTHON, JAVA, PHOTON-PROGRAMMA: regelt de setup in NOMAD.exe zelf.
