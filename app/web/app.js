@@ -484,6 +484,7 @@ const IC = {
   folder:'<path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>', file:'<path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6"/>',
   image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',
   mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/>',
+  camera:'<path d="M3 8a2 2 0 012-2h2l2-2h6l2 2h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><circle cx="12" cy="13" r="4"/>', zap:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>', trans:'<path d="M4 5h8M8 3v2M5 9c1 3 4 5 7 6M11 5c-1 4-4 8-7 10"/><path d="M13 21l4-9 4 9M14.5 18h5"/>',
   cpu:'<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>', check:'<path d="M5 12l5 5 9-10"/>',
 };
 const icon = (k, cls = '') => `<svg class="svgi ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[k] || ''}</svg>`;
@@ -760,7 +761,7 @@ function itemBtns(id, i, kind){
     let b = `<span class="done">✓ ${t('downloaded')}</span>`;
     if(kind === 'zim') b += `<button class="btn" data-o="${esc(i.prefix)}">${t('open')}</button>`;
     if(kind === 'ai') b += i.active ? `<span class="okb">${t('active')}</span>` : `<button class="btn" data-use="${esc(i.file)}">${t('use')}</button>`;
-    if(kind === 'zim' || kind === 'ai') b += `<button class="btn ghost" data-rm="${esc(id)}" title="${t('remove')}">✕</button>`;
+    if(kind === 'zim' || kind === 'ai' || kind === 'mt') b += `<button class="btn ghost" data-rm="${esc(id)}" title="${t('remove')}">✕</button>`;
     return b;
   }
   return `<button class="btn pri" data-d="${esc(id)}">${newer ? t('update') : (j && j.status === 'fout' ? t('resume') : t('download'))}</button>`;

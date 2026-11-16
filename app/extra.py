@@ -313,7 +313,7 @@ def fact():
     b = N.wikipedia_book() or next(iter(N.BOOKS.values()), None)
     if not b:
         return {}
-    for _ in range(8):
+    for _ in range(20):
         with b.lock:
             e = b.archive.get_random_entry()
             while e.is_redirect:
@@ -323,8 +323,11 @@ def fact():
                     continue
             except Exception:
                 continue
+        if re.search(r"/[a-z]{2,3}(-[a-z]+)?$", e.path) or re.search(r"/[a-z]{2,3}(-[a-z]+)?$", e.title or ""):
+            continue  # translated subpage (e.g. "Some page/zh")
         txt = N.plain_text(b, e.path, 400)
-        if len(txt) > 80:
+        latin = sum(1 for ch in txt if ch.isascii() or "\u00c0" <= ch <= "\u024f")
+        if len(txt) > 80 and latin / len(txt) > 0.85:
             first = re.split(r"(?<=[.!?])\s", txt)[0][:260]
             return {"book": b.id, "path": e.path, "title": e.title, "text": first}
     return {}
@@ -391,26 +394,48 @@ LANGNAMES = {"en": "English", "nl": "Dutch", "de": "German", "fr": "French", "es
 
 
 def translate_stream(handler, body):
+    import fast
     port = N.CFG["ollama_port"]
-    if not N.port_open(port):
-        return handler.json({"error": "AI is off — translation uses the local AI model."}, 503)
     src, dst, text = body.get("from", "auto"), body.get("to", "en"), body.get("text", "")
-    system = ("You are a professional translator. Translate the user's text " +
-              ("" if src == "auto" else f"from {LANGNAMES.get(src, src)} ") + f"into {LANGNAMES.get(dst, dst)}. "
-              "Keep the meaning, tone and formatting. Output ONLY the translation, no explanations, no quotes.")
-    model = N.CFG.get("translate_model") or N.CFG["ai_model"]
-    payload = {"model": model, "stream": True, "options": {"temperature": 0.2},
-               "messages": [{"role": "system", "content": system}, {"role": "user", "content": text}]}
-    if "qwen3" in model:
-        payload["think"] = False
-    req = urllib.request.Request(f"http://127.0.0.1:{port}/api/chat", data=json.dumps(payload).encode(),
-                                 headers={"Content-Type": "application/json"})
+    if src == "auto":
+        src = fast.detect(text)
+    hops = [] if src == dst else (fast.route(src, dst) if fast.mt_engine_ok() else None)
+    if hops is None and not N.port_open(port):
+        return handler.json({"error": "AI is off — install a Fast translator in Downloads → AI models, or start the AI."}, 503)
     handler.send_response(200)
     handler.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
     handler.send_header("Cache-Control", "no-store")
     handler.send_header("Connection", "close")
     handler.end_headers()
     handler.close_connection = True
+
+    def emit(obj):
+        handler.wfile.write((json.dumps(obj) + "\n").encode())
+        handler.wfile.flush()
+
+    emit({"from": src})
+    if hops is not None:  # fast path: dedicated translation models, sentence by sentence
+        emit({"engine": "fast"})
+        try:
+            if not hops:
+                emit({"t": text})
+            else:
+                fast.translate_fast(text, src, dst, lambda piece: emit({"t": piece}))
+            return
+        except Exception as e:
+            emit({"warn": f"fast translator failed ({e}), using the AI"})
+    missing = sorted({c for c in (src, dst) if c != "en" and c in fast.MT_LANGS and not fast.mt_installed(c)})
+    emit({"engine": "ai", "missing": missing})
+    system = ("You are a professional translator. Translate the user's text " +
+              f"from {LANGNAMES.get(src, src)} into {LANGNAMES.get(dst, dst)}. "
+              "Keep the meaning, tone and formatting. Output ONLY the translation, no explanations, no quotes.")
+    model = N.CFG.get("translate_model") or N.CFG["ai_model"]
+    payload = {"model": model, "stream": True, "keep_alive": "30m", "options": {"temperature": 0.2},
+               "messages": [{"role": "system", "content": system}, {"role": "user", "content": text}]}
+    if N.supports_think(model):
+        payload["think"] = False
+    req = urllib.request.Request(f"http://127.0.0.1:{port}/api/chat", data=json.dumps(payload).encode(),
+                                 headers={"Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=600) as r:
             for line in r:
@@ -420,7 +445,6 @@ def translate_stream(handler, body):
                     continue
                 piece = (m.get("message") or {}).get("content", "")
                 if piece:
-                    handler.wfile.write((json.dumps({"t": piece}) + "\n").encode())
-                    handler.wfile.flush()
+                    emit({"t": piece})
     except Exception as e:
-        handler.wfile.write((json.dumps({"error": str(e)}) + "\n").encode())
+        emit({"error": str(e)})

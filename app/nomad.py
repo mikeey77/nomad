@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.11.0"
+VERSION = "0.12.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -701,8 +701,10 @@ def check_updates():
                           "url": CFG["kiwix_base"] + kiwix_dir(b.prefix) + "/" + name})
     # AI-model
     if STATE["ai"] == "aan" and ai_models():
-        found.append({"id": "ai", "type": "ai", "title": "AI-model " + CFG["ai_model"],
-                      "current": "geïnstalleerd", "latest": "controleren & bijwerken"})
+        import fast
+        if fast.model_update_available(CFG["ai_model"]):  # only when the registry really has a newer version
+            found.append({"id": "ai", "type": "ai", "title": "AI model " + CFG["ai_model"],
+                          "current": "installed", "latest": "new version"})
     STATE["updates"] = found
     STATE["last_check"] = datetime.now().strftime("%d-%m %H:%M")
 
@@ -1229,6 +1231,16 @@ class Handler(BaseHTTPRequestHandler):
         msgs = body.get("messages", [])[-12:]
         model = body.get("model") or CFG["ai_model"]
         think = bool(body.get("think"))
+        images = [i.split(",", 1)[-1] for i in (body.get("images") or [])][:3]
+        if images:
+            import fast
+            vm = fast.vision_model()
+            if not vm:
+                return self.json({"error": "No photo model installed yet. Download Moondream 2 (fast) or Qwen 2.5 VL 3B "
+                                           "(most accurate) in Downloads → AI models."}, 400)
+            model, think = vm, False
+            if msgs:
+                msgs[-1] = dict(msgs[-1], images=images)
         # headers first: the browser shows progress right away instead of waiting for the search
         self.send_response(200)
         self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
@@ -1251,12 +1263,21 @@ class Handler(BaseHTTPRequestHandler):
         sources, ctx = [], []
         if body.get("wiki") and BOOKS and msgs:
             question = msgs[-1].get("content", "")
+            if images:
+                emit({"status": "vision", "model": model})
+                try:
+                    import fast
+                    name = fast.identify(model, images[0])
+                    emit({"status": "seen", "name": name})
+                    question = name or question
+                except Exception as e:
+                    emit({"status": "seen", "name": "", "err": str(e)})
             sources, ctx = rag_search(question, emit, deep=think)
         if ctx:
             system += ("\n\nUse the following excerpts from the user's offline library as your source. "
                        "Mention which source you used. If the answer is not in them, say so honestly.\n\n" + "\n\n".join(ctx))
         emit({"sources": sources})
-        emit({"status": "answer"})
+        emit({"status": "answer", "model": model})
         payload = {"model": model, "stream": True, "keep_alive": "30m",
                    "options": {"num_ctx": 8192 if think else 4096},
                    "messages": [{"role": "system", "content": system}] + msgs}

@@ -1,6 +1,13 @@
 /* NOMAD — vertalingen. Engels is standaard; Nederlands kiesbaar in Settings. */
 window.I18N = {
   en: {
+    photo_ready:'Photo attached', photo_q:'What is this?', s_vision:'Looking at the photo ({m})…', s_lookup:'Recognised “{x}” — searching your library…',
+    tr_fast:'⚡ FAST TRANSLATOR', tr_ai:'AI TRANSLATION (slower)', tr_tip:'Tip: download <b>Fast translator · {l}</b> in Downloads → AI models for instant translation (about 10× faster).', tr_detected:'Detected: {l}',
+    c_translate:'Fast translators', c_photo:'Photo recognition',
+    cl_intro:'NOMAD found files it no longer needs. <b>Nothing is deleted</b> until you tick a file and press the button.',
+    cl_old:'An older version of a collection or download. The newer version is already installed.', cl_partial:'A download that stopped and is not running anymore. Delete it if you don’t want to resume it.',
+    cl_installer:'Setup installers and log files. NOMAD doesn’t need them anymore.', cl_archive:'The address-search archive. It is already unpacked, so this copy is no longer needed.',
+    cl_safe:'SAFE TO DELETE', cl_check:'CHECK FIRST', cl_all:'Select all safe files',
     think:'Think', think_tip:'Slower but smarter: searches deeper and reasons before answering',
     s_search:'Searching {n} collections for “{kw}”…', s_found:'Found {n} sources in {s}s', s_skip:'Skipped (too slow): {b}',
     s_answer:'Writing answer…', s_cold:'Loading the AI model (first answer only)…', s_thinking:'Thinking…', s_thought:'Thought process',
@@ -69,6 +76,13 @@ window.I18N = {
     saved:'Saved', g_green:'Green', g_blue:'Blue', g_amber:'Amber', g_red:'Red',
   },
   nl: {
+    photo_ready:'Foto toegevoegd', photo_q:'Wat is dit?', s_vision:'Foto bekijken ({m})…', s_lookup:'Herkend: “{x}” — zoeken in je bibliotheek…',
+    tr_fast:'⚡ SNELLE VERTALER', tr_ai:'AI-VERTALING (langzamer)', tr_tip:'Tip: download <b>Fast translator · {l}</b> bij Downloads → AI-modellen voor directe vertaling (ongeveer 10× sneller).', tr_detected:'Herkend: {l}',
+    c_translate:'Snelle vertalers', c_photo:'Fotoherkenning',
+    cl_intro:'NOMAD heeft bestanden gevonden die hij niet meer nodig heeft. <b>Er wordt niets verwijderd</b> totdat jij een bestand aanvinkt en op de knop drukt.',
+    cl_old:'Een oudere versie van een collectie of download. De nieuwe versie staat er al.', cl_partial:'Een download die gestopt is en niet meer loopt. Verwijder hem als je hem niet wilt hervatten.',
+    cl_installer:'Installatiebestanden en logbestanden van de setup. NOMAD heeft ze niet meer nodig.', cl_archive:'Het archief van adres zoeken. Het is al uitgepakt, dus deze kopie is overbodig.',
+    cl_safe:'VEILIG OM TE VERWIJDEREN', cl_check:'EERST CHECKEN', cl_all:'Alle veilige bestanden selecteren',
     think:'Nadenken', think_tip:'Trager maar slimmer: zoekt dieper en denkt na voor het antwoordt',
     s_search:'Zoeken in {n} collecties naar “{kw}”…', s_found:'{n} bronnen gevonden in {s}s', s_skip:'Overgeslagen (te traag): {b}',
     s_answer:'Antwoord schrijven…', s_cold:'AI-model laden (alleen bij het eerste antwoord)…', s_thinking:'Aan het nadenken…', s_thought:'Denkproces',

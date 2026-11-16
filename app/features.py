@@ -130,8 +130,11 @@ def cleanup_items():
 
     for f in glob.glob(os.path.join(dl, "old", "*")):
         add(f, "old")
+    active = {os.path.basename(j.get("target", "")) + ".part" for j in N.STATE["jobs"].values()
+              if j.get("status") in ("bezig", "wachtrij")}
     for f in glob.glob(os.path.join(dl, "*.part")):
-        add(f, "partial")
+        if os.path.basename(f) not in active and time.time() - os.path.getmtime(f) > 600:
+            add(f, "partial")
     for pat in ("*.zip", "*.tar.gz", "*.log"):
         for f in glob.glob(os.path.join(dl, pat)):
             add(f, "installer")
@@ -187,12 +190,14 @@ AI_MODELS = [
     ("llama3.2:3b", "Llama 3.2 3B", "Default — good balance on CPU", 2.0),
     ("qwen3:4b", "Qwen 3 4B", "Smart for its size, multilingual (NL)", 2.5),
     ("phi4-mini", "Phi-4 mini 3.8B", "Strong at math & logic", 2.5),
-    ("gemma3:4b", "Gemma 3 4B", "Multilingual, can read images", 3.3),
+    ("gemma3:4b", "Gemma 3 4B", "Multilingual · also recognises photos", 3.3),
     ("qwen2.5-coder:3b", "Qwen 2.5 Coder 3B", "Programming help", 1.9),
     ("mistral:7b", "Mistral 7B", "Larger, slower on CPU", 4.1),
     ("qwen3:8b", "Qwen 3 8B", "Best quality, needs 16 GB RAM", 5.2),
     ("deepseek-r1:7b", "DeepSeek R1 7B", "Thinks step by step (slow)", 4.7),
-    ("llava:7b", "LLaVA 7B", "Vision: describe photos", 4.7),
+    ("moondream", "Moondream 2", "Vision · fast photo recognition on CPU", 1.7),
+    ("qwen2.5vl:3b", "Qwen 2.5 VL 3B", "Vision · best at plants, objects & reading text in photos", 3.2),
+    ("llava:7b", "LLaVA 7B", "Vision · describe photos (slow on CPU)", 4.7),
 ]
 
 
@@ -303,6 +308,8 @@ def extras():
     for size, title, summ, gb in extra.WHISPER_SIZES:
         out.append({"id": "stt:" + size, "kind": "stt", "cat": "ai", "title": title + " · speech to text", "summary": summ + ". Talk instead of typing — works offline.",
                     "file": size, "date": "", "size": int(gb * (1 << 30)), "installed": extra.whisper_installed(size)})
+    import fast
+    out += fast.mt_items()
     for mid, title, summ, gb in AI_MODELS:
         out.append({"id": "ai:" + mid, "kind": "ai", "cat": "ai", "title": title, "summary": summ, "file": mid,
                     "date": "", "size": int(gb * (1 << 30)), "installed": mid in have or (mid + ":latest") in have,
@@ -330,9 +337,9 @@ def enqueue(item_id):
     if item.get("kind") == "torrent":
         return {"error": "torrent only"}
     free = N.shutil.disk_usage(N.ROOT).free
-    if item.get("size") and item["size"] > free and item.get("kind") not in ("ai", "stt"):
+    if item.get("size") and item["size"] > free and item.get("kind") not in ("ai", "stt", "mt"):
         return {"error": "not enough free space"}
-    jobs[item_id] = {"status": "wachtrij", "title": item["title"], "done": 0, "total": item.get("size", 0), "msg": ""}
+    jobs[item_id] = {"status": "wachtrij", "title": item["title"], "done": 0, "total": item.get("size", 0), "msg": "", "target": item.get("target", "")}
     with QUEUE_LOCK:
         QUEUE.append((item_id, item))
         if not WORKER["running"]:
@@ -368,6 +375,9 @@ def _worker():
             kind = item["kind"]
             if kind == "ai":
                 _pull_model(job, item["file"])
+            elif kind == "mt":
+                import fast
+                fast.install_mt(job, item["file"])
             elif kind == "stt":
                 import extra
                 extra.install_whisper(job, item["file"])
@@ -465,6 +475,9 @@ def remove(item_id):
             return {"ok": True}
         except Exception as e:
             return {"error": str(e)}
+    if item_id.startswith("mt:"):
+        import fast
+        return fast.remove_mt(item_id[3:])
     return {"error": "not removable"}
 
 

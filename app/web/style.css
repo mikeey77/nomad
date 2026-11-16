@@ -552,3 +552,24 @@ details.think summary{cursor:pointer;color:var(--dim);font-family:var(--mono);fo
 details.think summary::-webkit-details-marker{display:none}
 details.think>div{white-space:pre-wrap;color:var(--dim);font-size:13.5px;line-height:1.55;margin-top:6px;max-height:260px;overflow:auto}
 .ameta{margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--dim);opacity:.7;white-space:normal}
+
+/* v0.12 — photo, translator engine, grouped AI downloads, clean-up */
+#photoPrev:empty{display:none}
+.pchip{display:inline-flex;align-items:center;gap:10px;margin-bottom:8px;padding:6px 8px 6px 6px;border:1px solid var(--line2);border-radius:12px;background:rgba(var(--a),.06);font-size:13px;animation:fadeUp .2s both}
+.pchip img{width:44px;height:44px;object-fit:cover;border-radius:8px}
+.pchip button{border:0;background:none;color:var(--dim);cursor:pointer;font-size:14px}
+.uimg{display:block;max-width:220px;max-height:220px;border-radius:12px;border:1px solid var(--line2);margin-bottom:8px}
+#trHint{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:-4px 0 10px;min-height:22px;font-size:13px}
+.engb{font:600 10.5px var(--mono);letter-spacing:.14em;padding:3px 9px;border-radius:20px;border:1px solid var(--line2);color:var(--dim)}
+.engb.fast{color:var(--acc);border-color:var(--acc);box-shadow:0 0 12px rgba(var(--a),.25)}
+.trtip{color:var(--dim)}
+.grp-t{grid-column:1/-1;display:flex;align-items:center;gap:8px;font:600 11px var(--mono);letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin:14px 0 2px}
+.grp-t:first-child{margin-top:0}
+.grp-t .svgi{width:16px;height:16px;color:var(--acc)}
+.clg{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.clh{display:flex;align-items:center;gap:10px}
+.clh em{margin-left:auto;font:normal 12px var(--mono);color:var(--dim)}
+.clb{font:600 9.5px var(--mono);letter-spacing:.14em;padding:2px 8px;border-radius:20px;border:1px solid}
+.clb.ok{color:var(--acc);border-color:rgba(var(--a),.5)}
+.clb.warn{color:#ffb63a;border-color:rgba(255,182,58,.5)}
+.cld{font-size:13px;color:var(--dim);margin:4px 0 8px}

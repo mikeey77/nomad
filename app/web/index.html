@@ -104,8 +104,10 @@
       <div id="chat"></div>
       <div id="aiDrawer" class="drawer"></div>
       <div id="composer">
+        <div id="photoPrev"></div>
         <div class="comp">
           <button class="btn mic" data-mic="prompt" title="Microphone" style="height:48px;width:48px"><span class="ic" data-i="mic"></span></button>
+          <label class="btn" id="photoBtn" title="Photo" style="height:48px;width:48px;padding:0;display:grid;place-items:center"><span class="ic" data-i="camera"></span><input type="file" id="photoIn" accept="image/*" hidden></label>
           <textarea id="prompt" rows="1" data-tp="ask_ph"></textarea>
           <button class="btn pri" id="send" style="height:48px;padding:0 18px" data-t="send"></button>
         </div>
@@ -184,6 +186,7 @@
         <select id="trTo" class="inp"></select>
         <span class="mono dim" id="trModel" style="margin-left:auto"></span>
       </div>
+      <div id="trHint"></div>
       <div class="trgrid">
         <div class="trbox"><textarea id="trIn" data-tp="tr_ph"></textarea>
           <div class="tract"><button class="btn mic" data-mic="trIn" title="Microphone"><span class="ic" data-i="mic"></span></button><button class="btn" id="trSpeakIn" title="Speak">🔊</button><span class="mono dim" id="trCount"></span><button class="btn pri" id="trGo" data-t="tr_go"></button></div></div>
@@ -258,6 +261,7 @@
 <script src="/web/app.js"></script>
 <script src="/web/app2.js"></script>
 <script src="/web/ai.js"></script>
+<script src="/web/v12.js"></script>
 <script src="/web/fx.js"></script>
 </body>
 </html>
