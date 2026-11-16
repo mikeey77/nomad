@@ -131,7 +131,7 @@ function renderDash(){
       <div class="big">${S.geo==='aan'?t('st_aan'):'—'}</div><div class="sub">${t('photon')}</div>
       <div class="status"><span class="dot ${stateDot(S.geo)}"></span>${esc(stTxt(S.geo))}</div></div>
     <div class="card" data-h="ai"><div class="k">${t('mod')} 04</div><h3>${ICON.ai}${t('assistant')}</h3>
-      <div class="big">${A.state==='aan'?(A.models?.length||0)+' '+t('model'):'—'}</div><div class="sub">${esc(A.model||'')} · ${t('local_ollama')}</div>
+      <div class="big">${A.state==='aan'?(A.models?.length||0)+' '+t('model')+((A.models?.length||0)!==1&&LANG!=='nl'?'s':''):'—'}</div><div class="sub">${esc(A.model||'')} · ${t('local_ollama')}</div>
       <div class="status"><span class="dot ${stateDot(A.state)}"></span>${esc(stTxt(A.state))}</div></div>`;
   $$('#mods .card').forEach(c => c.onclick = () => location.hash = c.dataset.h);
   $('#favHome').innerHTML = USER.favorites.length ? `<div class="sec-t">${t('favorites')}</div><div class="chips">` +
@@ -258,7 +258,26 @@ const LAYERSTATE = store.get('nomad.layers', {streets:true, satellite:false, hil
 function whenMap(fn){ if(MAP && MAP.loaded()) fn(MAP); else mapWaiters.push(fn) }
 const ACC = {green:['#2ecf85','#1f8a58','#9dffcf','#2f8f62'], blue:['#3aa8ff','#1f5f9a','#a8dcff','#2f6f9f'], amber:['#ffb63a','#9a6a1f','#ffe0a8','#9f7a2f'], red:['#ff5a5a','#9a2f2f','#ffb0b0','#9f3f3f']};
 function mapFlavor(){
+  const style = SET.map_style || 'color';
+  if(style === 'light') return Object.assign({}, basemaps.namedFlavor('light'));
   const f = Object.assign({}, basemaps.namedFlavor('dark'));
+  if(style === 'color'){
+    Object.assign(f, {
+      background:'#0b1015', earth:'#111a1f', water:'#0f3d63', park_a:'#173f26', park_b:'#1b4a2c', wood_a:'#163a23', wood_b:'#1b4429',
+      scrub_a:'#1f3a26', scrub_b:'#1f3a26', glacier:'#2c3e4a', sand:'#3b3524', beach:'#43392a', hospital:'#3d2129', school:'#2f2a40',
+      industrial:'#262b31', aerodrome:'#283040', pedestrian:'#1b2229', zoo:'#2b3c23', military:'#3b2e25', runway:'#3a4250',
+      buildings:'#26303a', boundaries:'#9a86c4',
+      highway:'#ff9a3c', highway_casing_early:'#4a2a0e', highway_casing_late:'#4a2a0e',
+      major:'#f2d16b', major_casing_early:'#3d3416', major_casing_late:'#3d3416', link:'#f2d16b',
+      minor_a:'#66727c', minor_b:'#56626b', minor_service:'#424d56', other:'#424d56', railway:'#b884ff',
+      bridges_highway:'#ffab5c', bridges_major:'#f6dc84', bridges_minor:'#727e88', bridges_link:'#f6dc84', bridges_other:'#4a555e',
+      tunnel_highway:'#9a5c25', tunnel_major:'#8f7c3d', tunnel_minor:'#3a434b', tunnel_link:'#8f7c3d', tunnel_other:'#333c44',
+      roads_label_major:'#ffe9b0', roads_label_major_halo:'#0b1015', roads_label_minor:'#b9c3ca', roads_label_minor_halo:'#0b1015',
+      ocean_label:'#86c3f0', subplace_label:'#b8c4cc', subplace_label_halo:'#0b1015', city_label:'#ffffff', city_label_halo:'#0b1015',
+      state_label:'#c9b9ea', state_label_halo:'#0b1015', country_label:'#ffffff', address_label:'#8f9ba5', address_label_halo:'#0b1015',
+    });
+    return f;
+  }
   const [hi, maj, lab, bnd] = ACC[SET.accent] || ACC.green;
   Object.assign(f, {
     background:'#040b08', earth:'#08130e', water:'#04201c', park_a:'#0b2117', park_b:'#0d2a1c', wood_a:'#0b1d14', wood_b:'#0d2318',
@@ -279,7 +298,7 @@ function mapFlavor(){
 function buildStyle(){
   const o = location.origin, M = STATUS.maps || {};
   const style = {
-    version:8, glyphs:o + '/web/assets/fonts/{fontstack}/{range}.pbf', sprite:o + '/web/assets/sprites/v4/dark',
+    version:8, glyphs:o + '/web/assets/fonts/{fontstack}/{range}.pbf', sprite:o + '/web/assets/sprites/v4/' + (SET.map_style === 'light' ? 'light' : 'dark'),
     sources:{ protomaps:{ type:'vector', url:'pmtiles://' + o + '/kaart/world.pmtiles', attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a> · Protomaps' } },
     layers:basemaps.layers('protomaps', mapFlavor(), {lang:LANG}),
   };
@@ -785,7 +804,7 @@ $('#rescan').onclick = async () => { await post('/api/rescan'); await loadStatus
 /* ───────── instellingen ───────── */
 function renderSettings(){
   const seg = (id, v) => $$('#' + id + ' button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
-  seg('sLang', SET.lang); seg('sAccent', SET.accent); seg('sTheme', SET.theme);
+  seg('sLang', SET.lang); seg('sAccent', SET.accent); seg('sTheme', SET.theme); seg('sMap', SET.map_style || 'color');
   $('#sFont').value = SET.font_scale; $('#sFontV').textContent = Math.round(SET.font_scale * 100) + '%';
   $('#sCheck').classList.toggle('on', !!SET.update_check);
   $('#sInterval').value = SET.update_check_minutes;
@@ -795,6 +814,7 @@ function renderSettings(){
 $$('#sLang button').forEach(b => b.onclick = () => saveSet({lang:b.dataset.v}));
 $$('#sAccent button').forEach(b => b.onclick = () => saveSet({accent:b.dataset.v}));
 $$('#sTheme button').forEach(b => b.onclick = () => saveSet({theme:b.dataset.v}));
+$$('#sMap button').forEach(b => b.onclick = async () => { await saveSet({map_style:b.dataset.v}); if(MAP){ MAP.setStyle(buildStyle()); MAP.once('styledata', () => { applyLayers(); renderPins() }) } });
 $('#sFont').addEventListener('input', e => { $('#sFontV').textContent = Math.round(e.target.value * 100) + '%' });
 $('#sFont').addEventListener('change', e => saveSet({font_scale:+e.target.value}));
 $('#sCheck').onclick = () => saveSet({update_check:!SET.update_check});

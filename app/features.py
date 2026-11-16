@@ -22,7 +22,7 @@ def init(nomad_module):
 
 SETTING_KEYS = {
     "lang": "en", "accent": "green", "theme": "dark", "font_scale": 1.0,
-    "update_check": True, "update_check_minutes": 30, "ai_model": "llama3.2:3b",
+    "update_check": True, "update_check_minutes": 30, "ai_model": "llama3.2:3b", "map_style": "color",
 }
 
 

@@ -1,55 +1,153 @@
-# PROJECT NOMAD
+<p align="center"><img src="docs/img/banner.png" alt="PROJECT NOMAD" width="100%"></p>
 
-Mijn eigen offline kennis- en wereldserver op een 2 TB SSD. Werkt volledig zonder internet.
+<p align="center">
+  <img src="https://img.shields.io/badge/version-0.9-3dffa0?style=for-the-badge&labelColor=030806">
+  <img src="https://img.shields.io/badge/platform-Windows-3dffa0?style=for-the-badge&labelColor=030806">
+  <img src="https://img.shields.io/badge/works-100%25%20offline-b6ff4a?style=for-the-badge&labelColor=030806">
+  <img src="https://img.shields.io/badge/storage-2%20TB%20SSD-3dffa0?style=for-the-badge&labelColor=030806">
+</p>
 
-| Module | Inhoud | Bron |
-|---|---|---|
-| 📚 Bibliotheek | Wikipedia (EN, maxi), Gutenberg, iFixit, Wikibooks, LibreTexts, mdwiki… | Kiwix `.zim` |
-| 🗺️ Wereldkaart | Straten, gebouwen, plaatsnamen | Protomaps `.pmtiles` (OpenStreetMap) |
-| ⛰️ Hoogte | Reliëf + 3D-terrein | JAXA AW3D30 terrarium `.pmtiles` |
-| 🛰️ Satelliet | (nog te bepalen) | `.pmtiles` |
-| 📍 Adres zoeken | Wereldwijd zoeken op adres/plaats | Photon (OSM) |
-| 🤖 AI | Lokale chat, met Wikipedia als bron | Ollama |
-| 🆘 Noodpakket | EHBO-snelgidsen, kompas, zon-tijden, SOS-lamp, checklist | — |
-| ⭐ Favorieten | Artikelen bewaren, notities, kaart-pins | `data\nomad-user.json` |
-| ⬇️ Downloads | Catalogus met collecties, downloaden en hervatten in de app | Kiwix, Protomaps, Photon |
+<p align="center"><b>Node for Offline Media, Archives and Data.</b><br>
+All of Wikipedia, a map of the entire planet, a local AI, thousands of books, repair guides, medical references and survival tools —<br>
+on one SSD, in one app, without an internet connection.</p>
 
-## Installatie op de SSD
+<p align="center">
+  <a href="https://github.com/mikeey77/nomad/releases/latest/download/NOMAD.exe"><b>⬇ Download NOMAD.exe</b></a> ·
+  <a href="#-quick-start">Quick start</a> ·
+  <a href="#-features">Features</a> ·
+  <a href="#-whats-on-the-ssd">Storage guide</a>
+</p>
 
-```
-git clone https://github.com/mikeey77/nomad.git X:\NOMAD
-```
-(of download de zip en pak uit naar `X:\NOMAD`)
+---
 
-1. Download de data: zie **LINKS.txt** en de `_WAT_HOORT_HIER.txt` in elke map.
-2. Download **[NOMAD.exe](https://github.com/mikeey77/nomad/releases/latest/download/NOMAD.exe)**, zet hem in de NOMAD-map en dubbelklik.
-   De eerste keer start hij de setup (portable Python, Ollama + AI-model, Java, Photon in `tools\`).
-   Daarna opent NOMAD in een eigen venster, met een tray-icoon onderin (openen, herstarten, setup, afsluiten).
-   Op je telefoon/iPad (zelfde wifi): scan de QR-code op het dashboard en kies *Zet op beginscherm*.
-   Windows vraagt de eerste keer of Python op het netwerk mag: kies **Privénetwerken → Toegang toestaan**.
+<p align="center"><img src="docs/img/home.png" alt="NOMAD command center" width="100%"></p>
 
-## Mappen
+## ✦ Features
+
+<table>
+<tr>
+<td width="50%"><img src="docs/img/map.png" alt="World map"></td>
+<td width="50%"><h3>🗺️ World map</h3>
+Every street, building and place name on Earth from OpenStreetMap, rendered locally from a single file.
+Colorful night style (or accent / light), relief shading, 3D terrain, worldwide address search, pins and
+<b>turn-by-turn routes</b> for car, bike and walking.</td>
+</tr>
+<tr>
+<td width="50%"><h3>📚 Library</h3>
+The complete English Wikipedia with images — plus any of 3,600+ Kiwix collections: Gutenberg books, iFixit,
+Stack Exchange, medical encyclopedias, Khan Academy, TED talks and more.
+Full-text search across everything, favorites, notes per article and reading history.</td>
+<td width="50%"><img src="docs/img/library.png" alt="Library"></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/img/ai.png" alt="AI assistant"></td>
+<td width="50%"><h3>🤖 Local AI</h3>
+A private assistant running on your own computer (Ollama). It searches <i>your</i> offline library first and
+answers with sources you can open. Chats are temporary by default — save the ones you want, bookmark single answers.</td>
+</tr>
+<tr>
+<td width="50%"><h3>🆘 Survival kit</h3>
+One-tap first-aid and survival guides pulled from your medical and survival collections, SOS light-and-sound signal,
+flashlight, GPS position, compass, sunrise/sunset and an emergency checklist.</td>
+<td width="50%"><img src="docs/img/survival.png" alt="Survival kit"></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/img/bundles.png" alt="Bundles and storage planner"></td>
+<td width="50%"><h3>⬇️ Bundles & storage planner</h3>
+Pick ready-made bundles — <i>Survival, World Knowledge, Health, Maker & Repair, Video School, Navigation…</i> —
+and see instantly whether it all fits on your SSD. Downloads queue up, resume after interruptions and work the moment they finish.</td>
+</tr>
+<tr>
+<td width="50%"><h3>📁 File manager</h3>
+Browse the whole SSD inside the app, preview images, PDFs, video and audio, edit text files, upload, rename and delete.
+Files you copy in by hand are detected automatically.</td>
+<td width="50%"><img src="docs/img/files.png" alt="File manager"></td>
+</tr>
+</table>
+
+### And the small stuff
+- 📱 **Phone & iPad** — scan the QR code on the dashboard, add NOMAD to your home screen, use it over Wi-Fi.
+- 🔄 **Self-updating** — the app and NOMAD.exe update themselves from GitHub; a banner offers a one-click restart.
+- 🌍 **English & Nederlands**, four accent colors, dark & light theme, adjustable text size.
+- ✨ Boot sequence, rotating globe, a campfire in the survival kit, the occasional shooting star… and maybe something hidden if you know the right code.
+
+## 🗺️ The map
+
+<table>
+<tr>
+<td><img src="docs/img/map-netherlands.jpg" alt="Netherlands"><p align="center"><sub>Country view</sub></p></td>
+<td><img src="docs/img/map-alps.jpg" alt="Swiss Alps"><p align="center"><sub>Lakes, forests & mountain roads</sub></p></td>
+</tr>
+<tr>
+<td><img src="docs/img/map-newyork.jpg" alt="New York"><p align="center"><sub>City detail</sub></p></td>
+<td><img src="docs/img/map-world.jpg" alt="World"><p align="center"><sub>The whole planet — one 120 GB file</sub></p></td>
+</tr>
+</table>
+
+Motorways are orange, main roads yellow, railways purple, water blue and parks & forests green — readable at a glance, easy on the eyes at night.
+
+## 🚀 Quick start
+
+1. **Prepare the SSD** — format it as **exFAT** if you also want to use it on a phone later.
+2. **Download** this repository (**Code → Download ZIP**) and unzip it to the root of the SSD as `NOMAD\`.
+3. **Download [NOMAD.exe](https://github.com/mikeey77/nomad/releases/latest/download/NOMAD.exe)** into that `NOMAD\` folder and double-click it.
+   The first run installs everything it needs into `NOMAD\tools` (portable Python, Ollama + an AI model, Java, Photon).
+4. Open **Downloads → Bundles**, pick what you want and press **Download plan**.
+
+> Windows SmartScreen may warn about an unsigned app: click **More info → Run anyway**.
+> When Windows asks about network access, allow **private networks** so your phone can connect.
+
+## 💾 What's on the SSD
+
+| Content | Size | Folder |
+|---|---:|---|
+| Wikipedia (English, with images) | ~119 GB | `data\bibliotheek` |
+| World map (OpenStreetMap) | ~120 GB | `data\kaart\basis\world.pmtiles` |
+| Elevation / 3D terrain | ~91 GB | `data\kaart\hoogte\terrain.pmtiles` |
+| Worldwide address search | ~95 GB | `data\zoeken\photon_data` |
+| Survival Essentials bundle | ~9 GB | `data\bibliotheek` |
+| Project Gutenberg (70k books) | ~206 GB | `data\bibliotheek` |
+| Khan Academy (video) | ~168 GB | `data\bibliotheek` |
+| Route planning, Benelux | ~3 GB | `data\route` |
+| AI models | 1–5 GB each | `ai\modellen` |
+
+A practical "everything important" setup is roughly **450–600 GB**, leaving plenty of room on 2 TB for books, video and more.
 
 ```
 NOMAD\
-├─ app\                 de app (deze repo)
-├─ data\bibliotheek\    *.zim
-├─ data\kaart\basis\    world.pmtiles
-├─ data\kaart\hoogte\   terrain.pmtiles
-├─ data\kaart\satelliet satellite.pmtiles
-├─ data\zoeken\         photon_data\
-├─ ai\modellen\         Ollama-modellen
-├─ tools\               python, ollama, java, photon
-└─ downloads\           tijdelijke/oude bestanden
+├─ NOMAD.exe            start here
+├─ app\                 the application (this repo, self-updating)
+├─ data\
+│  ├─ bibliotheek\      .zim collections (Wikipedia, books, guides…)
+│  ├─ kaart\            world.pmtiles · terrain.pmtiles · satellite.pmtiles
+│  ├─ zoeken\           address search database
+│  └─ route\            route planning data
+├─ ai\modellen\         local AI models
+├─ tools\               portable Python, Ollama, Java, Photon, GraphHopper
+└─ downloads\           partial downloads, logs, old versions
 ```
 
-## Updates
+## 🧩 How it works
 
-- **App**: `NOMAD.exe` haalt bij elke start automatisch de nieuwste app-code van GitHub
-  (alleen `app\`, je data en tools blijven staan). Setup hoeft nooit opnieuw.
-- **Data** (`.zim`-collecties, AI-model): als er internet is kijkt NOMAD elke 30 min of er
-  nieuwere versies zijn. Je krijgt een melding bij **Update** en downloadt pas als je zelf klikt.
+```mermaid
+flowchart LR
+  EXE[NOMAD.exe<br/>tray · splash · self-update] --> S[NOMAD server<br/>Python]
+  S --> L[(Kiwix .zim<br/>libzim)]
+  S --> M[(PMTiles<br/>maps & terrain)]
+  S --> P[Photon<br/>address search]
+  S --> G[GraphHopper<br/>routing]
+  S --> O[Ollama<br/>local AI]
+  UI[App window · phone · iPad] <--> S
+```
 
-## Sneltoetsen
+Everything runs locally on your machine. NOMAD only goes online when you ask it to download or update something.
 
-`Ctrl+K` / `/` zoeken in alles · `Shift+Enter` zoeken in alle tekst · `R` willekeurig artikel · `Alt+←/→` terug/vooruit
+## 🙏 Built on
+
+[Kiwix / openZIM](https://kiwix.org) · [OpenStreetMap](https://www.openstreetmap.org/copyright) · [Protomaps](https://protomaps.com) ·
+[MapLibre](https://maplibre.org) · [JAXA AW3D30](https://earth.jaxa.jp/en/data/policy/) · [Photon](https://github.com/komoot/photon) ·
+[GraphHopper](https://www.graphhopper.com) · [Ollama](https://ollama.com) — and inspired by Crosstalk Solutions' Project N.O.M.A.D.
+
+Map data © OpenStreetMap contributors (ODbL). Content collections keep their own licenses.
+
+<sub>Medical and survival content is for reference only and is no substitute for professional help. In an emergency, call 112.</sub>
