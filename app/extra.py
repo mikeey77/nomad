@@ -328,3 +328,99 @@ def fact():
             first = re.split(r"(?<=[.!?])\s", txt)[0][:260]
             return {"book": b.id, "path": e.path, "title": e.title, "text": first}
     return {}
+
+
+# ───────── spraak naar tekst (Whisper, offline) ─────────
+WHISPER = {"model": None, "size": None, "lock": threading.Lock()}
+WHISPER_SIZES = [("tiny", "Whisper Tiny", "Fastest, basic accuracy", 0.08), ("base", "Whisper Base", "Fast, good for clear speech (recommended)", 0.15),
+                 ("small", "Whisper Small", "More accurate, slower on CPU", 0.5)]
+
+
+def whisper_dir():
+    return os.path.join(N.ROOT, "ai", "whisper")
+
+
+def whisper_installed(size=None):
+    d = whisper_dir()
+    if not os.path.isdir(d):
+        return [] if size is None else False
+    have = [s for s, *_ in WHISPER_SIZES if os.path.isdir(os.path.join(d, f"models--Systran--faster-whisper-{s}"))]
+    return have if size is None else size in have
+
+
+def install_whisper(job, size):
+    import sys as _s
+    job["msg"] = "installing speech engine (faster-whisper)…"
+    r = subprocess.run([_s.executable, "-m", "pip", "install", "--quiet", "faster-whisper"], capture_output=True, text=True,
+                       creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    if r.returncode != 0:
+        raise RuntimeError("pip: " + (r.stderr or r.stdout)[-300:])
+    job["msg"] = f"downloading Whisper {size} model…"
+    from faster_whisper import WhisperModel
+    os.makedirs(whisper_dir(), exist_ok=True)
+    WhisperModel(size, device="cpu", compute_type="int8", download_root=whisper_dir())
+    N.CFG["whisper"] = size
+    N.save_json(N.CONFIG_FILE, N.CFG)
+
+
+def stt(audio_bytes):
+    have = whisper_installed()
+    if not have:
+        return {"error": "Speech recognition is not installed (Downloads → AI models → Whisper)."}
+    size = N.CFG.get("whisper") if N.CFG.get("whisper") in have else have[-1]
+    import tempfile
+    with WHISPER["lock"]:
+        if WHISPER["model"] is None or WHISPER["size"] != size:
+            from faster_whisper import WhisperModel
+            WHISPER["model"] = WhisperModel(size, device="cpu", compute_type="int8", download_root=whisper_dir())
+            WHISPER["size"] = size
+        with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as f:
+            f.write(audio_bytes)
+            path = f.name
+        try:
+            segs, info = WHISPER["model"].transcribe(path, beam_size=1, vad_filter=True)
+            text = " ".join(s.text.strip() for s in segs).strip()
+        finally:
+            os.remove(path)
+    return {"text": text, "lang": info.language}
+
+
+# ───────── vertalen (lokale AI) ─────────
+LANGNAMES = {"en": "English", "nl": "Dutch", "de": "German", "fr": "French", "es": "Spanish", "it": "Italian", "pt": "Portuguese",
+             "pl": "Polish", "tr": "Turkish", "ar": "Arabic", "uk": "Ukrainian", "ru": "Russian", "zh": "Chinese", "ja": "Japanese"}
+
+
+def translate_stream(handler, body):
+    port = N.CFG["ollama_port"]
+    if not N.port_open(port):
+        return handler.json({"error": "AI is off — translation uses the local AI model."}, 503)
+    src, dst, text = body.get("from", "auto"), body.get("to", "en"), body.get("text", "")
+    system = ("You are a professional translator. Translate the user's text " +
+              ("" if src == "auto" else f"from {LANGNAMES.get(src, src)} ") + f"into {LANGNAMES.get(dst, dst)}. "
+              "Keep the meaning, tone and formatting. Output ONLY the translation, no explanations, no quotes.")
+    model = N.CFG.get("translate_model") or N.CFG["ai_model"]
+    payload = {"model": model, "stream": True, "options": {"temperature": 0.2},
+               "messages": [{"role": "system", "content": system}, {"role": "user", "content": text}]}
+    if "qwen3" in model:
+        payload["think"] = False
+    req = urllib.request.Request(f"http://127.0.0.1:{port}/api/chat", data=json.dumps(payload).encode(),
+                                 headers={"Content-Type": "application/json"})
+    handler.send_response(200)
+    handler.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
+    handler.send_header("Cache-Control", "no-store")
+    handler.send_header("Connection", "close")
+    handler.end_headers()
+    handler.close_connection = True
+    try:
+        with urllib.request.urlopen(req, timeout=600) as r:
+            for line in r:
+                try:
+                    m = json.loads(line)
+                except Exception:
+                    continue
+                piece = (m.get("message") or {}).get("content", "")
+                if piece:
+                    handler.wfile.write((json.dumps({"t": piece}) + "\n").encode())
+                    handler.wfile.flush()
+    except Exception as e:
+        handler.wfile.write((json.dumps({"error": str(e)}) + "\n").encode())

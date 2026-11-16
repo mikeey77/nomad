@@ -300,6 +300,9 @@ def extras():
     import extra
     out += extra.route_items()
     have = set(N.ai_models()) if N.STATE.get("ai") == "aan" else set()
+    for size, title, summ, gb in extra.WHISPER_SIZES:
+        out.append({"id": "stt:" + size, "kind": "stt", "cat": "ai", "title": title + " · speech to text", "summary": summ + ". Talk instead of typing — works offline.",
+                    "file": size, "date": "", "size": int(gb * (1 << 30)), "installed": extra.whisper_installed(size)})
     for mid, title, summ, gb in AI_MODELS:
         out.append({"id": "ai:" + mid, "kind": "ai", "cat": "ai", "title": title, "summary": summ, "file": mid,
                     "date": "", "size": int(gb * (1 << 30)), "installed": mid in have or (mid + ":latest") in have,
@@ -327,7 +330,7 @@ def enqueue(item_id):
     if item.get("kind") == "torrent":
         return {"error": "torrent only"}
     free = N.shutil.disk_usage(N.ROOT).free
-    if item.get("size") and item["size"] > free and item.get("kind") != "ai":
+    if item.get("size") and item["size"] > free and item.get("kind") not in ("ai", "stt"):
         return {"error": "not enough free space"}
     jobs[item_id] = {"status": "wachtrij", "title": item["title"], "done": 0, "total": item.get("size", 0), "msg": ""}
     with QUEUE_LOCK:
@@ -365,6 +368,9 @@ def _worker():
             kind = item["kind"]
             if kind == "ai":
                 _pull_model(job, item["file"])
+            elif kind == "stt":
+                import extra
+                extra.install_whisper(job, item["file"])
             else:
                 N.download(job, item["url"], item["target"])
                 if kind == "zim":

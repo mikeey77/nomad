@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.9.0"
+VERSION = "0.10.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -768,6 +768,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json(features.remove(self.body_json().get("id")))
             if p == "/api/ai/use":
                 return self.json(features.use_model(self.body_json().get("model")))
+            if p == "/api/stt":
+                ln = int(self.headers.get("Content-Length") or 0)
+                return self.json(extra.stt(self.rfile.read(ln)))
+            if p == "/api/translate":
+                return extra.translate_stream(self, self.body_json())
             if p == "/api/fs/write":
                 b = self.body_json()
                 return self.json(extra.fs_write(b["path"], b["content"]))
@@ -895,7 +900,7 @@ class Handler(BaseHTTPRequestHandler):
                         "articles": sum(b.archive.article_count for b in BOOKS.values()),
                         "zim": HAVE_ZIM},
             "maps": maps,
-            "geo": STATE["geo"], "route": {"state": extra.ROUTE["state"], "region": extra.ROUTE.get("region")},
+            "stt": bool(extra.whisper_installed()), "geo": STATE["geo"], "route": {"state": extra.ROUTE["state"], "region": extra.ROUTE.get("region")},
             "ai": {"state": STATE["ai"], "model": CFG["ai_model"], "models": ai_models() if STATE["ai"] == "aan" else []},
             "updates": len(STATE["updates"]),
         })

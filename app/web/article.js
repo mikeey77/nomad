@@ -6,8 +6,16 @@
     return;
   }
   document.documentElement.classList.add('nexus');
+  const isMW = () => !!document.querySelector('#mw-content-text, .mw-parser-output, .mw-body, #bodyContent, meta[name="generator"][content*="MediaWiki"], meta[content*="mwoffliner"]');
+  let MODE = 'auto';
+  function applyMode(){
+    const mw = isMW(), m = MODE === 'auto' ? (mw ? 'nomad' : 'original') : MODE;
+    document.documentElement.classList.toggle('mw', m === 'nomad' && mw);
+    document.documentElement.classList.toggle('inv', m === 'dark' || (m === 'nomad' && !mw));
+  }
 
   function ready(){
+    applyMode();
     // secties altijd uitklappen (mwoffliner gebruikt <details>)
     document.querySelectorAll('details').forEach(d => d.open = true);
     document.querySelectorAll('.collapsible-block, .mf-section-1, [class*="mf-section"]').forEach(el => {
@@ -29,7 +37,7 @@
       return { id: h.id, t: h.textContent.replace(/\[bewerken.*?\]|\[edit\]/gi,'').trim(), l: h.tagName === 'H2' ? 2 : 3 };
     }).filter(h => h.t);
     window.__heads = heads;
-    P.postMessage({ type: 'doc', title: title.trim(), headings: heads,
+    P.postMessage({ type: 'doc', title: title.trim(), headings: heads, mw: isMW(),
       book: decodeURIComponent(location.pathname.split('/')[2]), path: decodeURIComponent(location.pathname.split('/').slice(3).join('/')) }, '*');
     onScroll();
   }
@@ -51,6 +59,7 @@
   addEventListener('message', e => {
     const m = e.data || {};
     if(m.type === 'look'){
+      MODE = m.mode || 'auto'; applyMode();
       document.documentElement.style.setProperty('--fs', m.scale || 1);
       document.documentElement.classList.toggle('light', m.theme === 'light');
     }

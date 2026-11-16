@@ -238,3 +238,91 @@ renderExtras = function(){
   bindBtns('#mapgrid'); bindBtns('#aigrid');
 };
 setInterval(() => { if(VIEW === 'map') updateRouteBox() }, 5000);
+
+/* weergave per collectie: Auto / NOMAD / Origineel / Donker */
+$$('#aMode button').forEach(b => b.onclick = () => {
+  if(!CUR) return;
+  const m = store.get('nomad.amode', {}); m[CUR.book] = b.dataset.v; store.set('nomad.amode', m);
+  $$('#aMode button').forEach(x => x.classList.toggle('on', x === b));
+  frame.contentWindow.postMessage(lookMsg(), '*');
+});
+
+/* ───────── microfoon (Whisper) & voorlezen ───────── */
+let REC = null;
+async function micToggle(btn){
+  const target = $('#' + btn.dataset.mic);
+  if(REC){ REC.stop(); return }
+  if(!STATUS.stt){ toast(t('mic_off')); return }
+  let stream;
+  try{ stream = await navigator.mediaDevices.getUserMedia({audio:true}) }catch(e){ toast(t('mic_perm')); return }
+  const chunks = [], mr = new MediaRecorder(stream);
+  REC = mr; btn.classList.add('rec'); toast(t('listening'));
+  const stopT = setTimeout(() => mr.state === 'recording' && mr.stop(), 60000);
+  mr.ondataavailable = e => chunks.push(e.data);
+  mr.onstop = async () => {
+    clearTimeout(stopT); stream.getTracks().forEach(x => x.stop()); REC = null; btn.classList.remove('rec'); btn.classList.add('busy'); toast(t('transcribing'));
+    const r = await fetch('/api/stt', {method:'POST', body:new Blob(chunks, {type:'audio/webm'})}).then(r => r.json()).catch(e => ({error:e.message}));
+    btn.classList.remove('busy');
+    if(r.error){ toast(r.error); return }
+    target.value = (target.value ? target.value.trim() + ' ' : '') + r.text; target.dispatchEvent(new Event('input'));
+    if(r.lang && target.id === 'trIn' && $('#trFrom').value === 'auto') toast('🎙 ' + r.lang.toUpperCase());
+  };
+  mr.start();
+}
+$$('[data-mic]').forEach(b => b.onclick = () => micToggle(b));
+function speak(text, lang){
+  if(!('speechSynthesis' in window) || !text) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  if(lang && lang !== 'auto'){ u.lang = lang; const v = speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith(lang)); if(v) u.voice = v }
+  speechSynthesis.speak(u);
+}
+const _renderChat2 = renderChat;
+renderChat = function(){
+  _renderChat2();
+  $$('#chat .macts').forEach((m, k) => { if(m.querySelector('[data-say]')) return; const b = document.createElement('button'); b.textContent = '🔊'; b.dataset.say = 1; b.title = 'Speak';
+    const i = +m.querySelector('[data-copy]').dataset.copy; b.onclick = () => speak(CHAT[i].content, LANG); m.appendChild(b) });
+};
+
+/* ───────── vertaler ───────── */
+const TRL = [['auto','tr_auto'],['en','English'],['nl','Nederlands'],['de','Deutsch'],['fr','Français'],['es','Español'],['it','Italiano'],['pt','Português'],['pl','Polski'],['tr','Türkçe'],['ar','العربية'],['uk','Українська'],['ru','Русский'],['zh','中文'],['ja','日本語']];
+function trInit(){
+  $('#trFrom').innerHTML = TRL.map(([c, n]) => `<option value="${c}">${c === 'auto' ? t(n) : n}</option>`).join('');
+  $('#trTo').innerHTML = TRL.slice(1).map(([c, n]) => `<option value="${c}">${n}</option>`).join('');
+  const s = store.get('nomad.tr', {from:'auto', to:LANG === 'nl' ? 'en' : 'nl'});
+  $('#trFrom').value = s.from; $('#trTo').value = s.to;
+  $('#trModel').textContent = 'AI: ' + (STATUS.ai?.model || '—');
+  const P = ['I need help', 'Where is the hospital?', 'I need a doctor', 'Water, please', 'I am lost', 'Call the police', 'Is this safe to drink?', 'Thank you'];
+  $('#trPhrases').innerHTML = P.map(p => `<span class="chip">${p}</span>`).join('');
+  $$('#trPhrases .chip').forEach(c => c.onclick = () => { $('#trIn').value = c.textContent; $('#trFrom').value = 'en'; trGo() });
+}
+const trSave = () => store.set('nomad.tr', {from:$('#trFrom').value, to:$('#trTo').value});
+$('#trFrom').onchange = $('#trTo').onchange = trSave;
+$('#trSwap').onclick = () => { const f = $('#trFrom').value, to = $('#trTo').value; if(f !== 'auto'){ $('#trFrom').value = to; $('#trTo').value = f }
+  const o = $('#trOut').textContent; if(o){ $('#trIn').value = o; $('#trOut').textContent = '' } trSave() };
+$('#trIn').addEventListener('input', () => { $('#trCount').textContent = $('#trIn').value.length + ' / 5000' });
+$('#trIn').addEventListener('keydown', e => { if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) trGo() });
+let trBusy = false;
+async function trGo(){
+  const text = $('#trIn').value.trim().slice(0, 5000); if(!text || trBusy) return;
+  trBusy = true; $('#trOut').textContent = ''; $('#trOut').classList.add('cursor');
+  try{
+    const res = await fetch('/api/translate', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text, from:$('#trFrom').value, to:$('#trTo').value})});
+    if(!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.status);
+    const rd = res.body.getReader(), dec = new TextDecoder(); let buf = '';
+    for(;;){ const {value, done} = await rd.read(); if(done) break; buf += dec.decode(value, {stream:true}); let i;
+      while((i = buf.indexOf('\n')) >= 0){ const l = buf.slice(0, i); buf = buf.slice(i + 1); if(!l.trim()) continue; const m = JSON.parse(l);
+        if(m.t) $('#trOut').textContent += m.t; if(m.error) throw new Error(m.error) } }
+  }catch(e){ $('#trOut').textContent = t('error') + ': ' + e.message }
+  $('#trOut').classList.remove('cursor'); trBusy = false;
+}
+$('#trGo').onclick = trGo;
+$('#trSpeak').onclick = () => speak($('#trOut').textContent, $('#trTo').value);
+$('#trSpeakIn').onclick = () => speak($('#trIn').value, $('#trFrom').value);
+$('#trCopy').onclick = () => { navigator.clipboard?.writeText($('#trOut').textContent); toast(t('copied')) };
+$('#trSave').onclick = () => { const a = $('#trOut').textContent; if(!a) return; saveUser({saved:[{q:$('#trIn').value, a, sources:[], date:Date.now()}, ...(USER.saved || [])]}); toast(t('saved_ans')) };
+VIEWS.push('tr');
+const _setView2 = setView;
+setView = function(v){ _setView2(v); if(v === 'tr') trInit() };
+renderExtras = (function(orig){ return function(){ orig(); const ex = (CAT?.extras || []).filter(i => i.kind === 'ai' || i.kind === 'stt');
+  $('#aigrid').innerHTML = ex.map(i => card(i.id, i, i.kind === 'stt' ? 'stt' : 'ai', `<div class="cico ph">${icon(i.kind === 'stt' ? 'mic' : 'cpu')}</div>`)).join(''); bindBtns('#aigrid') } })(renderExtras);

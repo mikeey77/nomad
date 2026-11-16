@@ -28,7 +28,7 @@ function applyLook(){
   document.documentElement.dataset.theme = SET.theme || 'dark';
   applyI18n();
   $('#viewName').textContent = t('v_' + VIEW);
-  try{ frame.contentWindow.postMessage({type:'look', scale:SET.font_scale || 1, theme:SET.theme}, '*') }catch(e){}
+  try{ frame.contentWindow.postMessage(lookMsg(), '*') }catch(e){}
 }
 async function saveSet(patch){
   SET = await post('/api/settings', patch); delete $('#phone').dataset.url;
@@ -38,6 +38,9 @@ async function saveUser(patch){
   Object.assign(USER, patch);
   await post('/api/user', patch).catch(() => {});
 }
+
+function curBook(){ try{ return decodeURIComponent(frame.contentWindow.location.pathname.split('/')[2] || '') }catch(e){ return '' } }
+function lookMsg(){ const m = store.get('nomad.amode', {}); return {type:'look', scale:SET.font_scale || 1, theme:SET.theme, mode:m[curBook()] || 'auto'} }
 
 /* ───────── routing ───────── */
 function setView(v){
@@ -184,7 +187,7 @@ frame.addEventListener('load', () => {
   if(!p.startsWith('/lib/')) return;
   const want = '#lib/' + decodeURIComponent(p.slice(5));
   if(decodeURI(location.hash) !== want) history.replaceState(null, '', encodeURI(want));
-  frame.contentWindow.postMessage({type:'look', scale:SET.font_scale || 1, theme:SET.theme}, '*');
+  frame.contentWindow.postMessage(lookMsg(), '*');
 });
 window.addEventListener('message', e => {
   const m = e.data || {};
@@ -211,6 +214,8 @@ function renderArtBlock(){
   $('#favBtn').textContent = fav ? t('fav_rm') : t('fav_add');
   $('#favBtn').classList.toggle('pri', fav);
   $('#noteBox').value = USER.notes[keyOf(CUR)] || '';
+  const m = store.get('nomad.amode', {})[CUR.book] || 'auto';
+  $$('#aMode button').forEach(b => b.classList.toggle('on', b.dataset.v === m));
 }
 $('#favBtn').onclick = () => {
   if(!CUR) return;
@@ -478,6 +483,7 @@ const IC = {
   play:'<circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/>', code:'<path d="M8 6l-6 6 6 6M16 6l6 6-6 6"/>', map:'<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/>',
   folder:'<path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>', file:'<path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M14 3v6h6"/>',
   image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/>',
   cpu:'<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>', check:'<path d="M5 12l5 5 9-10"/>',
 };
 const icon = (k, cls = '') => `<svg class="svgi ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[k] || ''}</svg>`;
