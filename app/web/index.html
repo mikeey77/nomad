@@ -26,6 +26,7 @@
     <button class="tab" data-go="map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg><span data-t="map"></span></button>
     <button class="tab" data-go="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M9 12h.01M15 12h.01M9 16h6"/></svg><span data-t="ai"></span></button>
     <button class="tab" data-go="sos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><span data-t="sos"></span></button>
+    <button class="tab" data-go="files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span data-t="files"></span></button>
     <div class="rail-sp"></div>
     <button class="tab" data-go="dl"><span class="badge" id="updBadge"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span data-t="dl"></span></button>
     <button class="tab" data-go="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span data-t="set"></span></button>
@@ -86,11 +87,19 @@
         <div id="pinlist"></div>
       </div>
       <div class="mapui glass" id="mapcoord">—</div>
+      <div class="mapui glass" id="routebox">
+        <div class="hud" style="margin:2px 2px 8px" data-t="route"></div>
+        <div class="seg" id="rmode"><button data-m="car" class="on" data-t="r_car"></button><button data-m="bike" data-t="r_bike"></button><button data-m="foot" data-t="r_foot"></button></div>
+        <div class="rpts"><div class="rpt"><i class="ra">A</i><span id="rFrom" data-t="r_pick_from"></span></div><div class="rpt"><i class="rb">B</i><span id="rTo" data-t="r_pick_to"></span></div></div>
+        <div id="rRes"></div>
+      </div>
+      <div class="mapui" id="previewBadge"><span class="dot warn"></span><span data-t="map_preview"></span></div>
       <div id="mapempty"><div class="note" style="max-width:560px"><b class="nt" data-t="no_world_t"></b><br><br><span data-t="no_world"></span></div></div>
     </section>
 
     <section class="view" id="v-ai">
       <div id="chat"></div>
+      <div id="aiDrawer" class="drawer"></div>
       <div id="composer">
         <div class="comp">
           <textarea id="prompt" rows="1" data-tp="ask_ph"></textarea>
@@ -99,7 +108,9 @@
         <div class="opts">
           <div class="tog on" id="useWiki" style="padding:2px 0"><i></i><span data-t="use_wiki"></span></div>
           <span id="aiModel" style="margin-left:auto;font-family:var(--mono)"></span>
-          <button class="btn" id="newChat" style="height:28px" data-t="new_chat"></button>
+          <button class="btn" id="histBtn" style="height:28px" data-t="history_btn"></button>
+          <button class="btn" id="savedBtn" style="height:28px" data-t="saved_btn"></button>
+          <button class="btn pri" id="newChat" style="height:28px" data-t="new_chat"></button>
         </div>
       </div>
     </section>
@@ -161,6 +172,13 @@
       </div>
     </div></section>
 
+    <section class="view" id="v-files"><div class="dash" style="max-width:1300px">
+      <div class="fbar"><div id="crumbs" class="crumbs"></div>
+        <button class="btn" id="fNew" data-t="f_newfolder"></button><button class="btn" id="fNewFile" data-t="f_newfile"></button>
+        <label class="btn pri"><span data-t="f_upload"></span><input type="file" id="fUp" multiple hidden></label></div>
+      <div class="fwrap"><div class="flist" id="flist"></div><div class="fprev" id="fprev"></div></div>
+    </div></section>
+
     <section class="view" id="v-set"><div class="dash" style="max-width:860px">
       <div class="sec-t" style="margin-top:0" data-t="s_look"></div>
       <div class="card setc">
@@ -203,6 +221,8 @@
 </div>
 <div id="flash"></div>
 <div id="banner"></div>
+<div id="modal"><div class="mbox"><h3 id="mTitle"></h3><div id="mBody"></div><div id="mBtns"></div></div></div>
+<canvas id="fx2"></canvas>
 <div id="restarting"><div class="boot-logo">N</div><div class="mono" data-t="restarting"></div></div>
 <div id="toast"></div>
 
@@ -213,6 +233,7 @@
 <script src="/web/i18n.js"></script>
 <script src="/web/sun.js"></script>
 <script src="/web/app.js"></script>
+<script src="/web/app2.js"></script>
 <script src="/web/fx.js"></script>
 </body>
 </html>

@@ -10,6 +10,7 @@ Start via NOMAD.exe. Opties:
     --no-browser   geen browser openen
 """
 import argparse
+import mimetypes
 import glob
 import json
 import os
@@ -28,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.7.0"
+VERSION = "0.8.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -83,6 +84,7 @@ CFG = load_config()
 
 sys.path.insert(0, APP)
 import features  # noqa: E402
+import extra  # noqa: E402
 
 try:
     from libzim.reader import Archive
@@ -677,8 +679,27 @@ class Handler(BaseHTTPRequestHandler):
                 long = p.startswith(("/web/vendor/", "/web/assets/")) or p.endswith(".png")
                 return self.static(os.path.join(WEB, p[5:]), cache=long)
             if p.startswith("/kaart/"):
-                f = map_file(p[7:].split("/")[0].replace(".pmtiles", ""))
-                return self.ranged(f) if f else self.send(404, "geen kaartbestand")
+                layer = p[7:].split("/")[0].replace(".pmtiles", "")
+                f = map_file(layer)
+                if f:
+                    return self.ranged(f)
+                if layer == "world" and STATE.get("online") and extra.preview_url():
+                    return extra.proxy_range(self, extra.preview_url())
+                return self.send(404, "geen kaartbestand")
+            if p == "/api/fs/list":
+                return self.json(extra.fs_list(q("path")))
+            if p == "/api/fs/read":
+                return self.json(extra.fs_read(q("path")))
+            if p == "/api/fs/raw":
+                full, _ = extra.safe(q("path"))
+                return self.ranged(full, mimetypes.guess_type(full)[0])
+            if p == "/api/route":
+                try:
+                    return self.json(extra.route(q("from"), q("to"), q("mode", "car")))
+                except Exception as e:
+                    return self.json({"error": str(e)})
+            if p == "/api/fact":
+                return self.json(extra.fact())
             if p == "/api/status":
                 return self.api_status()
             if p == "/api/library":
@@ -747,6 +768,19 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json(features.remove(self.body_json().get("id")))
             if p == "/api/ai/use":
                 return self.json(features.use_model(self.body_json().get("model")))
+            if p == "/api/fs/write":
+                b = self.body_json()
+                return self.json(extra.fs_write(b["path"], b["content"]))
+            if p == "/api/fs/mkdir":
+                return self.json(extra.fs_mkdir(self.body_json()["path"]))
+            if p == "/api/fs/rename":
+                b = self.body_json()
+                return self.json(extra.fs_rename(b["path"], b["name"]))
+            if p == "/api/fs/delete":
+                return self.json(extra.fs_delete(self.body_json()["path"]))
+            if p == "/api/fs/upload":
+                qs = parse_qs(urlparse(self.path).query)
+                return self.json(extra.fs_upload(qs.get("path", [""])[0], qs.get("name", [""])[0], self.rfile, int(self.headers.get("Content-Length") or 0)))
             if p == "/api/restart":
                 self.json({"ok": True})
                 threading.Thread(target=lambda: (time.sleep(0.4), stop_services(), os._exit(3)), daemon=True).start()
@@ -771,7 +805,7 @@ class Handler(BaseHTTPRequestHandler):
         with open(full, "rb") as f:
             self.send(200, f.read(), MIME.get(ext, "application/octet-stream"), cache=cache)
 
-    def ranged(self, path):
+    def ranged(self, path, ctype=None):
         size = os.path.getsize(path)
         rng = self.headers.get("Range")
         start, end = 0, size - 1
@@ -792,7 +826,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
         length = end - start + 1
         self.send_response(206 if rng else 200)
-        self.send_header("Content-Type", "application/octet-stream")
+        self.send_header("Content-Type", ctype or "application/octet-stream")
         self.send_header("Accept-Ranges", "bytes")
         self.send_header("Content-Length", str(length))
         self.send_header("Cache-Control", "public, max-age=3600")
@@ -850,6 +884,8 @@ class Handler(BaseHTTPRequestHandler):
         for layer in MAP_LAYERS:
             f = map_file(layer)
             maps[layer] = {"present": bool(f), "size": os.path.getsize(f) if f else 0}
+        if not maps["world"]["present"] and STATE.get("online"):
+            maps["world"]["preview"] = True
         lib_size = sum(b.size for b in BOOKS.values())
         self.json({
             "version": VERSION, "online": STATE["online"], "disk": disk, "lan_url": STATE.get("lan_url"),
@@ -859,7 +895,7 @@ class Handler(BaseHTTPRequestHandler):
                         "articles": sum(b.archive.article_count for b in BOOKS.values()),
                         "zim": HAVE_ZIM},
             "maps": maps,
-            "geo": STATE["geo"],
+            "geo": STATE["geo"], "route": {"state": extra.ROUTE["state"], "region": extra.ROUTE.get("region")},
             "ai": {"state": STATE["ai"], "model": CFG["ai_model"], "models": ai_models() if STATE["ai"] == "aan" else []},
             "updates": len(STATE["updates"]),
         })
@@ -1009,6 +1045,7 @@ def lan_ip():
 
 def main():
     features.init(sys.modules[__name__])
+    extra.init(sys.modules[__name__])
     ap = argparse.ArgumentParser(description="PROJECT NOMAD")
     ap.add_argument("--port", type=int, default=CFG["port"])
     ap.add_argument("--local", action="store_true", help="alleen op deze pc (niet op je netwerk)")
@@ -1023,6 +1060,7 @@ def main():
     if not a.no_services:
         threading.Thread(target=start_ollama, daemon=True).start()
         threading.Thread(target=start_photon, daemon=True).start()
+        threading.Thread(target=extra.start_route, daemon=True).start()
     threading.Thread(target=update_loop, daemon=True).start()
     threading.Thread(target=app_update_loop, daemon=True).start()
     threading.Thread(target=watch_loop, daemon=True).start()

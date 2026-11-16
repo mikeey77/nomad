@@ -84,7 +84,7 @@ def set_autostart(on):
 
 USER_FILE = None
 USER_LOCK = threading.Lock()
-DEFAULT_USER = {"favorites": [], "notes": {}, "pins": [], "checklist": [
+DEFAULT_USER = {"favorites": [], "notes": {}, "pins": [], "chats": [], "saved": [], "checklist": [
     {"t": t, "done": False} for t in [
         "Water (3 L per person per day, 3 days)", "Non-perishable food for 3 days", "First aid kit",
         "Flashlight + spare batteries", "Power bank (charged)", "Battery / crank radio", "Cash",
@@ -109,7 +109,7 @@ def load_user():
 def save_user(patch):
     with USER_LOCK:
         u = load_user()
-        for k in ("favorites", "notes", "pins", "checklist"):
+        for k in ("favorites", "notes", "pins", "checklist", "chats", "saved"):
             if k in patch:
                 u[k] = patch[k]
         N.save_json(user_file(), u)
@@ -297,6 +297,8 @@ def extras():
                 "url": "https://download1.graphhopper.com/public/photon-db-planet-1.0-latest.tar.bz2",
                 "installed": os.path.isdir(os.path.join(N.GEO_DIR, "photon_data")),
                 "target": os.path.join(N.DL_DIR, "photon-db-planet-1.0-latest.tar.bz2")})
+    import extra
+    out += extra.route_items()
     have = set(N.ai_models()) if N.STATE.get("ai") == "aan" else set()
     for mid, title, summ, gb in AI_MODELS:
         out.append({"id": "ai:" + mid, "kind": "ai", "cat": "ai", "title": title, "summary": summ, "file": mid,
@@ -378,6 +380,15 @@ def _worker():
                         except OSError:
                             pass
                     N.scan_library()
+                elif kind == "route":
+                    import extra
+                    extra.ensure_jar(job)
+                    job["msg"] = "building route network (first time: 10-60 min)…"
+                    port = N.CFG.get("route_port", 8989)
+                    if N.port_open(port) and extra.ROUTE.get("proc"):
+                        extra.ROUTE["proc"].terminate()
+                        time.sleep(3)
+                    threading.Thread(target=extra.start_route, daemon=True).start()
                 elif kind == "geo":
                     job["msg"] = "unpacking… (can take an hour)"
                     subprocess.run(["tar", "-xjf", item["target"], "-C", N.GEO_DIR], check=True)
@@ -514,6 +525,9 @@ BUNDLES = [
     {"id": "navigation", "icon": "map", "title": "World Navigation",
      "desc": "World map, worldwide address search and 3D elevation.",
      "items": ["map:world", "geo:photon", "torrent:terrain"]},
+    {"id": "routes_nl", "icon": "compass", "title": "Route Planning Benelux",
+     "desc": "Turn-by-turn car, bike and walking directions for the Netherlands, Belgium and Luxembourg.",
+     "items": ["route:netherlands"]},
     {"id": "ai", "icon": "cpu", "title": "AI Brains",
      "desc": "Two local AI models: a fast default and a smarter multilingual one (speaks Dutch well).",
      "items": ["ai:llama3.2:3b", "ai:qwen3:4b"]},
@@ -528,7 +542,7 @@ def bundles():
     for b in BUNDLES:
         items = []
         for p in b["items"]:
-            if ":" in p and p.split(":")[0] in ("map", "geo", "torrent", "ai"):
+            if ":" in p and p.split(":")[0] in ("map", "geo", "torrent", "ai", "route"):
                 e = ext.get(p)
                 if e:
                     items.append({"id": p, "title": e["title"], "size": e["size"], "installed": bool(e["installed"]), "kind": e["kind"]})
