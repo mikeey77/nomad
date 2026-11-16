@@ -67,6 +67,8 @@ Files you copy in by hand are detected automatically.</td>
 
 ### And the small stuff
 - 📱 **Phone & iPad** — scan the QR code on the dashboard, add NOMAD to your home screen, use it over Wi-Fi.
+- 📴 **NOMAD Mobile, no PC needed** — `NOMAD-mobile.html` is one self-contained file: open it on your phone, pick your `.zim` and `world.pmtiles` files, and read, search and browse the map straight from the SSD. Also installable from [mikeey77.github.io/nomad/mobile](https://mikeey77.github.io/nomad/mobile/).
+- ⚡ **Fast AI** — searches all collections in parallel with live progress, keeps the model warm, and has a **Think** mode for harder questions.
 - 🔄 **Self-updating** — the app and NOMAD.exe update themselves from GitHub; a banner offers a one-click restart.
 - 🌍 **English & Nederlands**, four accent colors, dark & light theme, adjustable text size.
 - ✨ Boot sequence, rotating globe, a campfire in the survival kit, the occasional shooting star… and maybe something hidden if you know the right code.
@@ -101,15 +103,15 @@ Motorways are orange, main roads yellow, railways purple, water blue and parks &
 
 | Content | Size | Folder |
 |---|---:|---|
-| Wikipedia (English, with images) | ~119 GB | `data\bibliotheek` |
-| World map (OpenStreetMap) | ~120 GB | `data\kaart\basis\world.pmtiles` |
-| Elevation / 3D terrain | ~91 GB | `data\kaart\hoogte\terrain.pmtiles` |
-| Worldwide address search | ~95 GB | `data\zoeken\photon_data` |
-| Survival Essentials bundle | ~9 GB | `data\bibliotheek` |
-| Project Gutenberg (70k books) | ~206 GB | `data\bibliotheek` |
-| Khan Academy (video) | ~168 GB | `data\bibliotheek` |
+| Wikipedia (English, with images) | ~119 GB | `data\library` |
+| World map (OpenStreetMap) | ~120 GB | `data\maps\world\world.pmtiles` |
+| Elevation / 3D terrain | ~91 GB | `data\maps\terrain\terrain.pmtiles` |
+| Worldwide address search | ~95 GB | `data\search\photon_data` |
+| Survival Essentials bundle | ~9 GB | `data\library` |
+| Project Gutenberg (70k books) | ~206 GB | `data\library` |
+| Khan Academy (video) | ~168 GB | `data\library` |
 | Route planning, Benelux | ~3 GB | `data\route` |
-| AI models | 1–5 GB each | `ai\modellen` |
+| AI models | 1–5 GB each | `ai\models` |
 
 A practical "everything important" setup is roughly **450–600 GB**, leaving plenty of room on 2 TB for books, video and more.
 
@@ -118,11 +120,11 @@ NOMAD\
 ├─ NOMAD.exe            start here
 ├─ app\                 the application (this repo, self-updating)
 ├─ data\
-│  ├─ bibliotheek\      .zim collections (Wikipedia, books, guides…)
-│  ├─ kaart\            world.pmtiles · terrain.pmtiles · satellite.pmtiles
-│  ├─ zoeken\           address search database
+│  ├─ library\          .zim collections (Wikipedia, books, guides…)
+│  ├─ maps\             world.pmtiles · terrain.pmtiles · satellite.pmtiles
+│  ├─ search\           address search database
 │  └─ route\            route planning data
-├─ ai\modellen\         local AI models
+├─ ai\models\           local AI models
 ├─ tools\               portable Python, Ollama, Java, Photon, GraphHopper
 └─ downloads\           partial downloads, logs, old versions
 ```

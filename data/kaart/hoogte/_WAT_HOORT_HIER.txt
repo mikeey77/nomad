@@ -1,1 +1,0 @@
-Hier komt de hoogtekaart (JAXA Terrarium z0-11, ~91 GB, via torrent). Hernoem het .pmtiles-bestand naar terrain.pmtiles.

@@ -539,3 +539,16 @@ a.btn{text-decoration:none}
 .tract .pri{margin-left:auto}
 #trCount{margin-left:auto}
 @media (max-width:900px){.trgrid{grid-template-columns:1fr}}
+
+/* v0.11 — AI progress + think mode */
+.aistat{display:flex;align-items:center;gap:10px;color:var(--dim);font-family:var(--mono);font-size:12.5px;letter-spacing:.02em;white-space:normal}
+.aisteps{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;white-space:normal}
+.aisteps span{font-size:11.5px;font-family:var(--mono);color:var(--acc);border:1px solid var(--line2);border-radius:20px;padding:2px 9px;animation:fadeUp .25s both}
+.spin{width:12px;height:12px;border-radius:50%;border:2px solid rgba(var(--a),.25);border-top-color:var(--acc);animation:spin .8s linear infinite;flex:none;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+details.think{margin:0 0 10px;border-left:2px solid var(--line2);padding:2px 0 2px 12px;white-space:normal}
+details.think summary{cursor:pointer;color:var(--dim);font-family:var(--mono);font-size:12px;display:flex;align-items:center;gap:8px;list-style:none}
+details.think summary::-webkit-details-marker{display:none}
+details.think>div{white-space:pre-wrap;color:var(--dim);font-size:13.5px;line-height:1.55;margin-top:6px;max-height:260px;overflow:auto}
+.ameta{margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--dim);opacity:.7;white-space:normal}

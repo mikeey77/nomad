@@ -128,7 +128,7 @@ def cleanup_items():
         except OSError:
             pass
 
-    for f in glob.glob(os.path.join(dl, "oud", "*")):
+    for f in glob.glob(os.path.join(dl, "old", "*")):
         add(f, "old")
     for f in glob.glob(os.path.join(dl, "*.part")):
         add(f, "partial")
@@ -140,7 +140,7 @@ def cleanup_items():
             add(f, "archive")
     # dubbele .zim (oudere datum van dezelfde collectie)
     seen = {}
-    for f in sorted(glob.glob(os.path.join(N.LIB_DIR, "*.zim"))):
+    for f in N.lib_zims():
         m = re.match(r"(.+)_(\d{4}-\d{2})\.zim$", os.path.basename(f))
         if m:
             seen.setdefault(m.group(1), []).append(f)
@@ -285,9 +285,9 @@ def extras():
     out.append({"id": "map:world", "kind": "map", "cat": "maps", "title": "World map", "summary":
                 "All streets, buildings and place names on Earth (OpenStreetMap via Protomaps).",
                 "file": "world.pmtiles", "date": d or "", "size": size, "url": url,
-                "installed": bool(N.map_file("world")), "target": os.path.join(N.MAP_DIR, "basis", "world.pmtiles")})
+                "installed": bool(N.map_file("world")), "target": os.path.join(N.MAP_DIR, "world", "world.pmtiles")})
     out.append({"id": "torrent:terrain", "kind": "torrent", "cat": "maps", "title": "Elevation & 3D terrain",
-                "summary": "JAXA AW3D30 terrain (zoom 0-11). Only available as torrent: open it in qBittorrent, save to data\\kaart\\hoogte and rename to terrain.pmtiles.",
+                "summary": "JAXA AW3D30 terrain (zoom 0-11). Only available as torrent: open it in qBittorrent, save to data\\maps\\terrain and rename to terrain.pmtiles.",
                 "file": "terrain.pmtiles", "date": "2025", "size": int(90.9 * (1 << 30)),
                 "url": "https://techidiots.net/downloads/open-base-map-torrents/pmtiles/jaxa_terrarium0-11/JAXA_AW3D30_2025_Terrarium_z0-Z11_cubic_webp_pmtiles.torrent",
                 "installed": bool(N.map_file("terrain"))})
@@ -379,7 +379,7 @@ def _worker():
                     import gc
                     gc.collect()
                     for path, file in old:  # oude versie opzij zetten
-                        oud = os.path.join(N.DL_DIR, "oud")
+                        oud = os.path.join(N.DL_DIR, "old")
                         os.makedirs(oud, exist_ok=True)
                         try:
                             os.replace(path, os.path.join(oud, file))

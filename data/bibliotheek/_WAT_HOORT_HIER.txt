@@ -1,1 +1,0 @@
-Hier komen alle .zim-bestanden (Kiwix). Bijv. wikipedia_en_all_maxi_YYYY-MM.zim, gutenberg_en_all_..., ifixit_en_all_..., wikibooks..., libretexts... NOMAD vindt ze hier automatisch.

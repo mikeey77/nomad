@@ -1,1 +1,0 @@
-Hier komt de wereldkaart van Protomaps: 1 .pmtiles-bestand (~115-120 GB), hernoem naar world.pmtiles.

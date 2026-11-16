@@ -1,1 +1,0 @@
-Hier komen de offline programma's: portable Python, Ollama, Java (voor adres zoeken), aria2 (downloader). Wordt door het setupscript gevuld.

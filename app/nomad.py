@@ -2,7 +2,7 @@
 PROJECT NOMAD — persoonlijke offline kennis- en wereldserver.
 
 Alles staat op de SSD:  NOMAD\\app (deze code), NOMAD\\data (inhoud),
-NOMAD\\tools (python, ollama, java, photon), NOMAD\\ai (modellen).
+NOMAD\\tools (python, ollama, java, photon), NOMAD\\ai (models).
 
 Start via NOMAD.exe. Opties:
     --lan          ook bereikbaar op je netwerk (iPad/telefoon)
@@ -29,18 +29,142 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.10.0"
+VERSION = "0.11.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
 WEB = os.path.join(APP, "web")
 DATA = os.path.join(ROOT, "data")
-LIB_DIR = os.path.join(DATA, "bibliotheek")
-MAP_DIR = os.path.join(DATA, "kaart")
-GEO_DIR = os.path.join(DATA, "zoeken")
 TOOLS = os.path.join(ROOT, "tools")
-AI_DIR = os.path.join(ROOT, "ai", "modellen")
 DL_DIR = os.path.join(ROOT, "downloads")
+
+# ── v0.11: English folder names. Old (Dutch) folders are renamed on start; if a folder
+#    is in use (e.g. a browser is still downloading into it) it is retried next start
+#    and the old folder keeps working in the meantime.
+LEGACY_DIRS = [  # (old, new) relative to ROOT — order matters (parents first)
+    ("data/kaart", "data/maps"),
+    ("data/maps/basis", "data/maps/world"),
+    ("data/maps/hoogte", "data/maps/terrain"),
+    ("data/maps/satelliet", "data/maps/satellite"),
+    ("data/bibliotheek", "data/library"),
+    ("data/zoeken", "data/search"),
+    ("ai/modellen", "ai/models"),
+    ("downloads/oud", "downloads/old"),
+]
+README_TEXT = {
+    "data/library": "Put .zim files here (Wikipedia, Gutenberg, iFixit, Stack Exchange...). NOMAD picks them up within ~30 seconds.",
+    "data/maps/world": "The Protomaps world map goes here: one .pmtiles file (~120 GB), named world.pmtiles.",
+    "data/maps/terrain": "The elevation map goes here (JAXA Terrarium z0-11, ~91 GB, torrent). Rename the .pmtiles file to terrain.pmtiles.",
+    "data/maps/satellite": "The satellite layer goes here (satellite.pmtiles).",
+    "data/search": "Address search database (Photon). Filled by setup from downloads\\photon-db-*.tar.bz2.",
+    "ai/models": "The local AI (Ollama) keeps its models here. Filled by setup / Downloads > AI models.",
+    "tools": "Offline programs: portable Python, Ollama, Java, Photon, GraphHopper. Filled by setup.",
+    "downloads": "Temporary downloads (.part files resume automatically). Safe to empty when nothing is downloading.",
+}
+
+
+def _merge_move(src, dst):
+    """Move src into dst. Returns True when src is gone afterwards."""
+    if not os.path.exists(dst):
+        try:
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            os.rename(src, dst)
+            return True
+        except OSError:
+            return False
+    ok = True
+    for name in os.listdir(src):
+        a, b = os.path.join(src, name), os.path.join(dst, name)
+        if name == "_WAT_HOORT_HIER.txt":
+            try:
+                os.remove(a)
+            except OSError:
+                ok = False
+            continue
+        if os.path.isdir(a) and os.path.isdir(b):
+            ok = _merge_move(a, b) and ok
+        elif not os.path.exists(b):
+            try:
+                os.rename(a, b)
+            except OSError:
+                ok = False
+        else:
+            ok = False
+    if ok:
+        try:
+            os.rmdir(src)
+        except OSError:
+            ok = False
+    return ok
+
+
+def _busy(port):
+    try:
+        with socket.create_connection(("127.0.0.1", port), timeout=0.3):
+            return True
+    except OSError:
+        return False
+
+
+def migrate_folders():
+    for old, new in LEGACY_DIRS:
+        a, b = os.path.join(ROOT, *old.split("/")), os.path.join(ROOT, *new.split("/"))
+        # never move folders from under a running AI / address server; retried next start
+        if (old == "ai/modellen" and _busy(11434)) or (old == "data/zoeken" and _busy(2322)):
+            continue
+        if os.path.isdir(a):
+            if not _merge_move(a, b):
+                print(f"! Could not rename {old} -> {new} yet (in use?). Will retry next start.")
+    for rel, text in README_TEXT.items():
+        d = os.path.join(ROOT, *rel.split("/"))
+        if os.path.isdir(d):
+            for junk in ("_WAT_HOORT_HIER.txt",):
+                try:
+                    os.remove(os.path.join(d, junk))
+                except OSError:
+                    pass
+            f = os.path.join(d, "README.txt")
+            if not os.path.exists(f):
+                try:
+                    with open(f, "w", encoding="utf-8") as fh:
+                        fh.write(text + "\n")
+                except OSError:
+                    pass
+
+
+def legacy(new_rel):
+    """Old Dutch folder for an English one, if it still exists (rename failed)."""
+    for old, new in LEGACY_DIRS:
+        if new == new_rel:
+            a = os.path.join(ROOT, *old.split("/"))
+            if os.path.isdir(a):
+                return a
+            # parent may still have the old name (data/kaart/basis)
+            for o2, n2 in LEGACY_DIRS:
+                if old.startswith(n2 + "/"):
+                    a2 = os.path.join(ROOT, *(o2 + old[len(n2):]).split("/"))
+                    if os.path.isdir(a2):
+                        return a2
+    return None
+
+
+try:
+    migrate_folders()
+except Exception as _e:  # never block startup
+    print("! folder migration:", _e)
+
+LIB_DIR = os.path.join(DATA, "library")
+MAP_DIR = os.path.join(DATA, "maps")
+GEO_DIR = legacy("data/search") or os.path.join(DATA, "search")
+AI_DIR = legacy("ai/models") or os.path.join(ROOT, "ai", "models")
+LIB_DIRS = [d for d in (LIB_DIR, legacy("data/library")) if d]
+
+
+def lib_zims():
+    out = []
+    for d in LIB_DIRS:
+        out += glob.glob(os.path.join(d, "*.zim"))
+    return sorted(out)
 CONFIG_FILE = os.path.join(APP, "config.json")
 
 DEFAULT_CONFIG = {
@@ -162,8 +286,8 @@ BOOKS_LOCK = threading.Lock()
 
 def scan_library():
     found = {}
-    if HAVE_ZIM and os.path.isdir(LIB_DIR):
-        for path in sorted(glob.glob(os.path.join(LIB_DIR, "*.zim"))):
+    if HAVE_ZIM:
+        for path in lib_zims():
             try:
                 b = Book(path)
                 old = found.get(b.id)
@@ -249,24 +373,153 @@ def plain_text(book, path, limit=2200):
     return text[:limit]
 
 
+
+# ───────────────────────────── snelle AI (v0.11) ─────────────────────────────
+THINK_MODELS = ("qwen3", "deepseek-r1", "gpt-oss", "magistral", "phi4-reasoning", "qwq", "cogito")
+STOP = set("""a an the is are was were be been of to in on at for and or but with by from as it its this that these those what which who whom
+how why when where do does did can could should would will shall may might i you he she we they me my your our their there here
+about into than then so if not no yes please tell explain give show make use also just very much many more most some any all
+de het een en of in op aan voor met van te is zijn was waren wordt worden hoe wat wie waarom wanneer waar welk welke dat die dit deze
+er hier daar ik je jij u hij zij we wij ze mijn jouw ons onze hun kan kun kunt moet mag wil zou zal ook nog maar dan als niet geen wel
+heel veel meer meest over naar bij uit om door tot""".split())
+_RAG_CACHE = {}
+
+
+def supports_think(model):
+    return any(k in (model or "") for k in THINK_MODELS)
+
+
+def keywords(q, n=6):
+    words = re.findall(r"[\w'-]{2,}", q.lower())
+    out = [w for w in words if w not in STOP and not w.isdigit() or (w.isdigit() and len(w) == 4)]
+    seen, res = set(), []
+    for w in out:
+        if w not in seen:
+            seen.add(w)
+            res.append(w)
+    return res[:n] or words[:n]
+
+
+def _search_book(bk, kw, per):
+    key = (bk.id, " ".join(kw), per)
+    if key in _RAG_CACHE:
+        return _RAG_CACHE[key]
+    hits = []
+    try:
+        _, hits = fulltext(bk, " ".join(kw), 0, per)
+        if not hits and kw:
+            hits = suggest(bk, " ".join(kw[:3]), per)
+    except Exception:
+        hits = []
+    hits = hits[:per]
+    if len(_RAG_CACHE) > 300:
+        _RAG_CACHE.clear()
+    _RAG_CACHE[key] = hits
+    return hits
+
+
+def rag_search(question, emit, deep=False):
+    """Search all books in parallel with a time budget; report progress via emit()."""
+    from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
+    kw = keywords(question)
+    budget = 12.0 if deep else 4.0
+    per, limit, chars = (3, 8, 1800) if deep else (2, 5, 1300)
+    books = sorted(BOOKS.values(), key=book_order)
+    emit({"status": "search", "kw": kw, "books": len(books)})
+    hits, t0 = [], time.time()
+    pool = ThreadPoolExecutor(max_workers=min(8, max(1, len(books))))
+    futs = {pool.submit(_search_book, bk, kw, per): bk for bk in books}
+    pending = set(futs)
+    while pending and time.time() - t0 < budget:
+        done, pending = wait(pending, timeout=max(0.05, budget - (time.time() - t0)), return_when=FIRST_COMPLETED)
+        for f in done:
+            bk = futs[f]
+            h = f.result() or []
+            hits += h
+            emit({"status": "book", "book": bk.title, "n": len(h)})
+    if pending:
+        emit({"status": "timeout", "skipped": [futs[f].title for f in pending]})
+    pool.shutdown(wait=False, cancel_futures=True)
+    order = {bk.id: i for i, bk in enumerate(books)}
+    hits.sort(key=lambda h: order.get(h["book"], 99))
+    sources, ctx = [], []
+    for h in hits[:limit]:
+        bk = BOOKS.get(h["book"])
+        if not bk:
+            continue
+        try:
+            txt = plain_text(bk, h["path"], chars)
+        except Exception:
+            txt = ""
+        if txt:
+            src = {"book": bk.id, "path": h["path"], "title": h["title"], "bookTitle": bk.title}
+            sources.append(src)
+            ctx.append(f"### {h['title']} ({bk.title})\n{txt}")
+            emit({"source": src})
+    try:
+        notes = features.load_user().get("notes", {})
+        for key, note in notes.items():
+            if any(w in note.lower() for w in kw if len(w) > 3):
+                ctx.append(f"### My note on {key}\n{note[:600]}")
+    except Exception:
+        pass
+    emit({"status": "found", "n": len(sources), "ms": int((time.time() - t0) * 1000)})
+    return sources, ctx
+
+
+def copy_mobile():
+    """Keep NOMAD-mobile.html (phone reader, no server needed) next to NOMAD.exe up to date."""
+    src = os.path.join(APP, "mobile", "NOMAD-mobile.html")
+    dst = os.path.join(ROOT, "NOMAD-mobile.html")
+    try:
+        if os.path.isfile(src) and (not os.path.isfile(dst) or os.path.getsize(dst) != os.path.getsize(src)
+                                    or open(dst, "rb").read() != open(src, "rb").read()):
+            shutil.copyfile(src, dst)
+    except OSError:
+        pass
+
+
+def warm_model():
+    """Load the AI model into memory in the background so the first answer starts fast."""
+    port = CFG["ollama_port"]
+    for _ in range(60):
+        if port_open(port):
+            break
+        time.sleep(1)
+    else:
+        return
+    try:
+        payload = {"model": CFG["ai_model"], "prompt": "", "keep_alive": "30m"}
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/api/generate", data=json.dumps(payload).encode(),
+                                     headers={"Content-Type": "application/json"})
+        urllib.request.urlopen(req, timeout=300).read()
+        STATE["ai_warm"] = True
+    except Exception:
+        pass
+
 # ───────────────────────────── kaarten ─────────────────────────────
 
 MAP_LAYERS = {
-    "world": os.path.join(MAP_DIR, "basis"),
-    "terrain": os.path.join(MAP_DIR, "hoogte"),
-    "satellite": os.path.join(MAP_DIR, "satelliet"),
+    "world": os.path.join(MAP_DIR, "world"),
+    "terrain": os.path.join(MAP_DIR, "terrain"),
+    "satellite": os.path.join(MAP_DIR, "satellite"),
 }
 
 
 def map_file(layer):
     d = MAP_LAYERS.get(layer)
-    if not d or not os.path.isdir(d):
+    if not d:
         return None
-    pref = os.path.join(d, layer + ".pmtiles")
-    if os.path.isfile(pref):
-        return pref
-    files = sorted(glob.glob(os.path.join(d, "*.pmtiles")), key=os.path.getsize, reverse=True)
-    return files[0] if files else None
+    for dd in (d, legacy("data/maps/" + layer)):
+        if not dd or not os.path.isdir(dd):
+            continue
+        pref = os.path.join(dd, layer + ".pmtiles")
+        if os.path.isfile(pref):
+            return pref
+        files = sorted(glob.glob(os.path.join(dd, "*.pmtiles")), key=os.path.getsize, reverse=True)
+        if files:
+            return files[0]
+    return None
 
 
 # ───────────────────────────── diensten (AI, adres zoeken) ─────────────────────────────
@@ -475,7 +728,7 @@ def app_update_loop():
 
 def data_signature():
     sig = []
-    for f in glob.glob(os.path.join(LIB_DIR, "*.zim")):
+    for f in lib_zims():
         try:
             st = os.stat(f)
             sig.append((os.path.basename(f), st.st_size, int(st.st_mtime)))
@@ -586,12 +839,12 @@ def run_update(uid):
                 old = BOOKS.get(uid[4:])
                 scan_library()
                 if old and os.path.exists(old.path) and old.path != target:
-                    oud = os.path.join(DL_DIR, "oud")
+                    oud = os.path.join(DL_DIR, "old")
                     os.makedirs(oud, exist_ok=True)
                     try:
                         old.archive = None
                         shutil.move(old.path, os.path.join(oud, old.file))
-                        job["msg"] = f"Oude versie verplaatst naar downloads\\oud\\{old.file}"
+                        job["msg"] = f"Oude versie verplaatst naar downloads\\old\\{old.file}"
                     except Exception:
                         job["msg"] = "Oude versie staat nog in de bibliotheek; je kunt hem verwijderen."
             elif upd["type"] == "app":
@@ -675,6 +928,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, html)
             if p == "/manifest.webmanifest":
                 return self.static(os.path.join(WEB, "manifest.webmanifest"))
+            if p in ("/mobile", "/NOMAD-mobile.html"):
+                with open(os.path.join(APP, "mobile", "NOMAD-mobile.html"), "rb") as f:
+                    return self.send(200, f.read(), extra={"Content-Disposition": 'attachment; filename="NOMAD-mobile.html"'})
             if p.startswith("/web/"):
                 long = p.startswith(("/web/vendor/", "/web/assets/")) or p.endswith(".png")
                 return self.static(os.path.join(WEB, p[5:]), cache=long)
@@ -901,7 +1157,7 @@ class Handler(BaseHTTPRequestHandler):
                         "zim": HAVE_ZIM},
             "maps": maps,
             "stt": bool(extra.whisper_installed()), "geo": STATE["geo"], "route": {"state": extra.ROUTE["state"], "region": extra.ROUTE.get("region")},
-            "ai": {"state": STATE["ai"], "model": CFG["ai_model"], "models": ai_models() if STATE["ai"] == "aan" else []},
+            "ai": {"state": STATE["ai"], "warm": STATE.get("ai_warm", False), "think": supports_think(CFG["ai_model"]), "model": CFG["ai_model"], "models": ai_models() if STATE["ai"] == "aan" else []},
             "updates": len(STATE["updates"]),
         })
 
@@ -969,72 +1225,69 @@ class Handler(BaseHTTPRequestHandler):
     def api_chat(self, body):
         port = CFG["ollama_port"]
         if not port_open(port):
-            return self.json({"error": "AI staat uit (" + STATE["ai"] + "). Start de setup via NOMAD.exe (tray → Run setup)."}, 503)
+            return self.json({"error": "AI is off (" + STATE["ai"] + "). Run setup via NOMAD.exe (tray → Run setup)."}, 503)
         msgs = body.get("messages", [])[-12:]
-        sources = []
-        system = ("Je bent NOMAD, een behulpzame offline assistent. Antwoord in de taal van de gebruiker, "
-                  "kort en duidelijk.")
-        if body.get("wiki") and BOOKS and msgs:
-            question = msgs[-1].get("content", "")
-            hits = []
-            for bk in sorted(BOOKS.values(), key=book_order):
-                try:
-                    _, h = fulltext(bk, question, 0, 2)
-                    if not h:
-                        h = suggest(bk, question, 1)
-                    hits += h[:2]
-                except Exception:
-                    pass
-            ctx = []
-            for h in hits[:5]:
-                bk = BOOKS[h["book"]]
-                txt = plain_text(bk, h["path"], 1600)
-                if txt:
-                    sources.append({"book": bk.id, "path": h["path"], "title": h["title"], "bookTitle": bk.title})
-                    ctx.append(f"### {h['title']} ({bk.title})\n{txt}")
-            try:
-                notes = features.load_user().get("notes", {})
-                words = [w.lower() for w in re.findall(r"\w{4,}", question)]
-                for key, note in notes.items():
-                    if any(w in note.lower() for w in words):
-                        ctx.append(f"### My note on {key}\n{note[:600]}")
-            except Exception:
-                pass
-            if ctx:
-                system += ("\n\nUse the following excerpts from the user's offline library as your source. "
-                           "Mention which source you used. If the answer is not in them, say so honestly.\n\n" + "\n\n".join(ctx))
-        payload = {"model": body.get("model") or CFG["ai_model"], "stream": True,
-                   "messages": [{"role": "system", "content": system}] + msgs}
-        req = urllib.request.Request(f"http://127.0.0.1:{port}/api/chat", data=json.dumps(payload).encode(),
-                                     headers={"Content-Type": "application/json"})
+        model = body.get("model") or CFG["ai_model"]
+        think = bool(body.get("think"))
+        # headers first: the browser shows progress right away instead of waiting for the search
         self.send_response(200)
         self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
         self.send_header("Connection", "close")
         self.end_headers()
         self.close_connection = True
-        self.wfile.write((json.dumps({"sources": sources}) + "\n").encode())
-        self.wfile.flush()
+
+        def emit(obj):
+            try:
+                self.wfile.write((json.dumps(obj) + "\n").encode())
+                self.wfile.flush()
+            except Exception:
+                pass
+
+        system = ("You are NOMAD, a helpful offline assistant. Answer in the user's language, "
+                  "clearly and to the point.")
+        if think and not supports_think(model):
+            system += " Think step by step before you answer, then give a clear final answer."
+        sources, ctx = [], []
+        if body.get("wiki") and BOOKS and msgs:
+            question = msgs[-1].get("content", "")
+            sources, ctx = rag_search(question, emit, deep=think)
+        if ctx:
+            system += ("\n\nUse the following excerpts from the user's offline library as your source. "
+                       "Mention which source you used. If the answer is not in them, say so honestly.\n\n" + "\n\n".join(ctx))
+        emit({"sources": sources})
+        emit({"status": "answer"})
+        payload = {"model": model, "stream": True, "keep_alive": "30m",
+                   "options": {"num_ctx": 8192 if think else 4096},
+                   "messages": [{"role": "system", "content": system}] + msgs}
+        if supports_think(model):
+            payload["think"] = think
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/api/chat", data=json.dumps(payload).encode(),
+                                     headers={"Content-Type": "application/json"})
         try:
-            with urllib.request.urlopen(req, timeout=600) as r:
+            with urllib.request.urlopen(req, timeout=900) as r:
                 for line in r:
                     try:
                         m = json.loads(line)
                     except Exception:
                         continue
-                    piece = (m.get("message") or {}).get("content", "")
-                    if piece:
-                        self.wfile.write((json.dumps({"t": piece}) + "\n").encode())
-                        self.wfile.flush()
+                    msg = m.get("message") or {}
+                    if msg.get("thinking"):
+                        emit({"th": msg["thinking"]})
+                    if msg.get("content"):
+                        emit({"t": msg["content"]})
                     if m.get("error"):
-                        self.wfile.write((json.dumps({"error": m["error"]}) + "\n").encode())
+                        emit({"error": m["error"]})
+                    if m.get("done"):
+                        tok, dur = m.get("eval_count") or 0, (m.get("eval_duration") or 0) / 1e9
+                        emit({"done": True, "tps": round(tok / dur, 1) if dur else None})
         except urllib.error.HTTPError as e:
             msg = e.read().decode("utf-8", "replace")
             if "not found" in msg:
-                msg = f"Model '{payload['model']}' is nog niet gedownload. Start de setup via NOMAD.exe (tray → Run setup)."
-            self.wfile.write((json.dumps({"error": msg}) + "\n").encode())
+                msg = f"Model '{model}' is not downloaded yet. Get it via Downloads → AI models."
+            emit({"error": msg})
         except Exception as e:
-            self.wfile.write((json.dumps({"error": str(e)}) + "\n").encode())
+            emit({"error": str(e)})
 
 
 def lan_ip():
@@ -1059,11 +1312,16 @@ def main():
     a = ap.parse_args()
 
     print(f"\n  PROJECT NOMAD v{VERSION}\n  {ROOT}\n")
-    for d in (LIB_DIR, MAP_DIR, GEO_DIR, AI_DIR, DL_DIR):
-        os.makedirs(d, exist_ok=True)
+    for d in [LIB_DIR, GEO_DIR, AI_DIR, DL_DIR] + list(MAP_LAYERS.values()):
+        if d == LIB_DIR and len(LIB_DIRS) > 1:
+            continue
+        if not any(d == MAP_LAYERS[k] and legacy("data/maps/" + k) for k in MAP_LAYERS):
+            os.makedirs(d, exist_ok=True)
+    migrate_folders()  # README.txt in fresh folders
+    copy_mobile()
     scan_library()
     if not a.no_services:
-        threading.Thread(target=start_ollama, daemon=True).start()
+        threading.Thread(target=lambda: (start_ollama(), warm_model()), daemon=True).start()
         threading.Thread(target=start_photon, daemon=True).start()
         threading.Thread(target=extra.start_route, daemon=True).start()
     threading.Thread(target=update_loop, daemon=True).start()

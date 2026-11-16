@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#05100b">
+<title>NOMAD Mobile</title>
+<!--MANIFEST-->
+<style>/*MAPLIBRE_CSS*/</style>
+<style>
+:root{--bg:#05100b;--bg2:#0a1912;--card:#0c1d15;--line:#173a29;--line2:#22513a;--acc:#2ecf85;--acc2:#9dffcf;--hi:#e8fff3;--txt:#bfe3cf;--dim:#6f9a85;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+body{background:radial-gradient(120% 60% at 50% -10%,#0d2a1d 0,transparent 60%),var(--bg)}
+button{font:inherit;color:inherit}
+header{position:fixed;top:0;left:0;right:0;z-index:5;padding:calc(var(--sat) + 10px) 14px 10px;display:flex;align-items:center;gap:10px;background:linear-gradient(var(--bg) 70%,transparent)}
+.logo{width:34px;height:34px;border-radius:10px;border:1px solid var(--line2);display:grid;place-items:center;color:var(--acc);font:700 17px var(--mono);box-shadow:0 0 18px rgba(46,207,133,.18) inset}
+.brand{font:600 12px var(--mono);letter-spacing:.32em;color:var(--acc)}
+.brand small{display:block;letter-spacing:.12em;color:var(--dim);font-weight:400;font-size:10.5px}
+.hbtn{margin-left:auto;height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--line2);background:var(--card);font:600 11px var(--mono);letter-spacing:.12em;color:var(--acc)}
+main{position:absolute;inset:0;padding-top:calc(var(--sat) + 58px);padding-bottom:calc(var(--sab) + 64px)}
+.view{position:absolute;inset:calc(var(--sat) + 58px) 0 calc(var(--sab) + 64px);overflow:auto;display:none;-webkit-overflow-scrolling:touch}
+.view.on{display:block}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;padding:6px 8px calc(var(--sab) + 6px);background:rgba(5,16,11,.94);border-top:1px solid var(--line);backdrop-filter:blur(10px)}
+nav button{flex:1;background:none;border:0;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:3px;font:600 10px var(--mono);letter-spacing:.14em;color:var(--dim)}
+nav button svg{width:22px;height:22px}
+nav button.on{color:var(--acc)}
+nav button.on svg{filter:drop-shadow(0 0 6px rgba(46,207,133,.6))}
+svg.i{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.pad{padding:6px 14px 24px}
+.k{font:600 10.5px var(--mono);letter-spacing:.24em;color:var(--dim);margin:18px 2px 8px}
+.search{display:flex;align-items:center;gap:10px;height:46px;border:1px solid var(--line2);background:var(--card);border-radius:14px;padding:0 14px}
+.search input{flex:1;background:none;border:0;outline:0;color:var(--hi);font-size:16px;min-width:0}
+.search svg{width:18px;height:18px;color:var(--dim);flex:none}
+.card{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);background:var(--card);border-radius:14px;margin-bottom:8px;animation:up .25s both}
+.card img,.card .ph{width:40px;height:40px;border-radius:10px;flex:none;background:#0f2a1d;object-fit:cover}
+.card b{display:block;color:var(--hi);font-weight:600;line-height:1.25}
+.card small{color:var(--dim);font:11.5px var(--mono)}
+.card .go{margin-left:auto;color:var(--dim)}
+.hit{display:block;padding:11px 12px;border-bottom:1px solid var(--line);color:var(--hi);text-decoration:none}
+.hit small{display:block;color:var(--dim);font:11px var(--mono)}
+.empty{border:1px dashed var(--line2);border-radius:16px;padding:22px 18px;text-align:center;color:var(--dim);margin-top:10px}
+.empty h3{margin:6px 0;color:var(--hi);font:600 14px var(--mono);letter-spacing:.18em}
+.big{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:54px;border-radius:14px;border:1px solid var(--acc);background:rgba(46,207,133,.12);color:var(--acc2);font:700 13px var(--mono);letter-spacing:.18em;margin-top:14px;box-shadow:0 0 24px rgba(46,207,133,.15)}
+.big svg{width:20px;height:20px}
+.tip{font-size:13px;color:var(--dim);margin-top:14px;line-height:1.55}
+.tip code{font-family:var(--mono);color:var(--txt);font-size:12px}
+#reader{position:fixed;inset:0;z-index:10;background:var(--bg);display:none;flex-direction:column}
+#reader.on{display:flex}
+.rbar{display:flex;align-items:center;gap:8px;padding:calc(var(--sat) + 8px) 10px 8px;border-bottom:1px solid var(--line);background:var(--bg2)}
+.rbar button{width:40px;height:40px;border-radius:12px;border:1px solid var(--line2);background:var(--card);display:grid;place-items:center;color:var(--acc);flex:none}
+.rbar button svg{width:19px;height:19px}
+.rbar .search{flex:1;height:40px;border-radius:12px;min-width:0;padding:0 10px}
+#rhits{position:absolute;left:10px;right:10px;top:calc(var(--sat) + 58px);z-index:2;background:var(--bg2);border:1px solid var(--line2);border-radius:14px;max-height:60vh;overflow:auto;display:none;box-shadow:0 16px 40px rgba(0,0,0,.6)}
+#frame{flex:1;border:0;width:100%;background:#fff}
+#rload{position:absolute;top:calc(var(--sat) + 57px);left:0;height:2px;background:var(--acc);box-shadow:0 0 8px var(--acc);width:0;transition:width .3s}
+#map{position:absolute;inset:0}
+.mapui{position:absolute;left:12px;right:12px;top:10px;z-index:2}
+.fab{position:absolute;right:12px;bottom:48px;z-index:2;width:48px;height:48px;border-radius:14px;border:1px solid var(--line2);background:rgba(12,29,21,.92);display:grid;place-items:center;color:var(--acc)}
+.fab svg{width:22px;height:22px}
+.maplibregl-ctrl-attrib{font-size:10px!important}
+#toast{position:fixed;left:50%;bottom:calc(var(--sab) + 80px);transform:translate(-50%,20px);opacity:0;transition:.25s;background:var(--card);border:1px solid var(--line2);color:var(--hi);padding:10px 16px;border-radius:12px;z-index:20;font-size:13.5px;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line2);background:var(--card);font:600 11px var(--mono);letter-spacing:.1em;color:var(--dim)}
+.seg button.on{color:var(--acc);border-color:var(--acc)}
+.grid{position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(transparent 0,var(--bg) 92%),repeating-linear-gradient(90deg,rgba(46,207,133,.04) 0 1px,transparent 1px 44px),repeating-linear-gradient(0deg,rgba(46,207,133,.04) 0 1px,transparent 1px 44px)}
+@keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.lang{margin-left:6px}
+</style>
+</head>
+<body>
+<div class="grid"></div>
+<header>
+  <div class="logo">N</div>
+  <div class="brand">PROJECT NOMAD<small>MOBILE · OFFLINE</small></div>
+  <button class="hbtn" id="openBtn" data-t="open"></button>
+</header>
+<input type="file" id="files" multiple hidden>
+
+<section class="view on" id="v-lib"><div class="pad">
+  <div class="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="q" data-p="search_all" autocomplete="off"></div>
+  <div id="qhits"></div>
+  <div class="k" data-t="collections"></div>
+  <div id="books"></div>
+</div></section>
+
+<section class="view" id="v-map">
+  <div id="map"></div>
+  <div class="mapui" id="mapEmpty"></div>
+  <button class="fab" id="locBtn" title="My location"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg></button>
+</section>
+
+<section class="view" id="v-set"><div class="pad">
+  <div class="k" data-t="language"></div>
+  <div class="seg" id="langSeg"><button data-v="en">ENGLISH</button><button data-v="nl">NEDERLANDS</button></div>
+  <div class="k" data-t="pages"></div>
+  <div class="seg" id="lookSeg"><button data-v="orig" data-t="look_orig"></button><button data-v="dark" data-t="look_dark"></button></div>
+  <div class="k" data-t="howto"></div>
+  <div class="tip" data-t="howto_body"></div>
+  <div class="k">ABOUT</div>
+  <div class="tip">NOMAD Mobile reads Kiwix <code>.zim</code> files and Protomaps <code>.pmtiles</code> maps straight from your phone or SSD — no server, no internet. Title search only (full-text search needs the NOMAD PC app). Map data © OpenStreetMap contributors.</div>
+</div></section>
+
+<div id="reader">
+  <div class="rbar">
+    <button id="rBack"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <div class="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="rq" autocomplete="off"></div>
+    <button id="rHome"><svg class="i" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button>
+    <button id="rClose"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div id="rload"></div>
+  <div id="rhits"></div>
+  <iframe id="frame" sandbox="allow-same-origin allow-popups"></iframe>
+</div>
+
+<nav>
+  <button class="on" data-v="lib"><svg class="i" viewBox="0 0 24 24"><path d="M4 4h6a2 2 0 012 2v14a2 2 0 00-2-2H4zM20 4h-6a2 2 0 00-2 2v14a2 2 0 012-2h6z"/></svg><span data-t="library"></span></button>
+  <button data-v="map"><svg class="i" viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg><span data-t="map"></span></button>
+  <button data-v="set"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><span data-t="settings"></span></button>
+</nav>
+<div id="toast"></div>
+
+<script>/*FZSTD*/</script>
+<script>/*PMTILES*/</script>
+<script>/*BASEMAPS*/</script>
+<script>/*MAPLIBRE*/</script>
+<script>
+const ASSETS = /*ASSETS*/{};
+</script>
+<script>
+'use strict';
+/* ───────── i18n ───────── */
+const T = {
+  en:{open:'OPEN FILES', search_all:'Search all collections…', collections:'COLLECTIONS', library:'LIBRARY', map:'MAP', settings:'SETTINGS',
+      language:'LANGUAGE', pages:'PAGE LOOK', look_orig:'ORIGINAL', look_dark:'DARK', howto:'HOW TO USE',
+      howto_body:'1. Tap <b>OPEN FILES</b>.<br>2. Pick your <code>.zim</code> files (from <code>NOMAD/data/library</code>) and/or <code>world.pmtiles</code> (from <code>NOMAD/data/maps/world</code>). You can select several at once.<br>3. Read and search offline. Files are not copied — they are read directly, so this works with huge files too.<br><br>Your phone forgets the files when you close the page; just open them again.',
+      empty_t:'NO FILES OPEN', empty:'Tap <b>OPEN FILES</b> and pick .zim (library) or .pmtiles (map) files from your SSD or phone.',
+      nomap_t:'NO MAP OPEN', nomap:'Open <code>world.pmtiles</code> (NOMAD/data/maps/world) with <b>OPEN FILES</b>.',
+      articles:'articles', opened:'Opened {n} file(s)', xz:'This .zim uses old xz compression — download a newer version.', notzim:'Not a .zim or .pmtiles file: {f}',
+      notfound:'Page not found in this file.', nothing:'Nothing found', loc_err:'Location not available here', search_in:'Search in {b}…', external:'Online link (not available offline)'},
+  nl:{open:'BESTANDEN OPENEN', search_all:'Zoek in alle collecties…', collections:'COLLECTIES', library:'BIBLIOTHEEK', map:'KAART', settings:'INSTELLINGEN',
+      language:'TAAL', pages:'WEERGAVE PAGINA’S', look_orig:'ORIGINEEL', look_dark:'DONKER', howto:'ZO WERKT HET',
+      howto_body:'1. Tik op <b>BESTANDEN OPENEN</b>.<br>2. Kies je <code>.zim</code>-bestanden (uit <code>NOMAD/data/library</code>) en/of <code>world.pmtiles</code> (uit <code>NOMAD/data/maps/world</code>). Je kunt er meerdere tegelijk kiezen.<br>3. Lees en zoek offline. Bestanden worden niet gekopieerd maar direct gelezen, dus ook enorme bestanden werken.<br><br>Je telefoon vergeet de bestanden als je de pagina sluit; open ze dan gewoon opnieuw.',
+      empty_t:'GEEN BESTANDEN OPEN', empty:'Tik op <b>BESTANDEN OPENEN</b> en kies .zim- (bibliotheek) of .pmtiles-bestanden (kaart) van je SSD of telefoon.',
+      nomap_t:'GEEN KAART OPEN', nomap:'Open <code>world.pmtiles</code> (NOMAD/data/maps/world) via <b>BESTANDEN OPENEN</b>.',
+      articles:'artikelen', opened:'{n} bestand(en) geopend', xz:'Deze .zim gebruikt oude xz-compressie — download een nieuwere versie.', notzim:'Geen .zim of .pmtiles: {f}',
+      notfound:'Pagina niet gevonden in dit bestand.', nothing:'Niets gevonden', loc_err:'Locatie is hier niet beschikbaar', search_in:'Zoek in {b}…', external:'Online link (offline niet beschikbaar)'}
+};
+const ls = {get(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v) }catch{ return d } }, set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch{} }};
+let LANG = ls.get('nm.lang', (navigator.language || 'en').startsWith('nl') ? 'nl' : 'en'), LOOK = ls.get('nm.look', 'orig');
+const t = (k, v) => { let s = T[LANG][k] ?? T.en[k] ?? k; if(v) for(const [a, b] of Object.entries(v)) s = s.replace('{' + a + '}', b); return s };
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function i18n(){
+  $$('[data-t]').forEach(e => e.innerHTML = t(e.dataset.t));
+  $$('[data-p]').forEach(e => e.placeholder = t(e.dataset.p));
+  $$('#langSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === LANG));
+  $$('#lookSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === LOOK));
+  renderBooks(); renderMapEmpty();
+}
+function toast(m){ const e = $('#toast'); e.textContent = m; e.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => e.classList.remove('on'), 2600) }
+const fmtSize = b => b > 1e9 ? (b / 1e9).toFixed(1) + ' GB' : b > 1e6 ? (b / 1e6).toFixed(0) + ' MB' : Math.ceil(b / 1e3) + ' KB';
+
+/* ───────── ZIM reader (Kiwix format, zstd) ───────── */
+const td = new TextDecoder();
+const u64 = (dv, o) => dv.getUint32(o, true) + dv.getUint32(o + 4, true) * 4294967296;
+class Zim {
+  constructor(file){ this.f = file; this.dc = new Map(); this.cc = new Map(); this.bc = new Map() }
+  async buf(off, len){ return new Uint8Array(await this.f.slice(off, off + len).arrayBuffer()) }
+  async dv(off, len){ const b = await this.buf(off, len); return new DataView(b.buffer, b.byteOffset, b.byteLength) }
+  async open(){
+    const h = await this.dv(0, 80);
+    if(h.getUint32(0, true) !== 72173914) throw new Error('notzim');
+    this.major = h.getUint16(4, true); this.minor = h.getUint16(6, true);
+    this.count = h.getUint32(24, true); this.clusters = h.getUint32(28, true);
+    this.pathPtr = u64(h, 32); this.titlePtr = u64(h, 40); this.clusterPtr = u64(h, 48); this.mimePos = u64(h, 56);
+    this.main = h.getUint32(64, true); this.checksum = u64(h, 72);
+    this.newNs = this.major >= 6 && this.minor >= 1;
+    this.cns = this.newNs ? 'C' : 'A';
+    const mb = await this.buf(this.mimePos, Math.max(16, Math.min(8192, this.pathPtr - this.mimePos)));
+    this.mimes = []; let s = 0;
+    for(let i = 0; i < mb.length; i++) if(mb[i] === 0){ if(i === s) break; this.mimes.push(td.decode(mb.subarray(s, i))); s = i + 1 }
+    this.title = (await this.text('M', 'Title').catch(() => '')) || this.f.name.replace(/\.zim$/, '');
+    this.desc = await this.text('M', 'Description').catch(() => '');
+    const ill = await this.find('M', 'Illustration_48x48@1').catch(() => null);
+    if(ill) this.icon = URL.createObjectURL(new Blob([await this.blob(ill)], {type:'image/png'}));
+    this.listing = this.newNs ? await this.find('X', 'listing/titleOrdered/v1').catch(() => null) : null;
+    this.size = this.f.size; return this;
+  }
+  async dirent(i){
+    if(this.dc.has(i)) return this.dc.get(i);
+    const off = u64(await this.dv(this.pathPtr + 8 * i, 8), 0);
+    let len = 512, d;
+    for(;;){
+      const b = await this.buf(off, len), v = new DataView(b.buffer, b.byteOffset, b.byteLength);
+      const mime = v.getUint16(0, true), ns = String.fromCharCode(v.getUint8(3));
+      d = {i, mime, ns};
+      let p;
+      if(mime === 0xffff){ d.redirect = v.getUint32(8, true); p = 12 }
+      else if(mime === 0xfffe || mime === 0xfffd){ p = 8 }
+      else { d.cluster = v.getUint32(8, true); d.blob = v.getUint32(12, true); p = 16 }
+      const z1 = b.indexOf(0, p), z2 = z1 < 0 ? -1 : b.indexOf(0, z1 + 1);
+      if(z2 < 0){ if(len >= 65536) throw new Error('dirent'); len *= 8; continue }
+      d.path = td.decode(b.subarray(p, z1)); d.title = td.decode(b.subarray(z1 + 1, z2)) || d.path;
+      break;
+    }
+    if(this.dc.size > 4000) this.dc.clear();
+    this.dc.set(i, d); return d;
+  }
+  async follow(d){ for(let n = 0; d && d.mime === 0xffff && n < 8; n++) d = await this.dirent(d.redirect); return d }
+  async find(ns, path){
+    let lo = 0, hi = this.count - 1;
+    while(lo <= hi){
+      const mid = (lo + hi) >> 1, d = await this.dirent(mid);
+      const c = d.ns < ns ? -1 : d.ns > ns ? 1 : d.path < path ? -1 : d.path > path ? 1 : 0;
+      if(c === 0) return d;
+      if(c < 0) lo = mid + 1; else hi = mid - 1;
+    }
+    return null;
+  }
+  async cluster(c){
+    if(this.cc.has(c)) return this.cc.get(c);
+    const pv = await this.dv(this.clusterPtr + 8 * c, c + 1 < this.clusters ? 16 : 8);
+    const start = u64(pv, 0), end = c + 1 < this.clusters ? u64(pv, 8) : this.checksum;
+    const info = (await this.buf(start, 1))[0], comp = info & 15, ext = !!(info & 16);
+    const cl = {start, end, comp, ext};
+    if(comp === 5){ cl.data = fzstd.decompress(await this.buf(start + 1, end - start - 1)) }
+    else if(comp === 4 || comp === 2 || comp === 3) throw new Error('xz');
+    if(this.cc.size > 6) this.cc.delete(this.cc.keys().next().value);
+    this.cc.set(c, cl); return cl;
+  }
+  async blob(d){
+    d = await this.follow(d);
+    const cl = await this.cluster(d.cluster), os = cl.ext ? 8 : 4, rd = (v, o) => cl.ext ? u64(v, o) : v.getUint32(o, true);
+    if(cl.data){
+      const v = new DataView(cl.data.buffer, cl.data.byteOffset, cl.data.byteLength);
+      const a = rd(v, d.blob * os), b = rd(v, (d.blob + 1) * os);
+      return cl.data.subarray(a, b);
+    }
+    const v = await this.dv(cl.start + 1 + d.blob * os, 2 * os);
+    const a = rd(v, 0), b = rd(v, os);
+    return this.buf(cl.start + 1 + a, b - a);
+  }
+  async text(ns, path){ const d = await this.find(ns, path); return d ? td.decode(await this.blob(d)) : '' }
+  mime(d){ return this.mimes[d.mime] || 'application/octet-stream' }
+  /* title list: front-article listing (new files) or full title index */
+  async titleAt(k){
+    if(this.listing){
+      if(!this.lidx){ const b = await this.blob(this.listing); this.lidx = new Uint32Array(b.slice().buffer); }
+      return this.dirent(this.lidx[k]);
+    }
+    const v = await this.dv(this.titlePtr + 4 * k, 4); return this.dirent(v.getUint32(0, true));
+  }
+  titleCount(){ return this.listing ? (this.lidx ? this.lidx.length : null) : this.count }
+  async suggest(q, n = 10){
+    if(this.listing && !this.lidx){ const b = await this.blob(this.listing); this.lidx = new Uint32Array(b.slice().buffer) }
+    const N = this.titleCount(), ns = this.cns, out = new Map();
+    const variants = [...new Set([q, q[0].toUpperCase() + q.slice(1), q.replace(/(^|\s)\S/g, m => m.toUpperCase()), q.toLowerCase()])];
+    for(const v of variants){
+      let lo = 0, hi = N;
+      while(lo < hi){
+        const mid = (lo + hi) >> 1, d = await this.titleAt(mid);
+        const less = this.listing ? d.title < v : (d.ns < ns || (d.ns === ns && d.title < v));
+        if(less) lo = mid + 1; else hi = mid;
+      }
+      for(let k = lo, seen = 0; k < N && seen < 40 && out.size < n; k++, seen++){
+        const d = await this.titleAt(k);
+        if((!this.listing && d.ns !== ns) || !d.title.startsWith(v)) break;
+        if(d.mime !== 0xffff && !this.mime(d).startsWith('text/html')) continue;
+        if(!out.has(d.path)) out.set(d.path, d);
+      }
+      if(out.size >= n) break;
+    }
+    return [...out.values()];
+  }
+  async mainPage(){
+    let d = null;
+    if(this.main !== 0xffffffff) d = await this.dirent(this.main);
+    if(!d && this.newNs) d = await this.find('W', 'mainPage');
+    return this.follow(d);
+  }
+  /* path in the article namespace ↔ a URL-like base for resolving relative links */
+  base(d){ return this.newNs ? d.path : d.ns + '/' + d.path }
+  async byUrl(p){
+    if(this.newNs) return this.follow(await this.find('C', p));
+    const i = p.indexOf('/'); if(i < 0) return null;
+    return this.follow(await this.find(p.slice(0, i), p.slice(i + 1)));
+  }
+}
+
+/* ───────── library ───────── */
+const BOOKS = [];
+let CUR = null, HIST = [], RES = new Map();
+function renderBooks(){
+  const el = $('#books'); if(!el) return;
+  el.innerHTML = BOOKS.length ? BOOKS.map((b, i) => `<div class="card" data-b="${i}" style="animation-delay:${i * 40}ms">
+      ${b.icon ? `<img src="${b.icon}" alt="">` : '<div class="ph"></div>'}
+      <div><b>${esc(b.title)}</b><small>${fmtSize(b.size)} · ${esc(b.f.name)}</small></div>
+      <svg class="i go" width="18" height="18" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></div>`).join('')
+    : `<div class="empty"><svg class="i" width="40" height="40" viewBox="0 0 24 24" style="color:var(--acc)"><path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+       <h3>${t('empty_t')}</h3><div>${t('empty')}</div><button class="big" onclick="$('#files').click()"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>${t('open')}</button></div>`;
+  $$('#books .card').forEach(c => c.onclick = () => openBook(BOOKS[+c.dataset.b]));
+}
+async function addFiles(list){
+  let n = 0;
+  for(const f of list){
+    const name = f.name.toLowerCase();
+    try{
+      if(name.endsWith('.pmtiles')){ await openMapFile(f); n++; continue }
+      if(BOOKS.some(b => b.f.name === f.name && b.size === f.size)) continue;
+      const z = await new Zim(f).open(); BOOKS.push(z); n++;
+    }catch(e){ toast(e.message === 'notzim' ? t('notzim', {f:f.name}) : f.name + ': ' + e.message) }
+  }
+  BOOKS.sort((a, b) => (/wikipedia/i.test(b.f.name) ? 1 : 0) - (/wikipedia/i.test(a.f.name) ? 1 : 0) || a.title.localeCompare(b.title));
+  renderBooks(); if(n) toast(t('opened', {n}));
+}
+$('#openBtn').onclick = () => $('#files').click();
+$('#files').onchange = e => { addFiles([...e.target.files]); e.target.value = '' };
+
+/* search across all books */
+let qTok = 0;
+$('#q').addEventListener('input', debounce(async e => {
+  const q = e.target.value.trim(), tok = ++qTok, el = $('#qhits');
+  if(!q){ el.innerHTML = ''; return }
+  let html = '';
+  for(const b of BOOKS){
+    const hits = await b.suggest(q, 5).catch(() => []);
+    if(tok !== qTok) return;
+    html += hits.map(d => `<a class="hit" data-b="${BOOKS.indexOf(b)}" data-p="${esc(b.base(d))}">${esc(d.title)}<small>${esc(b.title)}</small></a>`).join('');
+    el.innerHTML = html;
+    bindHits(el);
+  }
+  if(!html) el.innerHTML = `<div class="tip" style="padding:10px 4px">${t('nothing')}</div>`;
+}, 220));
+function bindHits(el){ el.querySelectorAll('.hit').forEach(a => a.onclick = () => { openBook(BOOKS[+a.dataset.b], a.dataset.p); $('#rhits').style.display = 'none' }) }
+function debounce(f, ms){ let h; return (...a) => { clearTimeout(h); h = setTimeout(() => f(...a), ms) } }
+
+/* ───────── reader ───────── */
+async function openBook(b, path){
+  CUR = b; HIST = []; b.page = null; RES.forEach(u => URL.revokeObjectURL(u)); RES = new Map();
+  $('#reader').classList.add('on'); $('#rq').value = ''; $('#rq').placeholder = t('search_in', {b:b.title});
+  if(path) return show(path);
+  const d = await b.mainPage(); show(d ? b.base(d) : '');
+}
+async function res(b, p){
+  if(RES.has(p)) return RES.get(p);
+  const d = await b.byUrl(p); if(!d) return '';
+  let data = await b.blob(d), type = b.mime(d);
+  if(type.startsWith('text/css')){
+    let css = td.decode(data); const urls = [...new Set([...css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)].map(m => m[1]))];
+    for(const u of urls){ if(/^(data:|https?:|#)/.test(u)) continue; const r = await res(b, resolve(p, u).path).catch(() => ''); if(r) css = css.split(u).join(r) }
+    data = css;
+  }
+  const url = URL.createObjectURL(new Blob([data], {type})); RES.set(p, url); return url;
+}
+function resolve(base, href){
+  const enc = base.split('/').map(encodeURIComponent).join('/');
+  const u = new URL(href, 'http://z/' + enc);
+  let path = u.pathname.slice(1); try{ path = decodeURIComponent(path) }catch{}
+  return {path, hash:u.hash};
+}
+async function show(path, hash = '', push = true){
+  const b = CUR, bar = $('#rload'); bar.style.width = '30%';
+  const d = await b.byUrl(path).catch(e => { toast(e.message === 'xz' ? t('xz') : e.message); return null });
+  if(!d){ bar.style.width = '0'; toast(t('notfound')); return }
+  const real = b.base(d);
+  if(!b.mime(d).startsWith('text/html')){ const u = await res(b, real); window.open(u); bar.style.width = '0'; return }
+  if(push){ if(CUR.page) HIST.push(CUR.page) }
+  CUR.page = real;
+  const doc = new DOMParser().parseFromString(td.decode(await b.blob(d)), 'text/html');
+  doc.querySelectorAll('script').forEach(s => s.remove());
+  bar.style.width = '60%';
+  const jobs = [];
+  doc.querySelectorAll('img[src],source[src],video[src],audio[src],track[src],video[poster],link[rel~=stylesheet][href],img[srcset],source[srcset]').forEach(el => {
+    for(const attr of ['src', 'href', 'poster']){
+      const v = el.getAttribute(attr); if(!v || /^(data:|https?:|blob:|#)/.test(v)) continue;
+      if(attr === 'href' && el.tagName !== 'LINK') continue;
+      jobs.push(res(b, resolve(real, v).path).then(u => u && el.setAttribute(attr, u)).catch(() => {}));
+    }
+    if(el.hasAttribute('srcset')) el.removeAttribute('srcset');
+  });
+  await Promise.all(jobs);
+  const head = doc.head || doc.documentElement;
+  const st = doc.createElement('style');
+  st.textContent = 'html{-webkit-text-size-adjust:100%}body{max-width:100%;overflow-x:hidden;padding:0 10px;word-wrap:break-word}img{max-width:100%;height:auto}table{display:block;overflow-x:auto;max-width:100%}' +
+    (LOOK === 'dark' ? 'html{filter:invert(.92) hue-rotate(180deg);background:#fff}img,video,picture,svg image,[style*="background-image"]{filter:invert(1) hue-rotate(180deg)}' : '');
+  head.appendChild(st);
+  const mv = doc.createElement('meta'); mv.name = 'viewport'; mv.content = 'width=device-width,initial-scale=1'; head.prepend(mv);
+  const fr = $('#frame');
+  fr.onload = () => {
+    bar.style.width = '100%'; setTimeout(() => bar.style.width = '0', 300);
+    const w = fr.contentWindow, dd = fr.contentDocument;
+    if(hash){ const tgt = dd.getElementById(decodeURIComponent(hash.slice(1))); if(tgt) tgt.scrollIntoView() } else w.scrollTo(0, 0);
+    dd.addEventListener('click', ev => {
+      const a = ev.target.closest('a[href]'); if(!a) return;
+      const href = a.getAttribute('href');
+      if(href.startsWith('#')) return;
+      ev.preventDefault();
+      if(/^[a-z]+:/i.test(href)){ toast(t('external')); return }
+      const r = resolve(real, href); show(r.path, r.hash);
+    });
+    // sections in mobile Wikipedia are collapsed with JS; open them
+    dd.querySelectorAll('details').forEach(x => x.open = true);
+    dd.querySelectorAll('.collapsible-block,.mf-section-1,.mf-section-2,.mf-section-3,.mf-section-4,.mf-section-5,.mf-section-6,.mf-section-7,.mf-section-8,.mf-section-9').forEach(x => x.style.display = 'block');
+  };
+  fr.srcdoc = '<!DOCTYPE html>' + doc.documentElement.outerHTML;
+}
+$('#rBack').onclick = () => { const p = HIST.pop(); if(p) show(p, '', false); else $('#reader').classList.remove('on') };
+$('#rHome').onclick = async () => { const d = await CUR.mainPage(); if(d) show(CUR.base(d)) };
+$('#rClose').onclick = () => $('#reader').classList.remove('on');
+$('#rq').addEventListener('input', debounce(async e => {
+  const q = e.target.value.trim(), el = $('#rhits');
+  if(!q){ el.style.display = 'none'; return }
+  const hits = await CUR.suggest(q, 12).catch(() => []);
+  el.innerHTML = hits.map(d => `<a class="hit" data-b="${BOOKS.indexOf(CUR)}" data-p="${esc(CUR.base(d))}">${esc(d.title)}</a>`).join('') || `<div class="tip" style="padding:12px">${t('nothing')}</div>`;
+  el.style.display = 'block'; bindHits(el);
+}, 200));
+$('#rq').addEventListener('keydown', e => { if(e.key === 'Enter'){ const h = $('#rhits .hit'); if(h) h.click() } });
+$('#rq').addEventListener('blur', () => setTimeout(() => $('#rhits').style.display = 'none', 250));
+window.addEventListener('popstate', () => {});
+
+/* ───────── map ───────── */
+let MAP = null, PROTO = null, MAPFILE = null;
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0)).buffer;
+function renderMapEmpty(){
+  const el = $('#mapEmpty'); if(!el) return;
+  el.innerHTML = MAPFILE ? '' : `<div class="empty" style="background:rgba(5,16,11,.9)"><h3>${t('nomap_t')}</h3><div>${t('nomap')}</div>
+    <button class="big" onclick="$('#files').click()">${t('open')}</button></div>`;
+}
+function flavor(){
+  const f = Object.assign({}, basemaps.namedFlavor('dark'));
+  return Object.assign(f, {
+    background:'#0b1015', earth:'#111a1f', water:'#0f3d63', park_a:'#173f26', park_b:'#1b4a2c', wood_a:'#163a23', wood_b:'#1b4429',
+    scrub_a:'#1f3a26', scrub_b:'#1f3a26', glacier:'#2c3e4a', sand:'#3b3524', beach:'#43392a', hospital:'#3d2129', school:'#2f2a40',
+    industrial:'#262b31', aerodrome:'#283040', pedestrian:'#1b2229', zoo:'#2b3c23', military:'#3b2e25', runway:'#3a4250',
+    buildings:'#26303a', boundaries:'#9a86c4', highway:'#ff9a3c', highway_casing_early:'#4a2a0e', highway_casing_late:'#4a2a0e',
+    major:'#f2d16b', major_casing_early:'#3d3416', major_casing_late:'#3d3416', link:'#f2d16b',
+    minor_a:'#66727c', minor_b:'#56626b', minor_service:'#424d56', other:'#424d56', railway:'#b884ff',
+    bridges_highway:'#ffab5c', bridges_major:'#f6dc84', bridges_minor:'#727e88', bridges_link:'#f6dc84', bridges_other:'#4a555e',
+    tunnel_highway:'#9a5c25', tunnel_major:'#8f7c3d', tunnel_minor:'#3a434b', tunnel_link:'#8f7c3d', tunnel_other:'#333c44',
+    roads_label_major:'#ffe9b0', roads_label_major_halo:'#0b1015', roads_label_minor:'#b9c3ca', roads_label_minor_halo:'#0b1015',
+    ocean_label:'#86c3f0', subplace_label:'#b8c4cc', subplace_label_halo:'#0b1015', city_label:'#ffffff', city_label_halo:'#0b1015',
+    state_label:'#c9b9ea', state_label_halo:'#0b1015', country_label:'#ffffff', address_label:'#8f9ba5', address_label_halo:'#0b1015',
+  });
+}
+maplibregl.addProtocol('nomad', async params => {
+  const p = params.url.slice('nomad://'.length);
+  if(p.startsWith('glyphs/')){
+    const range = p.split('/').pop().replace('.pbf', '');
+    return {data:ASSETS.glyphs[range] ? b64(ASSETS.glyphs[range]) : new ArrayBuffer(0)};
+  }
+  if(p.startsWith('sprite/')){
+    const name = p.slice(7);
+    if(name.endsWith('.json')) return {data:JSON.parse(ASSETS.sprites[name])};
+    return {data:b64(ASSETS.sprites[name])};
+  }
+  throw new Error('not found');
+});
+async function openMapFile(f){
+  if(!PROTO){ PROTO = new pmtiles.Protocol(); maplibregl.addProtocol('pmtiles', PROTO.tile) }
+  const pm = new pmtiles.PMTiles(new pmtiles.FileSource(f));
+  await pm.getHeader();
+  PROTO.add(pm); MAPFILE = f; renderMapEmpty();
+  if(MAP){ MAP.remove(); MAP = null }
+  if($('#v-map').classList.contains('on')) initMap(); else setView('map');
+}
+function initMap(){
+  if(MAP || !MAPFILE) return;
+  const last = ls.get('nm.view', {c:[5.3, 52.2], z:6});
+  MAP = new maplibregl.Map({container:'map', center:last.c, zoom:last.z, attributionControl:{compact:true}, maxPitch:70,
+    style:{version:8, glyphs:'nomad://glyphs/{fontstack}/{range}.pbf', sprite:'nomad://sprite/dark',
+      sources:{protomaps:{type:'vector', url:'pmtiles://' + MAPFILE.name, attribution:'© OpenStreetMap · Protomaps'}},
+      layers:basemaps.layers('protomaps', flavor(), {lang:LANG})}});
+  MAP.on('moveend', () => { const c = MAP.getCenter(); ls.set('nm.view', {c:[c.lng, c.lat], z:MAP.getZoom()}) });
+}
+let ME = null;
+$('#locBtn').onclick = () => {
+  if(!navigator.geolocation) return toast(t('loc_err'));
+  navigator.geolocation.getCurrentPosition(p => {
+    const ll = [p.coords.longitude, p.coords.latitude];
+    if(!MAP) return;
+    if(!ME){ const el = document.createElement('div'); el.style.cssText = 'width:16px;height:16px;border-radius:50%;background:#2ecf85;border:3px solid #fff;box-shadow:0 0 0 6px rgba(46,207,133,.3)'; ME = new maplibregl.Marker({element:el}) }
+    ME.setLngLat(ll).addTo(MAP); MAP.flyTo({center:ll, zoom:15});
+  }, () => toast(t('loc_err')), {enableHighAccuracy:true, timeout:15000});
+};
+
+/* ───────── views & settings ───────── */
+function setView(v){
+  $$('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
+  $$('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  if(v === 'map'){ initMap(); setTimeout(() => MAP && MAP.resize(), 50) }
+}
+$$('nav button').forEach(b => b.onclick = () => setView(b.dataset.v));
+$$('#langSeg button').forEach(b => b.onclick = () => { LANG = b.dataset.v; ls.set('nm.lang', LANG); i18n(); if(MAP){ MAP.remove(); MAP = null; initMap() } });
+$$('#lookSeg button').forEach(b => b.onclick = () => { LOOK = b.dataset.v; ls.set('nm.look', LOOK); i18n(); if($('#reader').classList.contains('on') && CUR?.page) show(CUR.page, '', false) });
+i18n();
+if('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
