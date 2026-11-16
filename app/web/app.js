@@ -410,41 +410,97 @@ $('#send').onclick = send;
 $('#useWiki').onclick = () => $('#useWiki').classList.toggle('on');
 $('#newChat').onclick = () => { CHAT = []; store.set('nomad.chat', []); renderChat() };
 
+/* ───────── iconen ───────── */
+const IC = {
+  sos:'<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/>', torch:'<path d="M9 2h6v5l-2 3v11h-2V10L9 7z"/><path d="M9 5h6"/>',
+  pin:'<path d="M12 21s-7-6.2-7-11a7 7 0 1114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>', phone:'<path d="M5 3h4l2 5-2.5 1.5a11 11 0 006 6L16 13l5 2v4a2 2 0 01-2 2A16 16 0 013 5a2 2 0 012-2z"/>',
+  heart:'<path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 000-7.8z"/><path d="M3.5 12h4l2-3 3 6 2-3h6"/>',
+  drop:'<path d="M12 2.7l5.7 5.7a8 8 0 11-11.4 0z"/>', flame:'<path d="M12 22a7 7 0 007-7c0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-3 3-5 6-5 8a7 7 0 007 7z"/>',
+  lungs:'<path d="M12 4v8M12 12l-3-2M12 12l3-2"/><path d="M8 8c-3 0-5 4-5 9 0 2 1 3 3 3s3-2 3-4V9M16 8c3 0 5 4 5 9 0 2-1 3-3 3s-3-2-3-4V9"/>',
+  bone:'<path d="M17 10c.7-.7 1.7-.6 2.4 0a2 2 0 01-1.4 3.4 2 2 0 01-3.4 1.4L9.2 20.2A2 2 0 015.8 18.8 2 2 0 014.4 15.4 2 2 0 015.8 12l5.4-5.4a2 2 0 013.4-1.4 2 2 0 011.4 3.4z"/>',
+  snow:'<path d="M12 2v20M4.9 4.9l14.2 14.2M2 12h20M4.9 19.1L19.1 4.9"/>', sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>', bite:'<path d="M4 12c4-8 12-8 16 0-4 8-12 8-16 0z"/><path d="M9 10l1 3M15 10l-1 3"/>', allergy:'<circle cx="12" cy="12" r="9"/><path d="M8 15c1-1 2-1.5 4-1.5s3 .5 4 1.5M9 9h.01M15 9h.01"/>',
+  water:'<path d="M7 16a5 5 0 0010 0c0-3-5-9-5-9s-5 6-5 9z"/><path d="M3 21h18"/>', fire:'<path d="M3 21l18-4M3 17l18 4"/><path d="M12 15c2 0 3-1.5 3-3 0-2-3-5-3-5s-3 3-3 5c0 1.5 1 3 3 3z"/>',
+  tent:'<path d="M12 3L2 21h20z"/><path d="M12 3v18M9 21l3-6 3 6"/>', compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  knot:'<path d="M4 12c0-4 4-6 8-2s8 2 8-2M4 16c0-4 4-6 8-2s8 2 8-2"/>', radio:'<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M7 8l10-5"/><circle cx="8" cy="14" r="2"/><path d="M14 13h4M14 16h4"/>',
+  leaf:'<path d="M5 21c0-9 5-15 16-16-1 11-7 16-16 16z"/><path d="M5 21l8-8"/>', chev:'<path d="M9 6l6 6-6 6"/>',
+  shield:'<path d="M12 2l8 3v7c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V5z"/><path d="M12 8v6M9 11h6"/>', archive:'<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9M10 13h4"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>', flag:'<path d="M5 21V4M5 4h12l-2 4 2 4H5"/>',
+  cap:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>', video:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/>',
+  wrench:'<path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 005.4-5.4l-2.5 2.5-2.5-2.5z"/>', book:'<path d="M4 4h6a2 2 0 012 2v14a2 2 0 00-2-2H4zM20 4h-6a2 2 0 00-2 2v14a2 2 0 012-2h6z"/>',
+  play:'<circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/>', code:'<path d="M8 6l-6 6 6 6M16 6l6 6-6 6"/>', map:'<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/>',
+  cpu:'<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>', check:'<path d="M5 12l5 5 9-10"/>',
+};
+const icon = (k, cls = '') => `<svg class="svgi ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[k] || ''}</svg>`;
+function fillIcons(){ $$('[data-i]').forEach(e => { if(!e.firstChild) e.innerHTML = icon(e.dataset.i) }) }
+
 /* ───────── noodpakket ───────── */
-const GUIDES = [
-  ['❤','CPR','Cardiopulmonary resuscitation','Reanimatie'], ['🩸','Bleeding','Bleeding','Bloeding stoppen'], ['🔥','Burns','Burn','Brandwonden'],
-  ['😮','Choking','Choking','Verslikken'], ['🦴','Fracture','Bone fracture','Botbreuk'], ['🥶','Hypothermia','Hypothermia','Onderkoeling'],
-  ['🥵','Heat stroke','Heat stroke','Zonnesteek'], ['⚡','Shock','Shock (circulatory)','Shock'], ['🐍','Snakebite','Snakebite','Slangenbeet'],
-  ['🤧','Anaphylaxis','Anaphylaxis','Allergische reactie'], ['💧','Water purification','Water purification','Water zuiveren'], ['🔥','Fire making','Fire making','Vuur maken'],
-  ['⛺','Shelter','Survival skills','Onderdak'], ['🧭','Navigation','Navigation','Navigeren'], ['🪢','Knots','List of knots','Knopen'], ['📻','Radio','Emergency communication system','Noodcommunicatie'],
-];
+const GUIDES = {
+  first: [
+    ['heart','CPR','Cardiopulmonary resuscitation','Reanimatie','Unresponsive and not breathing normally','Niet aanspreekbaar en ademt niet normaal'],
+    ['drop','Severe bleeding','Bleeding','Ernstige bloeding','Pressure, tourniquet, wound packing','Druk, tourniquet, wond opvullen'],
+    ['lungs','Choking','Choking','Verslikking','Back blows and abdominal thrusts','Rugslagen en Heimlich'],
+    ['flame','Burns','Burn','Brandwonden','Cool, cover, assess severity','Koelen, afdekken, ernst inschatten'],
+    ['bone','Fractures','Bone fracture','Botbreuken','Immobilise and splint','Immobiliseren en spalken'],
+    ['bolt','Shock','Shock (circulatory)','Shock','Recognise and treat circulatory shock','Herkennen en behandelen'],
+    ['allergy','Anaphylaxis','Anaphylaxis','Allergische shock','Severe allergic reaction, epinephrine','Ernstige allergie, adrenaline'],
+    ['snow','Hypothermia','Hypothermia','Onderkoeling','Warm up slowly and safely','Langzaam en veilig opwarmen'],
+    ['sun','Heat stroke','Heat stroke','Hitteberoerte','Cool down fast','Snel afkoelen'],
+    ['bite','Bites & stings','Snakebite','Beten & steken','Snake, insect and animal bites','Slangen, insecten en dieren'],
+  ],
+  skills: [
+    ['water','Water purification','Water purification','Water zuiveren','Boil, filter, disinfect','Koken, filteren, desinfecteren'],
+    ['fire','Making fire','Fire making','Vuur maken','Ignition, tinder and fuel','Aansteken, tondel en brandstof'],
+    ['tent','Shelter','Survival skills','Onderdak','Stay dry, warm and out of the wind','Droog, warm en uit de wind'],
+    ['compass','Navigation','Navigation','Navigatie','Map, compass, sun and stars','Kaart, kompas, zon en sterren'],
+    ['leaf','Food & foraging','Foraging','Voedsel zoeken','Edible plants and food safety','Eetbare planten en voedselveiligheid'],
+    ['knot','Knots','List of knots','Knopen','Essential knots and lashings','Belangrijke knopen en sjorringen'],
+    ['radio','Communication','Emergency communication system','Communicatie','Radio, signals and emergency channels','Radio, signalen en noodkanalen'],
+    ['shield','Disaster prep','Emergency management','Rampenvoorbereiding','Plans, supplies and evacuation','Plannen, voorraad en evacuatie'],
+  ],
+};
 async function openGuide(term){
-  const med = BOOKS.find(b => b.id.startsWith('mdwiki'));
-  for(const b of [med, BOOKS.find(b => b.id.startsWith('wikipedia_'))].filter(Boolean)){
+  const pri = ['mdwiki','wikipedia_en_medicine','zimgit','wikipedia_'];
+  const books = pri.map(p => BOOKS.find(b => b.id.startsWith(p))).filter(Boolean);
+  for(const b of books){
     const r = await api(`/api/suggest?book=${encodeURIComponent(b.id)}&q=${encodeURIComponent(term)}`).catch(() => []);
     if(r.length){ location.hash = 'lib/' + r[0].book + '/' + r[0].path; return }
   }
   location.hash = 'search/' + encodeURIComponent(term);
 }
-function renderSos(){
-  $('#guides').innerHTML = GUIDES.map(g => `<div class="card guide" data-q="${esc(g[2])}"><div class="gi">${g[0]}</div><b>${LANG === 'nl' ? g[3] : g[1]}</b></div>`).join('');
-  $$('#guides .guide').forEach(c => c.onclick = () => openGuide(c.dataset.q));
+function guideRows(list){
+  return list.map(g => `<a class="grow" data-q="${esc(g[2])}"><span class="gic">${icon(g[0])}</span><span class="gtx"><b>${LANG === 'nl' ? g[3] : g[1]}</b><small>${LANG === 'nl' ? g[5] : g[4]}</small></span>${icon('chev', 'gch')}</a>`).join('');
+}
+async function renderSos(){
+  fillIcons();
+  $('#gFirst').innerHTML = guideRows(GUIDES.first); $('#gSkills').innerHTML = guideRows(GUIDES.skills);
+  $$('.grow').forEach(c => c.onclick = () => openGuide(c.dataset.q));
   renderSun(); renderCheck();
   const hasSensor = 'DeviceOrientationEvent' in window && /iphone|ipad|android/i.test(navigator.userAgent);
   $('#compassNote').textContent = hasSensor ? '' : t('compass_na');
   $('#compassBtn').style.display = hasSensor ? '' : 'none';
+  const hasMed = BOOKS.some(b => /mdwiki|medicine|zimgit/.test(b.id));
+  if(!hasMed){
+    const B = await api('/api/bundles').catch(() => null), sb = B && B.bundles.find(b => b.id === 'survival');
+    $('#sosCta').innerHTML = sb ? `<div class="cta">${icon('shield')}<span>${t('sos_cta', {s:fmtB(sb.need)})}</span><button class="btn pri" id="ctaBtn">${t('sos_cta_btn')}</button></div>` : '';
+    const cb = $('#ctaBtn'); if(cb) cb.onclick = () => { location.hash = 'dl'; setTimeout(() => $('#dlTabs button[data-v=bun]').click(), 50) };
+  } else $('#sosCta').innerHTML = '';
 }
 let POS = null;
 function renderSun(){
   const v = store.get('nomad.view', {center:[4.9, 52.37]});
   const lat = POS ? POS.lat : v.center[1], lon = POS ? POS.lon : v.center[0];
-  const s = sunTimes(new Date(), lat, lon), f = d => d ? d.toLocaleTimeString(LANG === 'nl' ? 'nl-NL' : 'en-GB', {hour:'2-digit', minute:'2-digit'}) : '—';
+  const now = new Date(), s = sunTimes(now, lat, lon), f = d => d ? d.toLocaleTimeString(LANG === 'nl' ? 'nl-NL' : 'en-GB', {hour:'2-digit', minute:'2-digit'}) : '—';
   const len = s.rise && s.set ? (s.set - s.rise) / 36e5 : 0;
-  $('#sunbox').innerHTML = `<div class="big" style="font-size:22px">☀ ${f(s.rise)} → ${f(s.set)}</div>
-    ${t('daylight')}: ${Math.floor(len)}h ${Math.round((len % 1) * 60)}m<br><span class="mono dim">${lat.toFixed(3)}, ${lon.toFixed(3)} · ${t('sun_loc')}</span>`;
+  const k = s.rise && s.set ? Math.max(0, Math.min(1, (now - s.rise) / (s.set - s.rise))) : 0;
+  const ang = Math.PI * (1 - k), x = 100 + 80 * Math.cos(ang), y = 92 - 70 * Math.sin(ang);
+  $('#sunbox').innerHTML = `<svg viewBox="0 0 200 104" class="sunarc"><path d="M20 92 A80 70 0 0 1 180 92" class="arc"/><path d="M20 92 A80 70 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}" class="arc on"/>
+      <line x1="8" y1="92" x2="192" y2="92" class="hz"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6" class="sunb"/></svg>
+    <div class="sunrow"><div><small>${t('sunrise')}</small><b>${f(s.rise)}</b></div><div><small>${t('daylight')}</small><b>${Math.floor(len)}h ${Math.round((len % 1) * 60)}m</b></div><div><small>${t('sunset')}</small><b>${f(s.set)}</b></div></div>
+    <div class="mono dim" style="text-align:center;margin-top:6px">${lat.toFixed(3)}, ${lon.toFixed(3)}</div>`;
 }
 $('#posBtn').onclick = () => navigator.geolocation?.getCurrentPosition(p => { POS = {lat:p.coords.latitude, lon:p.coords.longitude}; renderSun();
-  whenMap(m => m.flyTo({center:[POS.lon, POS.lat], zoom:14})) }, e => toast(e.message), {enableHighAccuracy:true, timeout:15000});
+  $('#posTxt').textContent = POS.lat.toFixed(5) + ', ' + POS.lon.toFixed(5) }, e => toast(e.message), {enableHighAccuracy:true, timeout:15000});
 $('#compassBtn').onclick = async () => {
   try{ if(DeviceOrientationEvent.requestPermission) await DeviceOrientationEvent.requestPermission() }catch(e){}
   addEventListener('deviceorientationabsolute', onOri, true); addEventListener('deviceorientation', onOri, true);
@@ -453,10 +509,11 @@ function onOri(e){
   const h = e.webkitCompassHeading ?? (e.absolute || e.type === 'deviceorientationabsolute' ? (360 - e.alpha) % 360 : null);
   if(h == null) return;
   $('#needle').style.transform = `rotate(${-h}deg)`;
-  const dirs = ['N','NE','E','SE','S','SW','W','NW'];
-  $('#heading').textContent = Math.round(h) + '° ' + dirs[Math.round(h / 45) % 8];
+  $('#heading').textContent = Math.round(h) + '° ' + ['N','NE','E','SE','S','SW','W','NW'][Math.round(h / 45) % 8];
 }
 function renderCheck(){
+  const done = USER.checklist.filter(c => c.done).length, n = USER.checklist.length;
+  $('#chkProg').textContent = `${done}/${n}`; $('#chkBar').style.width = (n ? done / n * 100 : 0) + '%';
   $('#check').innerHTML = USER.checklist.map((c, i) => `<div class="chk${c.done ? ' done' : ''}" data-i="${i}"><i></i><span>${esc(c.t)}</span><b data-x="${i}">×</b></div>`).join('');
   $$('#check .chk').forEach(el => el.onclick = e => {
     const i = +el.dataset.i, list = USER.checklist.map(x => ({...x}));
@@ -482,8 +539,62 @@ $('#sosBtn').onclick = () => {
   step();
 };
 
+/* ───────── bundels & opslagplanner ───────── */
+let BUN = null;
+const PLAN = store.get('nomad.plan', {});   // {bundleId: [uitgezette item-ids]}
+function savePlan(){ store.set('nomad.plan', PLAN) }
+async function loadBundles(){
+  BUN = await api('/api/bundles').catch(() => null);
+  renderBundles();
+}
+function planItems(){
+  const ids = new Map();
+  if(!BUN) return ids;
+  for(const b of BUN.bundles) if(PLAN[b.id]) for(const i of b.items) if(!i.installed && !PLAN[b.id].includes(i.id) && i.kind !== 'torrent') ids.set(i.id, i);
+  return ids;
+}
+function renderPlanner(){
+  const d = BUN.disk, items = planItems(), planned = [...items.values()].reduce((a, i) => a + i.size, 0);
+  const other = Math.max(0, d.used - d.nomad - 0), queued = BUN.queued, freeAfter = d.free - queued - planned;
+  const pct = v => Math.max(0, v / d.total * 100).toFixed(2) + '%';
+  const over = freeAfter < 0;
+  $('#planner').innerHTML = `<div class="ph-top"><div><div class="k">${t('plan')}</div><div class="ph-big">${fmtB(planned)} <small>/ ${fmtB(d.free - queued)} ${t('free')}</small></div></div>
+      <button class="btn pri" id="planGo" ${planned && !over ? '' : 'disabled'}>${icon('check')} ${t('p_go', {s:fmtB(planned)})}</button></div>
+    <div class="pbar"><i class="s-other" style="width:${pct(other)}"></i><i class="s-nomad" style="width:${pct(d.nomad)}"></i><i class="s-queue" style="width:${pct(queued)}"></i><i class="s-plan${over ? ' over' : ''}" style="width:${pct(Math.min(planned, Math.max(0, d.free - queued)))}"></i></div>
+    <div class="plegend"><span><i class="s-other"></i>${t('p_other')} ${fmtB(other)}</span><span><i class="s-nomad"></i>${t('p_nomad')} ${fmtB(d.nomad)}</span>
+      <span><i class="s-queue"></i>${t('p_queue')} ${fmtB(queued)}</span><span><i class="s-plan"></i>${t('p_plan')} ${fmtB(planned)}</span><span><i class="s-free"></i>${t('p_free')} ${fmtB(Math.max(0, freeAfter))}</span></div>
+    <div class="pmsg ${over ? 'bad' : planned ? 'ok' : ''}">${over ? t('p_nofit', {s:fmtB(-freeAfter)}) : planned ? t('p_fits', {s:fmtB(freeAfter)}) : t('p_empty')}</div>`;
+  const g = $('#planGo'); if(g) g.onclick = async () => {
+    const r = await post('/api/download', {ids:[...items.keys()]});
+    if(r.errors?.length) toast(r.errors[0]);
+    for(const k of Object.keys(PLAN)) delete PLAN[k]; savePlan();
+    await pollJobs(); loadBundles();
+  };
+}
+function renderBundles(){
+  if(!BUN){ $('#bgrid').innerHTML = `<div class="empty">${t('loading')}</div>`; return }
+  renderPlanner();
+  const jobs = window.__jobs || {};
+  $('#bgrid').innerHTML = BUN.bundles.map(b => {
+    const inPlan = !!PLAN[b.id], ex = PLAN[b.id] || [];
+    const busy = b.items.filter(i => jobs[i.id] && (jobs[i.id].status === 'bezig' || jobs[i.id].status === 'wachtrij'));
+    const done = b.items.filter(i => i.installed).length;
+    return `<div class="bcard${inPlan ? ' sel' : ''}${b.complete ? ' comp' : ''}">
+      <div class="bhead"><span class="bic">${icon(b.icon)}</span><div class="bt"><b>${esc(b.title)}</b><span class="mono dim">${t('p_items', {n:b.items.length})} · ${fmtB(b.total)}</span></div>
+        ${b.complete ? `<span class="okb">${t('p_complete')}</span>` : `<button class="btn ${inPlan ? 'pri' : ''}" data-b="${b.id}">${inPlan ? '✓ ' + t('p_added') : '+ ' + t('p_add')}</button>`}</div>
+      <div class="bdesc">${esc(b.desc)}</div>
+      <div class="bprog"><div class="bar"><i style="width:${(done / b.items.length * 100).toFixed(0)}%"></i></div><span class="mono dim">${done}/${b.items.length} · ${b.complete ? '' : t('p_need', {s:fmtB(b.need)})}${busy.length ? ' · ' + stLabel('bezig') : ''}</span></div>
+      <div class="bitems">${b.items.map(i => `<label class="bit${i.installed ? ' inst' : ''}"><input type="checkbox" data-bb="${b.id}" data-ii="${esc(i.id)}" ${i.installed || !ex.includes(i.id) ? 'checked' : ''} ${i.installed || !inPlan || i.kind === 'torrent' ? 'disabled' : ''}>
+        <span>${esc(i.title)}</span><em>${i.installed ? '✓' : fmtB(i.size)}</em></label>`).join('')}</div></div>`;
+  }).join('');
+  $$('#bgrid [data-b]').forEach(btn => btn.onclick = () => { const id = btn.dataset.b; if(PLAN[id]) delete PLAN[id]; else PLAN[id] = []; savePlan(); renderBundles() });
+  $$('#bgrid [data-ii]').forEach(cb => cb.onchange = () => {
+    const b = cb.dataset.bb, i = cb.dataset.ii; PLAN[b] = (PLAN[b] || []).filter(x => x !== i); if(!cb.checked) PLAN[b].push(i); savePlan(); renderPlanner();
+  });
+}
+
 /* ───────── downloads & updates ───────── */
-let dlTimer = null, CAT = null, DLTAB = 'zim', SHOW = 60, FCAT = '';
+let dlTimer = null, CAT = null, DLTAB = 'bun', SHOW = 60, FCAT = '';
 const stLabel = s => t('status_' + s);
 const CATNAMES = {wikipedia:'Wikipedia', gutenberg:'Books (Gutenberg)', stack_exchange:'Stack Exchange', ted:'TED talks', ifixit:'iFixit', wiktionary:'Wiktionary',
   wikibooks:'Wikibooks', wikivoyage:'Wikivoyage', wikiversity:'Wikiversity', wikiquote:'Wikiquote', wikisource:'Wikisource', wikinews:'Wikinews',
@@ -494,7 +605,7 @@ async function loadDownloads(force){
     $('#zimgrid').innerHTML = `<div class="empty">${t('loading')}</div>`;
     CAT = await api('/api/catalog' + (force ? '?force=1' : '')).catch(() => ({zim:[], extras:[]}));
   }
-  await pollJobs(); renderCats(); renderZim(); renderExtras();
+  await pollJobs(); renderCats(); renderZim(); renderExtras(); loadBundles();
 }
 async function pollJobs(){
   const u = await api('/api/updates').catch(() => ({updates:[], jobs:{}}));
@@ -506,7 +617,7 @@ async function pollJobs(){
     const before = JSON.stringify(Object.values(window.__jobs).map(j => j.status));
     await pollJobs();
     if(before !== JSON.stringify(Object.values(window.__jobs).map(j => j.status))){ CAT = null; await loadStatus(); loadDownloads() }
-    else { renderZim(true); renderExtras() }
+    else { renderZim(true); renderExtras(); if(BUN) renderBundles() }
   }, 1500);
 }
 function jobOf(id){ return (window.__jobs || {})[id] }
@@ -710,6 +821,6 @@ setInterval(() => { $('#clock').textContent = new Date().toLocaleString(LANG ===
 setInterval(loadStatus, 30000);
 (async () => {
   [SET, USER] = await Promise.all([api('/api/settings').catch(() => ({lang:'en'})), api('/api/user').catch(() => USER)]);
-  applyLook(); renderChat();
+  applyLook(); renderChat(); fillIcons();
   await loadStatus(); route();
 })();

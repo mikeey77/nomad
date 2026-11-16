@@ -28,7 +28,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -651,6 +651,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json(features.cleanup_items())
             if p == "/api/catalog":
                 return self.json(features.catalog(q("force") == "1"))
+            if p == "/api/bundles":
+                return self.json(features.bundles())
             if p.startswith("/api/icon/"):
                 data = features.icon(p[10:])
                 return self.send(200, data, "image/png", cache=True) if data else self.send(404, "")
@@ -687,7 +689,8 @@ class Handler(BaseHTTPRequestHandler):
             if p == "/api/cleanup":
                 return self.json(features.cleanup(self.body_json().get("paths", [])))
             if p == "/api/download":
-                return self.json(features.enqueue(self.body_json().get("id")))
+                b = self.body_json()
+                return self.json(features.enqueue_many(b["ids"]) if "ids" in b else features.enqueue(b.get("id")))
             if p == "/api/download/cancel":
                 return self.json(features.cancel(self.body_json().get("id")))
             if p == "/api/remove":
@@ -874,21 +877,35 @@ class Handler(BaseHTTPRequestHandler):
         sources = []
         system = ("Je bent NOMAD, een behulpzame offline assistent. Antwoord in de taal van de gebruiker, "
                   "kort en duidelijk.")
-        wb = wikipedia_book()
-        if body.get("wiki") and wb and msgs:
+        if body.get("wiki") and BOOKS and msgs:
             question = msgs[-1].get("content", "")
-            _, hits = fulltext(wb, question, 0, 4)
-            if not hits:
-                hits = suggest(wb, question, 3)
+            hits = []
+            for bk in sorted(BOOKS.values(), key=book_order):
+                try:
+                    _, h = fulltext(bk, question, 0, 2)
+                    if not h:
+                        h = suggest(bk, question, 1)
+                    hits += h[:2]
+                except Exception:
+                    pass
             ctx = []
-            for h in hits[:3]:
-                t = plain_text(wb, h["path"])
-                if t:
-                    sources.append({"book": wb.id, "path": h["path"], "title": h["title"]})
-                    ctx.append(f"### {h['title']}\n{t}")
+            for h in hits[:5]:
+                bk = BOOKS[h["book"]]
+                txt = plain_text(bk, h["path"], 1600)
+                if txt:
+                    sources.append({"book": bk.id, "path": h["path"], "title": h["title"], "bookTitle": bk.title})
+                    ctx.append(f"### {h['title']} ({bk.title})\n{txt}")
+            try:
+                notes = features.load_user().get("notes", {})
+                words = [w.lower() for w in re.findall(r"\w{4,}", question)]
+                for key, note in notes.items():
+                    if any(w in note.lower() for w in words):
+                        ctx.append(f"### My note on {key}\n{note[:600]}")
+            except Exception:
+                pass
             if ctx:
-                system += ("\n\nGebruik de volgende Wikipedia-fragmenten als bron. Als het antwoord er niet in "
-                           "staat, zeg dat eerlijk.\n\n" + "\n\n".join(ctx))
+                system += ("\n\nUse the following excerpts from the user's offline library as your source. "
+                           "Mention which source you used. If the answer is not in them, say so honestly.\n\n" + "\n\n".join(ctx))
         payload = {"model": body.get("model") or CFG["ai_model"], "stream": True,
                    "messages": [{"role": "system", "content": system}] + msgs}
         req = urllib.request.Request(f"http://127.0.0.1:{port}/api/chat", data=json.dumps(payload).encode(),

@@ -455,3 +455,85 @@ def use_model(model):
     N.CFG["ai_model"] = model
     N.save_json(N.CONFIG_FILE, N.CFG)
     return {"ok": True}
+
+
+# ───────── bundels ─────────
+BUNDLES = [
+    {"id": "survival", "icon": "shield", "title": "Survival Essentials",
+     "desc": "First aid, medicine, water, food, shelter, energy and repair — the core of an offline survival library.",
+     "items": ["mdwiki_en_all_maxi", "wikipedia_en_medicine_maxi", "zimgit-medicine_en", "zimgit-water_en", "zimgit-food-preparation_en",
+               "zimgit-post-disaster_en", "outdoors.stackexchange.com_en_all", "appropedia_en_all_maxi", "energypedia_en_all_maxi",
+               "ifixit_en_all", "wikivoyage_en_all_maxi"]},
+    {"id": "survival_xl", "icon": "archive", "title": "Survivor Library",
+     "desc": "205 GB of historical how-to books: farming, blacksmithing, medicine, building, chemistry — rebuild-civilisation knowledge.",
+     "items": ["survivorlibrary.com_en_all"]},
+    {"id": "knowledge", "icon": "globe", "title": "World Knowledge",
+     "desc": "Complete English Wikipedia with images, plus dictionary, quotes and source texts.",
+     "items": ["wikipedia_en_all_maxi", "wiktionary_en_all_nopic", "wikiquote_en_all_maxi", "wikisource_en_all_nopic"]},
+    {"id": "nederlands", "icon": "flag", "title": "Nederlands",
+     "desc": "Nederlandse Wikipedia met afbeeldingen en Nederlandstalige boeken van Project Gutenberg.",
+     "items": ["wikipedia_nl_all_maxi", "gutenberg_nl_all"]},
+    {"id": "learning", "icon": "cap", "title": "Learning Lite",
+     "desc": "Textbooks for maths, physics, chemistry, biology, engineering and medicine, plus interactive science simulations.",
+     "items": ["libretexts.org_en_math", "libretexts.org_en_phys", "libretexts.org_en_chem", "libretexts.org_en_bio",
+               "libretexts.org_en_eng", "libretexts.org_en_med", "phet_en_all", "wikibooks_en_all_maxi", "wikiversity_en_all_maxi"]},
+    {"id": "school", "icon": "video", "title": "Video School",
+     "desc": "Khan Academy (full US curriculum with videos) and CrashCourse — a complete school offline.",
+     "items": ["khanacademy_en_all", "crashcourse_en_all"]},
+    {"id": "maker", "icon": "wrench", "title": "Maker & Repair",
+     "desc": "Repair guides and expert Q&A for electronics, DIY, gardening and cooking.",
+     "items": ["ifixit_en_all", "electronics.stackexchange.com_en_all", "diy.stackexchange.com_en_all",
+               "gardening.stackexchange.com_en_all", "cooking.stackexchange.com_en_all", "appropedia_en_all_maxi"]},
+    {"id": "books", "icon": "book", "title": "Library of Books",
+     "desc": "Project Gutenberg: ~70,000 free classic books, readable offline.",
+     "items": ["gutenberg_en_all"]},
+    {"id": "inspire", "icon": "play", "title": "Talks & Space",
+     "desc": "Every TED talk as video, plus NASA's Astronomy Picture of the Day archive.",
+     "items": ["ted_mul_all", "apod.nasa.gov_en_all"]},
+    {"id": "coding", "icon": "code", "title": "Programming",
+     "desc": "All of Stack Overflow plus documentation for Python, JavaScript, web, C/C++, Rust, Git, Docker and Godot.",
+     "items": ["stackoverflow.com_en_all", "devdocs_en_python", "devdocs_en_javascript", "devdocs_en_html", "devdocs_en_css",
+               "devdocs_en_node", "devdocs_en_react", "devdocs_en_git", "devdocs_en_bash", "devdocs_en_c", "devdocs_en_cpp",
+               "devdocs_en_rust", "devdocs_en_docker", "devdocs_en_godot", "freecodecamp_en_all"]},
+    {"id": "navigation", "icon": "map", "title": "World Navigation",
+     "desc": "World map, worldwide address search and 3D elevation.",
+     "items": ["map:world", "geo:photon", "torrent:terrain"]},
+    {"id": "ai", "icon": "cpu", "title": "AI Brains",
+     "desc": "Two local AI models: a fast default and a smarter multilingual one (speaks Dutch well).",
+     "items": ["ai:llama3.2:3b", "ai:qwen3:4b"]},
+]
+
+
+def bundles():
+    zims = {i["prefix"]: i for i in kiwix_entries()}
+    inst = {b.prefix: b.date for b in N.BOOKS.values()}
+    ext = {i["id"]: i for i in extras()}
+    out = []
+    for b in BUNDLES:
+        items = []
+        for p in b["items"]:
+            if ":" in p and p.split(":")[0] in ("map", "geo", "torrent", "ai"):
+                e = ext.get(p)
+                if e:
+                    items.append({"id": p, "title": e["title"], "size": e["size"], "installed": bool(e["installed"]), "kind": e["kind"]})
+            else:
+                z = zims.get(p)
+                if z:
+                    items.append({"id": "zim:" + z["id"], "title": z["title"] + (" (" + z["flavour"] + ")" if z.get("flavour") else ""),
+                                  "size": z["size"], "installed": bool(inst.get(p)), "kind": "zim", "summary": z["summary"]})
+        if items:
+            total = sum(i["size"] for i in items)
+            need = sum(i["size"] for i in items if not i["installed"])
+            out.append(dict(b, items=items, total=total, need=need, complete=need == 0))
+    du = N.shutil.disk_usage(N.ROOT)
+    nomad = sum(b.size for b in N.BOOKS.values()) + sum(os.path.getsize(f) for f in [N.map_file(l) for l in N.MAP_LAYERS] if f)
+    return {"bundles": out, "disk": {"total": du.total, "used": du.used, "free": du.free, "nomad": nomad},
+            "queued": sum(max(0, j.get("total", 0) - j.get("done", 0)) for j in N.STATE["jobs"].values() if j["status"] in ("bezig", "wachtrij"))}
+
+
+def enqueue_many(ids):
+    res = {"ok": [], "errors": []}
+    for i in ids:
+        r = enqueue(i)
+        (res["ok"] if r.get("ok") else res["errors"]).append(i if r.get("ok") else f"{i}: {r.get('error')}")
+    return res

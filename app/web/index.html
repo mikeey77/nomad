@@ -104,29 +104,42 @@
       </div>
     </section>
 
-    <section class="view" id="v-sos"><div class="dash">
-      <div class="sec-t" style="margin-top:0" data-t="sos_guides"></div>
-      <div class="grid guides" id="guides"></div>
-      <div class="sec-t" data-t="sos_tools"></div>
-      <div class="grid">
-        <div class="card tool"><div class="k" data-t="compass"></div><div class="dial"><div class="needle" id="needle"></div><b id="heading">—</b></div>
-          <div class="sub" id="compassNote"></div><button class="btn" id="compassBtn" data-t="compass_start" style="margin-top:10px"></button></div>
-        <div class="card tool"><div class="k" data-t="sun"></div><div id="sunbox" class="sub"></div><button class="btn" id="posBtn" data-t="my_pos" style="margin-top:10px"></button></div>
-        <div class="card tool"><div class="k" data-t="sos_signal"></div><div class="big">· · · — — — · · ·</div><div class="sub" data-t="sos_help"></div><button class="btn pri" id="sosBtn" data-t="start" style="margin-top:10px"></button></div>
-        <div class="card tool"><div class="k" data-t="torch"></div><div class="big">☀</div><div class="sub" data-t="torch_help"></div><button class="btn" id="torchBtn" data-t="start" style="margin-top:10px"></button></div>
+    <section class="view" id="v-sos"><div class="dash sos">
+      <div class="sos-hero">
+        <div><div class="k sos-k" data-t="sos_mode"></div><h2 class="sos-h" data-t="sos_title"></h2><div class="sub" data-t="sos_sub"></div></div>
+        <div class="sos-actions">
+          <button class="sact red" id="sosBtn"><span class="ic" data-i="sos"></span><b data-t="sos_signal"></b><small data-t="sos_small"></small></button>
+          <button class="sact" id="torchBtn"><span class="ic" data-i="torch"></span><b data-t="torch"></b><small data-t="torch_small"></small></button>
+          <button class="sact" id="posBtn"><span class="ic" data-i="pin"></span><b data-t="my_pos"></b><small id="posTxt" data-t="pos_small"></small></button>
+          <div class="sact static"><span class="ic" data-i="phone"></span><b>112</b><small data-t="emerg_small"></small></div>
+        </div>
       </div>
-      <div class="sec-t" data-t="checklist"></div>
-      <div class="card" style="cursor:default"><div id="check"></div>
-        <div style="display:flex;gap:8px;margin-top:10px"><input id="checkIn" class="inp" style="flex:1" data-tp="add_item"><button class="btn" id="checkAdd">+</button></div></div>
+      <div id="sosCta"></div>
+      <div class="sos-cols">
+        <div><div class="sec-t" data-t="g_firstaid"></div><div class="glist" id="gFirst"></div></div>
+        <div><div class="sec-t" data-t="g_skills"></div><div class="glist" id="gSkills"></div></div>
+      </div>
+      <div class="sec-t" data-t="sos_tools"></div>
+      <div class="sos-tools">
+        <div class="card tool"><div class="k" data-t="compass"></div><div class="dial"><div class="needle" id="needle"></div><b id="heading">—</b></div>
+          <div class="sub" id="compassNote" style="text-align:center"></div><button class="btn" id="compassBtn" data-t="compass_start" style="margin:10px auto 0;display:flex"></button></div>
+        <div class="card tool"><div class="k" data-t="sun"></div><div id="sunbox"></div></div>
+        <div class="card tool chkcard"><div class="k"><span data-t="checklist"></span> <b id="chkProg" class="mono"></b></div><div class="bar"><i id="chkBar"></i></div><div id="check"></div>
+          <div style="display:flex;gap:8px;margin-top:10px"><input id="checkIn" class="inp" style="flex:1" data-tp="add_item"><button class="btn" id="checkAdd">+</button></div></div>
+      </div>
     </div></section>
 
     <section class="view" id="v-dl"><div class="dash" style="max-width:1300px">
       <div class="dlhead">
-        <div class="seg" id="dlTabs"><button data-v="zim" class="on" data-t="t_library"></button><button data-v="maps" data-t="t_maps"></button><button data-v="ai" data-t="t_ai"></button><button data-v="upd"><span data-t="updates"></span> <b id="updCount"></b></button></div>
+        <div class="seg" id="dlTabs"><button data-v="bun" class="on" data-t="t_bundles"></button><button data-v="zim" data-t="t_library"></button><button data-v="maps" data-t="t_maps"></button><button data-v="ai" data-t="t_ai"></button><button data-v="upd"><span data-t="updates"></span> <b id="updCount"></b></button></div>
         <div id="dlFree" class="mono dim"></div>
       </div>
       <div id="dlQueue"></div>
-      <div id="pane-zim" class="pane">
+      <div id="pane-bun" class="pane">
+        <div class="card planner" id="planner"></div>
+        <div class="bgrid" id="bgrid"></div>
+      </div>
+      <div id="pane-zim" class="pane" style="display:none">
         <div class="filters">
           <input id="fq" class="inp" data-tp="f_search" style="flex:1;min-width:200px">
           <select id="flang" class="inp"><option value="eng,nld">English + Nederlands</option><option value="eng">English</option><option value="nld">Nederlands</option><option value="">All languages</option></select>
