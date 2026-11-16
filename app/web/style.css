@@ -309,3 +309,45 @@ footer .r{margin-left:auto}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 .tool .big{font-size:18px;white-space:nowrap}
+
+/* ═════════ v0.5: catalogus ═════════ */
+.dlhead{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.dlhead .seg button{padding:9px 16px;font-size:11.5px}
+#dlFree{margin-left:auto}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+select.inp{cursor:pointer;padding-right:8px}
+select.inp option{background:var(--bg2);color:var(--txt)}
+.catchips{display:flex;flex-wrap:wrap;gap:6px}
+.catchips .chip{color:var(--dim);border-color:var(--line)}
+.catchips .chip small{color:var(--dim);margin-left:4px;font-size:10px}
+.catchips .chip.on{color:var(--acc);border-color:var(--acc);background:rgba(var(--a),.1);box-shadow:var(--glow)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.ccard{position:relative;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px;display:flex;flex-direction:column;gap:8px;transition:.15s}
+.ccard:hover{border-color:var(--line2);box-shadow:var(--glow)}
+.ccard.inst{border-color:rgba(var(--a),.45);background:linear-gradient(135deg,rgba(var(--a),.08),transparent 60%),var(--panel)}
+.ctop{display:flex;gap:12px;align-items:center}
+.cico{width:40px;height:40px;border-radius:9px;flex:none;object-fit:cover;background:#fff1;border:1px solid var(--line)}
+.cico.ph{display:grid;place-items:center;font:700 17px var(--mono);color:var(--acc)}
+.cmain{flex:1;min-width:0}.cmain b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmain span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.csize{font:500 12.5px var(--mono);font-style:normal;color:var(--acc);white-space:nowrap}
+.csum{font-size:12.5px;color:var(--dim);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:36px}
+.cbtns{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:auto}
+.cbtns .btn{height:30px}
+.done{font:600 10.5px var(--mono);letter-spacing:.12em;color:var(--acc);margin-right:auto}
+.btn.ghost{border-color:transparent;color:var(--dim);min-width:30px;padding:0 8px}
+.btn.ghost:hover{color:var(--bad);border-color:var(--bad);box-shadow:none}
+.ccard .bar{margin:2px 0}
+/* QR-kaart */
+.phonecard{display:flex;gap:26px;align-items:center;flex-wrap:wrap;cursor:default}
+.qrbox{position:relative;width:150px;height:150px;flex:none;padding:12px;border-radius:14px;border:1px solid var(--line2);
+  background:radial-gradient(circle at 50% 50%,rgba(var(--a),.08),transparent 70%),rgba(var(--b),.6);box-shadow:inset 0 0 24px rgba(var(--a),.12),var(--glow);overflow:hidden}
+.qrbox svg{width:100%;height:100%;fill:var(--acc);filter:drop-shadow(0 0 3px rgba(var(--a),.6))}
+.qrscan{position:absolute;left:0;right:0;height:30%;top:-30%;background:linear-gradient(transparent,rgba(var(--a),.35),transparent);animation:qrs 2.6s ease-in-out infinite}
+@keyframes qrs{to{top:100%}}
+.qrinfo{flex:1;min-width:240px}
+.qrurl{font:600 22px var(--mono);color:var(--acc);margin:6px 0 6px;text-shadow:var(--glow);word-break:break-all}
+.qrsteps{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.qrsteps span{font:11px var(--mono);border:1px solid var(--line);border-radius:20px;padding:4px 10px;color:var(--dim)}
+[data-theme=light] .qrbox svg{fill:#0b3b24;filter:none}
+.qrbox{cursor:pointer}.qrbox.classic{background:#fff}.qrbox.classic svg{fill:#000;filter:none}.qrbox.classic .qrscan{display:none}

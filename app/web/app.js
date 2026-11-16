@@ -31,7 +31,7 @@ function applyLook(){
   try{ frame.contentWindow.postMessage({type:'look', scale:SET.font_scale || 1, theme:SET.theme}, '*') }catch(e){}
 }
 async function saveSet(patch){
-  SET = await post('/api/settings', patch);
+  SET = await post('/api/settings', patch); delete $('#phone').dataset.url;
   applyLook(); renderSettings(); renderAll();
 }
 async function saveUser(patch){
@@ -46,7 +46,7 @@ function setView(v){
   $$('.tab').forEach(x => x.classList.toggle('on', x.dataset.go === v));
   $('#viewName').textContent = t('v_' + v);
   if(v === 'map') initMap();
-  if(v === 'dl'){ loadUpdates(); loadCatalog() }
+  if(v === 'dl') loadDownloads();
   if(v === 'set'){ renderSettings(); loadCleanup() }
   if(v === 'sos') renderSos();
 }
@@ -111,10 +111,15 @@ function renderDash(){
   $$('#favHome .chip').forEach(c => c.onclick = () => location.hash = 'lib/' + c.dataset.b + '/' + c.dataset.p);
   const lan = S.lan_url, mobile = /iphone|ipad|android/i.test(navigator.userAgent);
   $('#phoneT').style.display = $('#phone').style.display = (lan && !mobile) ? '' : 'none';
-  if(lan && !mobile && window.qrcode){
+  if(lan && !mobile && window.qrcode && !$('#phone').dataset.url){
     const qr = qrcode(0, 'M'); qr.addData(lan); qr.make();
-    $('#phone').innerHTML = `<div style="flex:none;background:#eaf5ef;padding:10px;border-radius:10px;line-height:0">${qr.createSvgTag({cellSize:4, margin:0})}</div>
-      <div><div class="k">${t('scan')}</div><div class="big" style="font-size:20px">${esc(lan)}</div><div class="sub">${t('phone_help')}</div></div>`;
+    const n = qr.getModuleCount(); let rects = '';
+    for(let r = 0; r < n; r++) for(let c = 0; c < n; c++) if(qr.isDark(r, c)) rects += `<rect x="${c}" y="${r}" width="1.02" height="1.02" rx=".18"/>`;
+    $('#phone').dataset.url = lan;
+    setTimeout(() => { const b = $('.qrbox'); if(b) b.onclick = () => b.classList.toggle('classic') });
+    $('#phone').innerHTML = `<div class="qrbox"><svg viewBox="-1 -1 ${n + 2} ${n + 2}" shape-rendering="geometricPrecision">${rects}</svg><i class="qrscan"></i></div>
+      <div class="qrinfo"><div class="k">${t('scan')}</div><div class="qrurl">${esc(lan)}</div><div class="sub">${t('phone_help')}</div>
+      <div class="qrsteps"><span>📱 1. Wi-Fi</span><span>📷 2. Scan</span><span>➕ 3. Home Screen</span></div></div>`;
   }
   const d = S.disk || {}, pct = d.total ? d.used / d.total * 100 : 0;
   $('#disk').innerHTML = `<div class="k">SSD</div><div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div>
@@ -478,49 +483,130 @@ $('#sosBtn').onclick = () => {
 };
 
 /* ───────── downloads & updates ───────── */
-let dlTimer = null, CAT = null;
+let dlTimer = null, CAT = null, DLTAB = 'zim', SHOW = 60, FCAT = '';
 const stLabel = s => t('status_' + s);
-async function loadUpdates(){
-  const u = await api('/api/updates').catch(() => ({updates:[], jobs:{}}));
-  window.__jobs = u.jobs || {};
-  $('#updInfo').innerHTML = `<span class="dot ${u.online ? 'ok' : 'warn'}"></span>${u.online ? t('online') : t('offline')} · ${t('last_check')}: ${u.last_check || '—'} · ${t('never_auto')}`;
-  const jobs = u.jobs || {};
-  const rows = u.updates.map(x => { const j = jobs[x.id]; return `<div class="upd"><div class="t"><b>${esc(x.title)}</b><span>${esc(x.type.toUpperCase())} · ${esc(x.current)} → ${esc(x.latest)}</span>${jobBar(j)}</div>
-      <button class="btn pri" data-u="${esc(x.id)}" ${j && j.status === 'bezig' ? 'disabled' : ''}>${t('update')}</button></div>` });
-  $('#updList').innerHTML = rows.join('') || `<div class="note">${t('up_to_date')}${u.online ? '' : t('offline_note')}</div>`;
-  $$('#updList [data-u]').forEach(b => b.onclick = async () => { await post('/api/updates/run', {id:b.dataset.u}); loadUpdates() });
-  if(CAT) renderCatalog();
-  clearTimeout(dlTimer);
-  if(VIEW === 'dl' && Object.values(jobs).some(j => j.status === 'bezig')) dlTimer = setTimeout(loadUpdates, 1500);
+const CATNAMES = {wikipedia:'Wikipedia', gutenberg:'Books (Gutenberg)', stack_exchange:'Stack Exchange', ted:'TED talks', ifixit:'iFixit', wiktionary:'Wiktionary',
+  wikibooks:'Wikibooks', wikivoyage:'Wikivoyage', wikiversity:'Wikiversity', wikiquote:'Wikiquote', wikisource:'Wikisource', wikinews:'Wikinews',
+  phet:'PhET science', libretexts:'LibreTexts', vikidia:'Vikidia (kids)', freecodecamp:'freeCodeCamp', devdocs:'DevDocs', videos:'Videos', other:'Other', mooc:'Courses', zimit:'Websites'};
+const POP = ['wikipedia','gutenberg','ifixit','wikibooks','wikivoyage','stack_exchange','wiktionary','libretexts','ted','phet','devdocs','other'];
+async function loadDownloads(force){
+  if(!CAT || force){
+    $('#zimgrid').innerHTML = `<div class="empty">${t('loading')}</div>`;
+    CAT = await api('/api/catalog' + (force ? '?force=1' : '')).catch(() => ({zim:[], extras:[]}));
+  }
+  await pollJobs(); renderCats(); renderZim(); renderExtras();
 }
+async function pollJobs(){
+  const u = await api('/api/updates').catch(() => ({updates:[], jobs:{}}));
+  window.__jobs = u.jobs || {}; window.__upd = u;
+  renderQueue(); renderUpdates(u);
+  clearTimeout(dlTimer);
+  const busy = Object.values(window.__jobs).some(j => j.status === 'bezig' || j.status === 'wachtrij');
+  if(VIEW === 'dl' && busy) dlTimer = setTimeout(async () => {
+    const before = JSON.stringify(Object.values(window.__jobs).map(j => j.status));
+    await pollJobs();
+    if(before !== JSON.stringify(Object.values(window.__jobs).map(j => j.status))){ CAT = null; await loadStatus(); loadDownloads() }
+    else { renderZim(true); renderExtras() }
+  }, 1500);
+}
+function jobOf(id){ return (window.__jobs || {})[id] }
+function eta(j){ if(!j.speed || !j.total) return ''; const s = (j.total - j.done) / j.speed; return ` · ${fmtB(j.speed)}/s · ${s > 3600 ? (s/3600).toFixed(1) + 'h' : Math.ceil(s/60) + 'm'} ${t('eta')}` }
 function jobBar(j){
   if(!j) return '';
   const pct = j.total ? (j.done / j.total * 100) : 0;
-  return `<div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div><span>${stLabel(j.status)} ${j.total ? fmtB(j.done) + ' / ' + fmtB(j.total) + ' · ' + pct.toFixed(1) + '%' : ''} ${esc(j.msg || '')}</span>`;
+  return `<div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div><span class="mono dim">${stLabel(j.status)} ${j.total ? fmtB(j.done) + ' / ' + fmtB(j.total) + ' · ' + pct.toFixed(1) + '%' : ''}${eta(j)} ${esc(j.msg || '')}</span>`;
 }
-async function loadCatalog(force){
-  $('#catalog').innerHTML = `<div class="empty">${t('loading')}</div>`;
-  CAT = await api('/api/catalog' + (force ? '?force=1' : '')).catch(() => ({online:false, items:[]}));
-  renderCatalog();
-}
-function renderCatalog(){
+function renderQueue(){
+  const run = Object.entries(window.__jobs || {}).filter(([, j]) => j.status === 'bezig' || j.status === 'wachtrij');
+  $('#dlQueue').innerHTML = run.length ? `<div class="hud" style="margin:4px 2px 8px">${t('queue')}</div>` + run.map(([id, j]) =>
+    `<div class="upd"><div class="t"><b>${esc(j.title)}</b>${jobBar(j)}</div><button class="btn" data-c="${esc(id)}">${t('cancel')}</button></div>`).join('') : '';
+  $$('#dlQueue [data-c]').forEach(b => b.onclick = () => cancelDl(b.dataset.c));
   const d = STATUS.disk || {};
-  $('#dlFree').innerHTML = `SSD: <b style="color:var(--acc)">${fmtB(d.free)} ${t('free')}</b>`;
-  if(!CAT.online){ $('#catalog').innerHTML = `<div class="note">${t('need_online')}</div>`; return }
-  const jobs = window.__jobs || {}, groups = {};
-  CAT.items.forEach(i => (groups[i.cat] = groups[i.cat] || []).push(i));
-  $('#catalog').innerHTML = Object.entries(groups).map(([cat, items]) => `<div class="hud" style="margin:18px 2px 8px">${t('c_' + cat).toUpperCase()}</div>` + items.map(i => {
-    const j = jobs[i.id], running = j && j.status === 'bezig', newer = i.installed && i.installed !== 'yes' && i.installed < i.date;
-    const badge = i.installed ? `<em class="${newer ? 'warnb' : 'okb'}">${newer ? t('newer') : t('installed')}</em>` : '';
-    const btn = i.kind === 'torrent' ? `<a class="btn" href="${esc(i.url)}" target="_blank">${t('torrent')}</a>`
-      : running ? `<button class="btn" data-c="${esc(i.id)}">${t('cancel')}</button>`
-      : (i.installed && !newer) ? '' : `<button class="btn pri" data-d="${esc(i.id)}">${j && j.status === 'fout' ? t('resume') : t('download')}</button>`;
-    return `<div class="upd"><div class="t"><b>${esc(i.title)} ${badge}</b><span>${esc(i.file)} · ${esc(i.date)} · ${fmtB(i.size)}</span>${jobBar(j)}</div>${btn}</div>`;
-  }).join('')).join('');
-  $$('#catalog [data-d]').forEach(b => b.onclick = async () => { const r = await post('/api/download', {id:b.dataset.d}); if(r.error) toast(r.error); loadUpdates() });
-  $$('#catalog [data-c]').forEach(b => b.onclick = async () => { await post('/api/download/cancel', {id:b.dataset.c}); setTimeout(loadUpdates, 800) });
+  $('#dlFree').innerHTML = `SSD <b style="color:var(--acc)">${fmtB(d.free)}</b> ${t('free')} / ${fmtB(d.total)}`;
 }
-$('#updCheck').onclick = async () => { await post('/api/updates/check'); $('#updInfo').textContent = t('loading'); setTimeout(loadUpdates, 4000); loadCatalog(true) };
+function renderCats(){
+  const langs = $('#flang').value.split(',').filter(Boolean);
+  const counts = {};
+  (CAT.zim || []).forEach(i => { if(!langs.length || langs.some(l => i.lang.split(',').includes(l))) counts[i.cat] = (counts[i.cat] || 0) + 1 });
+  const cats = Object.keys(counts).sort((a, b) => (POP.indexOf(a) + 1 || 99) - (POP.indexOf(b) + 1 || 99) || counts[b] - counts[a]);
+  $('#fcats').innerHTML = `<span class="chip${FCAT ? '' : ' on'}" data-c="">${t('cat_all')}</span>` +
+    cats.map(c => `<span class="chip${FCAT === c ? ' on' : ''}" data-c="${esc(c)}">${esc(CATNAMES[c] || c)} <small>${counts[c]}</small></span>`).join('');
+  $$('#fcats .chip').forEach(c => c.onclick = () => { FCAT = c.dataset.c; SHOW = 60; renderCats(); renderZim() });
+}
+function filtered(){
+  const q = $('#fq').value.trim().toLowerCase(), langs = $('#flang').value.split(',').filter(Boolean), fl = $('#fflav').value, inst = $('#finst').classList.contains('on');
+  let list = (CAT.zim || []).filter(i =>
+    (!langs.length || langs.some(l => i.lang.split(',').includes(l))) && (!FCAT || i.cat === FCAT) && (!fl || i.flavour === fl) && (!inst || i.installed) &&
+    (!q || (i.title + ' ' + i.summary + ' ' + i.name).toLowerCase().includes(q)));
+  const s = $('#fsort').value;
+  const pop = i => (POP.indexOf(i.cat) + 1 || 50) * 1e12 - i.articles;
+  list.sort(s === 'size' ? (a, b) => b.size - a.size : s === 'small' ? (a, b) => a.size - b.size : s === 'name' ? (a, b) => a.title.localeCompare(b.title)
+    : s === 'date' ? (a, b) => b.date.localeCompare(a.date) : (a, b) => (b.installed ? 1 : 0) - (a.installed ? 1 : 0) || pop(a) - pop(b));
+  return list;
+}
+function itemBtns(id, i, kind){
+  const j = jobOf(id);
+  if(j && (j.status === 'bezig' || j.status === 'wachtrij')) return `<button class="btn" data-c="${esc(id)}">${t('cancel')}</button>`;
+  if(kind === 'torrent') return i.installed ? `<span class="done">✓ ${t('downloaded')}</span>` : `<a class="btn" href="${esc(i.url)}" target="_blank">${t('torrent')}</a>`;
+  const newer = i.installed && typeof i.installed === 'string' && i.installed < i.date;
+  if(i.installed && !newer){
+    let b = `<span class="done">✓ ${t('downloaded')}</span>`;
+    if(kind === 'zim') b += `<button class="btn" data-o="${esc(i.prefix)}">${t('open')}</button>`;
+    if(kind === 'ai') b += i.active ? `<span class="okb">${t('active')}</span>` : `<button class="btn" data-use="${esc(i.file)}">${t('use')}</button>`;
+    if(kind === 'zim' || kind === 'ai') b += `<button class="btn ghost" data-rm="${esc(id)}" title="${t('remove')}">✕</button>`;
+    return b;
+  }
+  return `<button class="btn pri" data-d="${esc(id)}">${newer ? t('update') : (j && j.status === 'fout' ? t('resume') : t('download'))}</button>`;
+}
+function card(id, i, kind, iconHtml){
+  const j = jobOf(id), meta = kind === 'zim'
+    ? `${esc(i.lang)} · ${esc(i.flavour || '—')} · ${fmtN(i.articles)} ${t('articles')} · ${esc(i.date)}` : esc(i.date || '');
+  return `<div class="ccard${i.installed ? ' inst' : ''}"><div class="ctop">${iconHtml}<div class="cmain"><b>${esc(i.title)}</b><span class="mono dim">${meta}</span></div><em class="csize">${fmtB(i.size)}</em></div>
+    <div class="csum">${esc(i.summary || '')}</div>${j && j.status !== 'klaar' ? jobBar(j) : ''}<div class="cbtns">${itemBtns(id, i, kind)}</div></div>`;
+}
+function renderZim(keepScroll){
+  if(!CAT) return;
+  const list = filtered();
+  $('#fcount').textContent = (CAT.online ? '' : t('offline_cat') + ' · ') + t('shown', {n:fmtN(Math.min(SHOW, list.length)), t:fmtN(list.length)});
+  $('#zimgrid').innerHTML = list.slice(0, SHOW).map(i => card('zim:' + i.id, i, 'zim', `<img class="cico" loading="lazy" src="/api/icon/${i.id}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cico ph',textContent:'${esc(i.title[0] || '?')}'}))">`)).join('')
+    || `<div class="empty">${t('nothing')}</div>`;
+  $('#more').style.display = list.length > SHOW ? '' : 'none';
+  bindBtns('#zimgrid');
+}
+function renderExtras(){
+  if(!CAT) return;
+  const ex = CAT.extras || [], ic = {map:'🗺️', torrent:'⛰️', geo:'📍', ai:'🤖'};
+  $('#mapgrid').innerHTML = ex.filter(i => i.kind !== 'ai').map(i => card(i.id, i, i.kind, `<div class="cico ph">${ic[i.kind]}</div>`)).join('');
+  $('#aigrid').innerHTML = ex.filter(i => i.kind === 'ai').map(i => card(i.id, i, 'ai', `<div class="cico ph">🤖</div>`)).join('');
+  bindBtns('#mapgrid'); bindBtns('#aigrid');
+}
+function bindBtns(root){
+  $$(root + ' [data-d]').forEach(b => b.onclick = async () => { const r = await post('/api/download', {id:b.dataset.d}); if(r.error) toast(r.error); pollJobs().then(() => { renderZim(); renderExtras() }) });
+  $$(root + ' [data-c]').forEach(b => b.onclick = () => cancelDl(b.dataset.c));
+  $$(root + ' [data-o]').forEach(b => b.onclick = () => { const bk = BOOKS.find(x => x.id === b.dataset.o); location.hash = 'lib/' + (bk ? bk.id : b.dataset.o) });
+  $$(root + ' [data-use]').forEach(b => b.onclick = async () => { await post('/api/ai/use', {model:b.dataset.use}); CAT = null; await loadStatus(); loadDownloads() });
+  $$(root + ' [data-rm]').forEach(b => b.onclick = async () => {
+    const id = b.dataset.rm, it = id.startsWith('zim:') ? CAT.zim.find(x => 'zim:' + x.id === id) : CAT.extras.find(x => x.id === id);
+    if(!confirm(t('rm_confirm', {n:it.title, s:fmtB(it.size)}))) return;
+    const r = await post('/api/remove', {id}); if(r.error) toast(r.error);
+    CAT = null; await loadStatus(); loadDownloads();
+  });
+}
+async function cancelDl(id){ await post('/api/download/cancel', {id}); setTimeout(() => pollJobs().then(() => { renderZim(); renderExtras() }), 600) }
+function renderUpdates(u){
+  $('#updCount').textContent = u.updates.length ? '(' + u.updates.length + ')' : '';
+  $('#updInfo').innerHTML = `<span class="dot ${u.online ? 'ok' : 'warn'}"></span>${u.online ? t('online') : t('offline')} · ${t('last_check')}: ${u.last_check || '—'} · ${t('never_auto')}`;
+  const jobs = u.jobs || {};
+  $('#updList').innerHTML = u.updates.map(x => { const j = jobs[x.id]; return `<div class="upd"><div class="t"><b>${esc(x.title)}</b><span>${esc(x.type.toUpperCase())} · ${esc(x.current)} → ${esc(x.latest)}</span>${jobBar(j)}</div>
+      <button class="btn pri" data-u="${esc(x.id)}" ${j && j.status === 'bezig' ? 'disabled' : ''}>${t('update')}</button></div>` }).join('') || `<div class="note">${t('up_to_date')}${u.online ? '' : t('offline_note')}</div>`;
+  $$('#updList [data-u]').forEach(b => b.onclick = async () => { await post('/api/updates/run', {id:b.dataset.u}); pollJobs() });
+}
+$$('#dlTabs button').forEach(b => b.onclick = () => { DLTAB = b.dataset.v; $$('#dlTabs button').forEach(x => x.classList.toggle('on', x === b)); $$('.pane').forEach(p => p.style.display = p.id === 'pane-' + DLTAB ? '' : 'none') });
+['#fq'].forEach(s => $(s).addEventListener('input', debounce(() => { SHOW = 60; renderZim() }, 150)));
+['#flang','#fflav','#fsort'].forEach(s => $(s).addEventListener('change', () => { SHOW = 60; renderCats(); renderZim() }));
+$('#finst').onclick = () => { $('#finst').classList.toggle('on'); renderZim() };
+$('#more').onclick = () => { SHOW += 60; renderZim() };
+$('#updCheck').onclick = async () => { await post('/api/updates/check'); $('#updInfo').textContent = t('loading'); setTimeout(pollJobs, 4000); loadDownloads(true) };
 $('#rescan').onclick = async () => { await post('/api/rescan'); await loadStatus(); toast(t('saved')) };
 
 /* ───────── instellingen ───────── */

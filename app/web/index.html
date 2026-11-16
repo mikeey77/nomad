@@ -46,7 +46,7 @@
       <div class="grid" id="mods"></div>
       <div id="favHome"></div>
       <div class="sec-t" id="phoneT" data-t="phone"></div>
-      <div class="card" style="cursor:default;display:flex;gap:22px;align-items:center;flex-wrap:wrap" id="phone"></div>
+      <div class="card phonecard" id="phone"></div>
       <div class="sec-t" data-t="storage"></div>
       <div class="card" style="cursor:default" id="disk"></div>
     </div></section>
@@ -120,14 +120,32 @@
         <div style="display:flex;gap:8px;margin-top:10px"><input id="checkIn" class="inp" style="flex:1" data-tp="add_item"><button class="btn" id="checkAdd">+</button></div></div>
     </div></section>
 
-    <section class="view" id="v-dl"><div class="dash" style="max-width:980px">
-      <div class="sec-t" style="margin-top:0" data-t="updates"></div>
-      <div id="updInfo" class="sub" style="color:var(--dim);margin-bottom:14px"></div>
-      <div id="updList"></div>
-      <div style="margin:14px 0 0;display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="updCheck" data-t="check_now"></button><button class="btn" id="rescan" data-t="rescan"></button></div>
-      <div class="sec-t" data-t="catalog"></div>
-      <div id="dlFree" class="sub" style="color:var(--dim);margin-bottom:12px"></div>
-      <div id="catalog"></div>
+    <section class="view" id="v-dl"><div class="dash" style="max-width:1300px">
+      <div class="dlhead">
+        <div class="seg" id="dlTabs"><button data-v="zim" class="on" data-t="t_library"></button><button data-v="maps" data-t="t_maps"></button><button data-v="ai" data-t="t_ai"></button><button data-v="upd"><span data-t="updates"></span> <b id="updCount"></b></button></div>
+        <div id="dlFree" class="mono dim"></div>
+      </div>
+      <div id="dlQueue"></div>
+      <div id="pane-zim" class="pane">
+        <div class="filters">
+          <input id="fq" class="inp" data-tp="f_search" style="flex:1;min-width:200px">
+          <select id="flang" class="inp"><option value="eng,nld">English + Nederlands</option><option value="eng">English</option><option value="nld">Nederlands</option><option value="">All languages</option></select>
+          <select id="fflav" class="inp"><option value="" data-t="f_any"></option><option value="maxi">maxi (images)</option><option value="nopic">nopic (no images)</option><option value="mini">mini (intros)</option></select>
+          <select id="fsort" class="inp"><option value="pop" data-t="f_pop"></option><option value="size" data-t="f_big"></option><option value="small" data-t="f_small"></option><option value="name" data-t="f_name"></option><option value="date" data-t="f_new"></option></select>
+          <div class="tog" id="finst"><i></i><span data-t="f_installed"></span></div>
+        </div>
+        <div class="catchips" id="fcats"></div>
+        <div class="mono dim" id="fcount" style="margin:6px 2px 12px"></div>
+        <div class="cgrid" id="zimgrid"></div>
+        <div style="text-align:center;margin:20px"><button class="btn" id="more" data-t="more"></button></div>
+      </div>
+      <div id="pane-maps" class="pane" style="display:none"><div class="cgrid" id="mapgrid"></div></div>
+      <div id="pane-ai" class="pane" style="display:none"><div class="cgrid" id="aigrid"></div></div>
+      <div id="pane-upd" class="pane" style="display:none">
+        <div id="updInfo" class="sub" style="color:var(--dim);margin-bottom:14px"></div>
+        <div id="updList"></div>
+        <div style="margin:14px 0 0;display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="updCheck" data-t="check_now"></button><button class="btn" id="rescan" data-t="rescan"></button></div>
+      </div>
     </div></section>
 
     <section class="view" id="v-set"><div class="dash" style="max-width:860px">

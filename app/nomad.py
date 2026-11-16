@@ -28,7 +28,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.4.2"
+VERSION = "0.5.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -476,25 +476,46 @@ def update_loop():
         time.sleep(max(5, CFG["update_check_minutes"]) * 60)
 
 
-def download(job, url, target):
+def download(job, url, target, retries=50):
+    """Download met hervatten: overleeft netwerkstoringen en herstarts (.part blijft staan)."""
     os.makedirs(DL_DIR, exist_ok=True)
     part = os.path.join(DL_DIR, os.path.basename(target) + ".part")
-    have = os.path.getsize(part) if os.path.exists(part) else 0
-    req = urllib.request.Request(url, headers={"User-Agent": "NOMAD/" + VERSION, "Range": f"bytes={have}-"})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        if r.status == 200:
-            have = 0
-        total = have + int(r.headers.get("Content-Length") or 0)
-        job.update(total=total, done=have)
-        with open(part, "ab" if have else "wb") as f:
-            while True:
-                if job.get("cancel"):
-                    raise RuntimeError("geannuleerd")
-                chunk = r.read(1 << 20)
-                if not chunk:
-                    break
-                f.write(chunk)
-                job["done"] += len(chunk)
+    for attempt in range(retries):
+        have = os.path.getsize(part) if os.path.exists(part) else 0
+        req = urllib.request.Request(url, headers={"User-Agent": "NOMAD/" + VERSION, "Range": f"bytes={have}-"})
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                if r.status == 200:
+                    have = 0
+                job.update(total=have + int(r.headers.get("Content-Length") or 0), done=have)
+                t0, d0 = time.time(), have
+                with open(part, "ab" if have else "wb") as f:
+                    while True:
+                        if job.get("cancel"):
+                            raise InterruptedError("cancelled")
+                        chunk = r.read(1 << 20)
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        job["done"] += len(chunk)
+                        dt = time.time() - t0
+                        if dt > 2:
+                            job["speed"] = (job["done"] - d0) / dt
+                            t0, d0 = time.time(), job["done"]
+            break
+        except urllib.error.HTTPError as e:
+            if e.code == 416:  # al compleet
+                break
+            if attempt == retries - 1:
+                raise
+        except InterruptedError:
+            raise
+        except Exception:
+            if attempt == retries - 1:
+                raise
+            job["msg"] = f"connection lost, retrying ({attempt + 1})…"
+            time.sleep(min(60, 5 * (attempt + 1)))
+    job["msg"] = ""
     os.replace(part, target)
 
 
@@ -630,6 +651,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json(features.cleanup_items())
             if p == "/api/catalog":
                 return self.json(features.catalog(q("force") == "1"))
+            if p.startswith("/api/icon/"):
+                data = features.icon(p[10:])
+                return self.send(200, data, "image/png", cache=True) if data else self.send(404, "")
             if p == "/api/updates":
                 return self.json({"online": STATE["online"], "last_check": STATE["last_check"],
                                   "updates": STATE["updates"], "jobs": STATE["jobs"]})
@@ -663,9 +687,13 @@ class Handler(BaseHTTPRequestHandler):
             if p == "/api/cleanup":
                 return self.json(features.cleanup(self.body_json().get("paths", [])))
             if p == "/api/download":
-                return self.json(features.start_download(self.body_json().get("id")))
+                return self.json(features.enqueue(self.body_json().get("id")))
             if p == "/api/download/cancel":
-                return self.json(features.cancel_download(self.body_json().get("id")))
+                return self.json(features.cancel(self.body_json().get("id")))
+            if p == "/api/remove":
+                return self.json(features.remove(self.body_json().get("id")))
+            if p == "/api/ai/use":
+                return self.json(features.use_model(self.body_json().get("model")))
             if p == "/api/shutdown" and self.client_address[0] == "127.0.0.1":
                 self.json({"ok": True})
                 threading.Thread(target=lambda: (time.sleep(0.3), stop_services(), os._exit(0)), daemon=True).start()

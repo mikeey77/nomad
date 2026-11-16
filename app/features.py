@@ -170,43 +170,98 @@ def cleanup(paths):
 
 
 # ───────── downloadcatalogus ─────────
+import xml.etree.ElementTree as ET
+from collections import deque
 
-KIWIX = "https://download.kiwix.org/zim/"
-CATALOG = [
-    # id, map, prefix, categorie, titel
-    ("wikipedia_en_all_maxi", "wikipedia", "encyclopedia", "Wikipedia (English, with images)"),
-    ("wikipedia_en_all_nopic", "wikipedia", "encyclopedia", "Wikipedia (English, no images)"),
-    ("wikipedia_nl_all_maxi", "wikipedia", "encyclopedia", "Wikipedia (Nederlands)"),
-    ("wiktionary_en_all_maxi", "wiktionary", "dictionary", "Wiktionary (English)"),
-    ("gutenberg_en_all", "gutenberg", "books", "Project Gutenberg (~70k books)"),
-    ("wikibooks_en_all_maxi", "wikibooks", "learning", "Wikibooks"),
-    ("wikiversity_en_all_maxi", "wikiversity", "learning", "Wikiversity"),
-    ("ifixit_en_all", "ifixit", "repair", "iFixit repair guides"),
-    ("mdwiki_en_all_maxi", "other", "medical", "WikiMed / mdwiki (medical)"),
-    ("wikivoyage_en_all_maxi", "wikivoyage", "travel", "Wikivoyage travel guide"),
-    ("electronics.stackexchange.com_en_all", "stack_exchange", "q&a", "Electronics Stack Exchange"),
-    ("diy.stackexchange.com_en_all", "stack_exchange", "q&a", "DIY / Home Improvement SE"),
-    ("cooking.stackexchange.com_en_all", "stack_exchange", "q&a", "Cooking Stack Exchange"),
-    ("gardening.stackexchange.com_en_all", "stack_exchange", "q&a", "Gardening Stack Exchange"),
-    ("outdoors.stackexchange.com_en_all", "stack_exchange", "q&a", "Outdoors Stack Exchange"),
-    ("phet_en_all", "phet", "learning", "PhET science simulations"),
-]
+OPDS = "https://library.kiwix.org/catalog/v2/entries?count=-1"
+NS = {"a": "http://www.w3.org/2005/Atom"}
 CAT_CACHE = {"t": 0, "items": None}
-LISTINGS = {}
-SIZE_RE = r'href="(%s_(\d{4}-\d{2})\.zim)"[^>]*>[^<]*</a>\s*([\d-]+ [\d:]+)?\s*([\d.]+[KMGT]?)'
+QUEUE = deque()
+QUEUE_LOCK = threading.Lock()
+WORKER = {"running": False}
+
+AI_MODELS = [
+    ("gemma3:1b", "Gemma 3 1B", "Tiny & fast — basic answers", 0.8),
+    ("llama3.2:1b", "Llama 3.2 1B", "Tiny & fast", 1.3),
+    ("qwen3:1.7b", "Qwen 3 1.7B", "Small, good reasoning", 1.4),
+    ("llama3.2:3b", "Llama 3.2 3B", "Default — good balance on CPU", 2.0),
+    ("qwen3:4b", "Qwen 3 4B", "Smart for its size, multilingual (NL)", 2.5),
+    ("phi4-mini", "Phi-4 mini 3.8B", "Strong at math & logic", 2.5),
+    ("gemma3:4b", "Gemma 3 4B", "Multilingual, can read images", 3.3),
+    ("qwen2.5-coder:3b", "Qwen 2.5 Coder 3B", "Programming help", 1.9),
+    ("mistral:7b", "Mistral 7B", "Larger, slower on CPU", 4.1),
+    ("qwen3:8b", "Qwen 3 8B", "Best quality, needs 16 GB RAM", 5.2),
+    ("deepseek-r1:7b", "DeepSeek R1 7B", "Thinks step by step (slow)", 4.7),
+    ("llava:7b", "LLaVA 7B", "Vision: describe photos", 4.7),
+]
 
 
-def _get(url, timeout=20):
+def _get(url, timeout=30):
     req = urllib.request.Request(url, headers={"User-Agent": "NOMAD/" + N.VERSION})
     with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read().decode("utf-8", "replace")
+        return r.read()
 
 
-def _size_bytes(s):
-    if not s:
-        return 0
-    mult = {"K": 1 << 10, "M": 1 << 20, "G": 1 << 30, "T": 1 << 40}
-    return int(float(s[:-1]) * mult[s[-1]]) if s[-1] in mult else int(float(s))
+def _cache_file():
+    return os.path.join(N.DL_DIR, "kiwix-catalog.json")
+
+
+def kiwix_entries(force=False):
+    """Alle Kiwix-collecties (±3600). Online opgehaald, offline uit cache."""
+    if CAT_CACHE["items"] is not None and not force and time.time() - CAT_CACHE["t"] < 6 * 3600:
+        return CAT_CACHE["items"]
+    items = None
+    if N.is_online():
+        try:
+            root = ET.fromstring(_get(OPDS, 120))
+            items = []
+            for e in root.findall("a:entry", NS):
+                g = lambda k: (e.findtext("a:" + k, "", NS) or "").strip()
+                acq = next((l for l in e.findall("a:link", NS) if l.get("type") == "application/x-zim"), None)
+                if acq is None:
+                    continue
+                url = acq.get("href", "").replace(".meta4", "")
+                file = url.rsplit("/", 1)[-1]
+                m = re.match(r"(.+)_(\d{4}-\d{2})\.zim$", file)
+                tags = g("tags")
+                items.append({
+                    "id": g("id").replace("urn:uuid:", ""), "title": g("title"), "summary": g("summary"),
+                    "lang": g("language"), "name": g("name"), "flavour": g("flavour"), "cat": g("category") or "other",
+                    "prefix": m.group(1) if m else file[:-4], "date": m.group(2) if m else g("updated")[:7],
+                    "articles": int(g("articleCount") or 0), "size": int(acq.get("length") or 0),
+                    "url": url, "file": file, "pictures": "_pictures:yes" in tags, "videos": "_videos:yes" in tags,
+                })
+            N.save_json(_cache_file(), items)
+        except Exception as ex:
+            print("catalogus ophalen mislukt:", ex)
+            items = None
+    if items is None:
+        try:
+            with open(_cache_file(), encoding="utf-8") as f:
+                items = json.load(f)
+        except Exception:
+            items = []
+    CAT_CACHE.update(t=time.time(), items=items)
+    return items
+
+
+def icon(uuid):
+    """Pictogram van een collectie, één keer online ophalen en daarna lokaal bewaren."""
+    if not re.fullmatch(r"[0-9a-f-]{36}", uuid or ""):
+        return None
+    d = os.path.join(N.DL_DIR, "icons")
+    f = os.path.join(d, uuid + ".png")
+    if os.path.exists(f):
+        return open(f, "rb").read()
+    if not N.STATE.get("online"):
+        return None
+    try:
+        data = _get(f"https://library.kiwix.org/catalog/v2/illustration/{uuid}/?size=48", 10)
+        os.makedirs(d, exist_ok=True)
+        open(f, "wb").write(data)
+        return data
+    except Exception:
+        return None
 
 
 def _latest_protomaps():
@@ -222,84 +277,181 @@ def _latest_protomaps():
     return None, 0, None
 
 
+def extras():
+    """Kaarten, adres zoeken en AI-modellen."""
+    out = []
+    online = N.is_online()
+    url, size, d = _latest_protomaps() if online else (None, 125 << 30, None)
+    out.append({"id": "map:world", "kind": "map", "cat": "maps", "title": "World map", "summary":
+                "All streets, buildings and place names on Earth (OpenStreetMap via Protomaps).",
+                "file": "world.pmtiles", "date": d or "", "size": size, "url": url,
+                "installed": bool(N.map_file("world")), "target": os.path.join(N.MAP_DIR, "basis", "world.pmtiles")})
+    out.append({"id": "torrent:terrain", "kind": "torrent", "cat": "maps", "title": "Elevation & 3D terrain",
+                "summary": "JAXA AW3D30 terrain (zoom 0-11). Only available as torrent: open it in qBittorrent, save to data\\kaart\\hoogte and rename to terrain.pmtiles.",
+                "file": "terrain.pmtiles", "date": "2025", "size": int(90.9 * (1 << 30)),
+                "url": "https://techidiots.net/downloads/open-base-map-torrents/pmtiles/jaxa_terrarium0-11/JAXA_AW3D30_2025_Terrarium_z0-Z11_cubic_webp_pmtiles.torrent",
+                "installed": bool(N.map_file("terrain"))})
+    out.append({"id": "geo:photon", "kind": "geo", "cat": "search", "title": "Address search (worldwide)",
+                "summary": "Photon geocoder database: search any address or place on Earth. Unpacks and starts automatically.",
+                "file": "photon-db-planet-1.0-latest.tar.bz2", "date": "weekly", "size": 66 << 30,
+                "url": "https://download1.graphhopper.com/public/photon-db-planet-1.0-latest.tar.bz2",
+                "installed": os.path.isdir(os.path.join(N.GEO_DIR, "photon_data")),
+                "target": os.path.join(N.DL_DIR, "photon-db-planet-1.0-latest.tar.bz2")})
+    have = set(N.ai_models()) if N.STATE.get("ai") == "aan" else set()
+    for mid, title, summ, gb in AI_MODELS:
+        out.append({"id": "ai:" + mid, "kind": "ai", "cat": "ai", "title": title, "summary": summ, "file": mid,
+                    "date": "", "size": int(gb * (1 << 30)), "installed": mid in have or (mid + ":latest") in have,
+                    "active": N.CFG.get("ai_model") == mid})
+    return out
+
+
 def catalog(force=False):
-    if CAT_CACHE["items"] is not None and not force and time.time() - CAT_CACHE["t"] < 3600:
-        return CAT_CACHE["items"]
-    if not N.is_online():
-        return {"online": False, "items": []}
-    installed = {b.prefix: b.date for b in N.BOOKS.values()}
-    items = []
-    for prefix, d, cat, title in CATALOG:
-        try:
-            if d not in LISTINGS:
-                LISTINGS[d] = _get(KIWIX + d + "/")
-            hits = re.findall(SIZE_RE % re.escape(prefix), LISTINGS[d])
-        except Exception:
-            hits = []
-        if not hits:
-            continue
-        name, dt, _, size = max(hits, key=lambda h: h[1])
-        items.append({"id": "zim:" + prefix, "kind": "library", "cat": cat, "title": title, "file": name,
-                      "date": dt, "size": _size_bytes(size), "url": KIWIX + d + "/" + name,
-                      "installed": installed.get(prefix), "target": os.path.join(N.LIB_DIR, name)})
-    url, size, d = _latest_protomaps()
-    world = N.map_file("world")
-    if url:
-        items.append({"id": "map:world", "kind": "map", "cat": "map", "title": "World map (Protomaps / OpenStreetMap)",
-                      "file": "world.pmtiles", "date": d, "size": size, "url": url,
-                      "installed": "yes" if world else None,
-                      "target": os.path.join(N.MAP_DIR, "basis", "world.pmtiles")})
-    items.append({"id": "geo:photon", "kind": "geo", "cat": "search", "title": "Address search database (Photon, planet)",
-                  "file": "photon-db-planet-1.0-latest.tar.bz2", "date": "weekly", "size": 66 << 30,
-                  "url": "https://download1.graphhopper.com/public/photon-db-planet-1.0-latest.tar.bz2",
-                  "installed": "yes" if os.path.isdir(os.path.join(N.GEO_DIR, "photon_data")) else None,
-                  "target": os.path.join(N.DL_DIR, "photon-db-planet-1.0-latest.tar.bz2")})
-    items.append({"id": "torrent:terrain", "kind": "torrent", "cat": "map", "title": "Elevation / 3D terrain (JAXA, torrent only)",
-                  "file": "terrain.pmtiles", "date": "2025", "size": int(90.9 * (1 << 30)),
-                  "url": "https://techidiots.net/downloads/open-base-map-torrents/pmtiles/jaxa_terrarium0-11/JAXA_AW3D30_2025_Terrarium_z0-Z11_cubic_webp_pmtiles.torrent",
-                  "installed": "yes" if N.map_file("terrain") else None})
-    res = {"online": True, "items": items}
-    CAT_CACHE.update(t=time.time(), items=res)
-    return res
+    items = kiwix_entries(force)
+    inst = {b.prefix: b.date for b in N.BOOKS.values()}
+    for i in items:
+        i["installed"] = inst.get(i["prefix"])
+    return {"online": N.STATE.get("online") or N.is_online(), "zim": items, "extras": extras(),
+            "free": N.shutil.disk_usage(N.ROOT).free}
 
 
-def start_download(item_id):
-    cat = CAT_CACHE["items"] or catalog()
-    item = next((i for i in cat.get("items", []) if i["id"] == item_id), None)
-    if not item or item["kind"] == "torrent":
-        return {"error": "not downloadable"}
+# ── wachtrij: downloads één voor één, de rest staat "in wachtrij" ──
+def enqueue(item_id):
     jobs = N.STATE["jobs"]
-    if item_id in jobs and jobs[item_id]["status"] == "bezig":
+    if item_id in jobs and jobs[item_id]["status"] in ("bezig", "wachtrij"):
         return {"ok": True}
+    item = _find(item_id)
+    if not item:
+        return {"error": "unknown item"}
+    if item.get("kind") == "torrent":
+        return {"error": "torrent only"}
     free = N.shutil.disk_usage(N.ROOT).free
-    part = os.path.join(N.DL_DIR, os.path.basename(item["target"]) + ".part")
-    have = os.path.getsize(part) if os.path.exists(part) else 0
-    if item["size"] and item["size"] - have > free:
+    if item.get("size") and item["size"] > free and item.get("kind") != "ai":
         return {"error": "not enough free space"}
-    job = {"status": "bezig", "title": item["title"], "done": 0, "total": item["size"], "msg": ""}
-    jobs[item_id] = job
+    jobs[item_id] = {"status": "wachtrij", "title": item["title"], "done": 0, "total": item.get("size", 0), "msg": ""}
+    with QUEUE_LOCK:
+        QUEUE.append((item_id, item))
+        if not WORKER["running"]:
+            WORKER["running"] = True
+            threading.Thread(target=_worker, daemon=True).start()
+    return {"ok": True}
 
-    def work():
+
+def _find(item_id):
+    if item_id.startswith("zim:"):
+        uid = item_id[4:]
+        it = next((i for i in kiwix_entries() if i["id"] == uid), None)
+        if it:
+            return dict(it, kind="zim", target=os.path.join(N.LIB_DIR, it["file"]))
+        return None
+    return next((i for i in extras() if i["id"] == item_id), None)
+
+
+def _worker():
+    while True:
+        with QUEUE_LOCK:
+            if not QUEUE:
+                WORKER["running"] = False
+                return
+            item_id, item = QUEUE.popleft()
+        job = N.STATE["jobs"][item_id]
+        if job.get("cancel"):
+            job["status"] = "fout"
+            job["msg"] = ""
+            continue
+        job["status"] = "bezig"
         try:
-            N.download(job, item["url"], item["target"])
-            if item["kind"] == "library":
-                N.scan_library()
-            elif item["kind"] == "geo":
-                job["msg"] = "extracting…"
-                subprocess.run(["tar", "-xjf", item["target"], "-C", N.GEO_DIR], check=True)
-                job["msg"] = "extracted — restart NOMAD"
+            kind = item["kind"]
+            if kind == "ai":
+                _pull_model(job, item["file"])
+            else:
+                N.download(job, item["url"], item["target"])
+                if kind == "zim":
+                    old = [(b.path, b.file) for b in N.BOOKS.values() if b.prefix == item["prefix"] and b.file != item["file"]]
+                    N.scan_library()
+                    import gc
+                    gc.collect()
+                    for path, file in old:  # oude versie opzij zetten
+                        oud = os.path.join(N.DL_DIR, "oud")
+                        os.makedirs(oud, exist_ok=True)
+                        try:
+                            os.replace(path, os.path.join(oud, file))
+                        except OSError:
+                            pass
+                    N.scan_library()
+                elif kind == "geo":
+                    job["msg"] = "unpacking… (can take an hour)"
+                    subprocess.run(["tar", "-xjf", item["target"], "-C", N.GEO_DIR], check=True)
+                    job["msg"] = "starting address search…"
+                    threading.Thread(target=N.start_photon, daemon=True).start()
             job["status"] = "klaar"
-            CAT_CACHE["t"] = 0
+            job["msg"] = ""
+            CAT_CACHE["t"] = 0 if kind != "zim" else CAT_CACHE["t"]
         except Exception as e:
             job["status"] = "fout"
             job["msg"] = str(e)
 
-    threading.Thread(target=work, daemon=True).start()
-    return {"ok": True}
+
+def _pull_model(job, model):
+    if N.STATE.get("ai") != "aan":
+        N.start_ollama()
+    req = urllib.request.Request(f"http://127.0.0.1:{N.CFG['ollama_port']}/api/pull",
+                                 data=json.dumps({"model": model}).encode(), headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=7200) as r:
+        for line in r:
+            if job.get("cancel"):
+                raise RuntimeError("cancelled")
+            try:
+                m = json.loads(line)
+            except Exception:
+                continue
+            if m.get("error"):
+                raise RuntimeError(m["error"])
+            job["msg"] = m.get("status", "")
+            if m.get("total"):
+                job["total"], job["done"] = m["total"], m.get("completed", 0)
 
 
-def cancel_download(item_id):
+def cancel(item_id):
     j = N.STATE["jobs"].get(item_id)
     if j:
         j["cancel"] = True
+        if j["status"] == "wachtrij":
+            j["status"] = "fout"
+    return {"ok": True}
+
+
+def remove(item_id):
+    """Verwijdert een geïnstalleerde collectie of een AI-model (na bevestiging in de UI)."""
+    if item_id.startswith("zim:"):
+        it = _find(item_id)
+        if not it:
+            return {"error": "unknown"}
+        paths = [b.path for b in N.BOOKS.values() if b.prefix == it["prefix"]]
+        with N.BOOKS_LOCK:
+            for k in [k for k, b in N.BOOKS.items() if b.prefix == it["prefix"]]:
+                N.BOOKS.pop(k)
+        import gc
+        gc.collect()
+        for p in paths:
+            try:
+                os.remove(p)
+            except OSError as e:
+                N.scan_library()
+                return {"error": str(e)}
+        N.scan_library()
+        return {"ok": True}
+    if item_id.startswith("ai:"):
+        try:
+            req = urllib.request.Request(f"http://127.0.0.1:{N.CFG['ollama_port']}/api/delete", method="DELETE",
+                                         data=json.dumps({"model": item_id[3:]}).encode(), headers={"Content-Type": "application/json"})
+            urllib.request.urlopen(req, timeout=30)
+            return {"ok": True}
+        except Exception as e:
+            return {"error": str(e)}
+    return {"error": "not removable"}
+
+
+def use_model(model):
+    N.CFG["ai_model"] = model
+    N.save_json(N.CONFIG_FILE, N.CFG)
     return {"ok": True}
