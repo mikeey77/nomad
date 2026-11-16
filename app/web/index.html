@@ -57,7 +57,7 @@
       <aside id="lib-side">
         <div class="block"><div class="hud" data-t="collections"></div><div id="books"></div></div>
         <div class="block" id="artBlock" style="display:none">
-          <button class="btn" id="favBtn" style="width:100%;margin-bottom:10px"></button>
+          <div style="display:flex;gap:8px;margin-bottom:10px"><button class="btn" id="favBtn" style="flex:1"></button><button class="btn" id="laterBtn" style="flex:1"></button></div>
           <div class="hud" data-t="a_look"></div>
           <div class="seg" id="aMode" style="margin-bottom:14px"><button data-v="auto">Auto</button><button data-v="nomad">NOMAD</button><button data-v="original" data-t="a_orig"></button><button data-v="dark" data-t="dark"></button></div>
           <div class="hud" data-t="note"></div>
@@ -65,7 +65,7 @@
         </div>
         <div class="block"><div class="hud" data-t="sections"></div><div id="toc"></div></div>
         <div class="block"><div class="hud" data-t="favorites"></div><div id="favs"></div></div>
-        <div class="block"><div class="hud" data-t="history"></div><div id="hist"></div></div>
+        <div class="block"><div class="hud" data-t="readlater"></div><div id="hist"></div></div>
       </aside>
       <div id="lib-main">
         <div id="progress"></div>
@@ -88,11 +88,14 @@
         <div class="tog" data-l="terrain3d"><i></i><span data-t="l_3d"></span></div>
         <div class="hud" style="margin:12px 6px 6px" data-t="pins"></div>
         <div id="pinlist"></div>
+        <div class="hud" style="margin:12px 6px 6px" data-t="places"></div>
+        <div id="poichips"></div>
         <div class="hud" style="margin:12px 6px 6px;display:flex;align-items:center"><span data-t="tracks"></span>
           <label class="btn" style="height:24px;margin-left:auto;padding:0 8px;font-size:10px" data-tt="gpx_tip"><span data-t="gpx_import"></span><input type="file" id="gpxIn" accept=".gpx,application/gpx+xml" multiple hidden></label></div>
         <div id="tracklist"></div>
       </div>
       <div class="mapui glass" id="mapcoord">—</div>
+      <div class="mapui glass" id="nearbox"><div class="hud" style="margin:2px 2px 8px;display:flex;align-items:center"><span data-t="nearby"></span><button class="nbx" id="nearClose">✕</button></div><div id="nearlist"></div></div>
       <div class="mapui glass" id="routebox">
         <div class="hud" style="margin:2px 2px 8px" data-t="route"></div>
         <div class="seg" id="rmode"><button data-m="car" class="on" data-t="r_car"></button><button data-m="bike" data-t="r_bike"></button><button data-m="foot" data-t="r_foot"></button></div>
@@ -273,6 +276,7 @@
 <script src="/web/ai.js"></script>
 <script src="/web/v12.js"></script>
 <script src="/web/v13.js"></script>
+<script src="/web/v14.js"></script>
 <script src="/web/fx.js"></script>
 </body>
 </html>

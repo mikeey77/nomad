@@ -618,3 +618,27 @@ details.think>div{white-space:pre-wrap;color:var(--dim);font-size:13.5px;line-he
 .view.on .ccard:nth-child(n+5),.view.on .card:nth-child(n+5),.view.on .mod:nth-child(n+5){animation-delay:.16s}
 @keyframes riseIn{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.view.on *{animation:none!important}}
+
+/* v0.14 — places on the map + reading list */
+#poichips{display:grid;grid-template-columns:1fr 1fr;gap:4px;max-width:250px}
+#poichips #nearBtn{grid-column:1/-1}
+.pchip2{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:8px;border:1px solid transparent;background:none;color:var(--dim);cursor:pointer;font-size:11.5px;text-align:left;min-width:0}
+.pchip2 span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pchip2 i{width:20px;height:20px;border-radius:50%;flex:none;display:grid;place-items:center;background:rgba(255,255,255,.08);color:var(--dim)}
+.pchip2 i svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.pchip2 i b{font-size:11px}
+.pchip2.on{color:var(--hi);border-color:var(--line)}
+.pchip2.on i{background:var(--pc);color:#fff}
+.pchip2:hover{background:rgba(var(--a),.06)}
+#maplayers{max-height:calc(100% - 28px);overflow:auto}
+#nearbox{top:84px;left:14px;width:min(320px,calc(100% - 28px));padding:12px;display:none;max-height:calc(100% - 180px);overflow:auto}
+#nearbox.on{display:block;animation:fadeUp .2s both}
+.nbx{margin-left:auto;border:0;background:none;color:var(--dim);cursor:pointer}
+.nrow{display:flex;align-items:center;gap:10px;padding:7px 6px;border-radius:8px;cursor:pointer;text-decoration:none;color:inherit}
+.nrow:hover{background:rgba(var(--a),.07)}
+.nrow i{width:10px;height:10px;border-radius:50%;flex:none}
+.nrow span{flex:1;min-width:0}.nrow b{display:block;font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--hi)}
+.nrow small{color:var(--dim);font-size:11px}.nrow em{font:normal 11.5px var(--mono);color:var(--acc)}
+.rl{display:flex;align-items:center}.rl .lnk{flex:1;min-width:0}
+.rl button{border:0;background:none;color:var(--dim);cursor:pointer;padding:4px 6px;border-radius:6px}.rl button:hover{color:var(--acc);background:rgba(var(--a),.08)}
+[data-theme=sun] .pchip2.on{border:2px solid #000}

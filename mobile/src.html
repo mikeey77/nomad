@@ -65,6 +65,30 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke
 .seg button{height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line2);background:var(--card);font:600 11px var(--mono);letter-spacing:.1em;color:var(--dim)}
 .seg button.on{color:var(--acc);border-color:var(--acc)}
 .grid{position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(transparent 0,var(--bg) 92%),repeating-linear-gradient(90deg,rgba(46,207,133,.04) 0 1px,transparent 1px 44px),repeating-linear-gradient(0deg,rgba(46,207,133,.04) 0 1px,transparent 1px 44px)}
+#poibar{position:absolute;left:0;right:0;top:8px;z-index:3;display:flex;gap:6px;overflow-x:auto;padding:2px 10px 6px;scrollbar-width:none}
+#poibar::-webkit-scrollbar{display:none}
+.pc{flex:none;display:flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 5px;border-radius:20px;border:1px solid var(--line2);background:rgba(10,25,18,.92);color:var(--dim);font-size:12.5px;white-space:nowrap}
+.pc i{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#1a2a22;color:var(--dim)}
+.pc i svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.pc.on{color:#fff;border-color:var(--pc)}.pc.on i{background:var(--pc);color:#fff}
+.pc.near{color:var(--acc);border-color:var(--acc)}
+#sheet{position:absolute;left:0;right:0;bottom:0;z-index:4;max-height:55%;overflow:auto;background:var(--bg2);border-top:1px solid var(--line2);border-radius:18px 18px 0 0;transform:translateY(105%);transition:transform .25s;padding:6px 12px 14px}
+#sheet.on{transform:none}
+.sh-h{display:flex;align-items:center;padding:8px 2px;font:600 11px var(--mono);letter-spacing:.2em;color:var(--dim)}
+.sh-h button{margin-left:auto;border:0;background:none;color:var(--dim);font-size:16px}
+.nrow{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.nrow i{width:10px;height:10px;border-radius:50%;flex:none}.nrow span{flex:1;min-width:0}
+.nrow b{display:block;color:var(--hi);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nrow small{color:var(--dim);font-size:12px}
+.nrow em{font:normal 12px var(--mono);color:var(--acc)}
+.maplibregl-popup-content{background:var(--bg2)!important;color:var(--txt);border:1px solid var(--line2);border-radius:12px!important}
+.maplibregl-popup-tip{display:none}
+.pop b{color:var(--hi)}.pop button{margin-top:8px;width:100%;height:34px;border-radius:10px;border:1px solid var(--acc);background:rgba(46,207,133,.12);color:var(--acc2);font:600 11px var(--mono);letter-spacing:.1em}
+#ract{position:absolute;right:12px;bottom:calc(var(--sab) + 14px);display:flex;flex-direction:column;gap:8px;z-index:3}
+#ract button{width:48px;height:48px;border-radius:14px;border:1px solid var(--line2);background:rgba(10,25,18,.94);color:var(--acc);font-size:20px}
+#ract button.on{background:var(--acc);color:#04120a}
+.li{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);background:var(--card);border-radius:12px;margin-bottom:6px}
+.li span{flex:1;min-width:0}.li b{display:block;color:var(--hi);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.li small{color:var(--dim);font:11px var(--mono)}
+.li.off{opacity:.45}.li button{border:0;background:none;color:var(--dim);font-size:16px;padding:4px}
 @keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .lang{margin-left:6px}
 </style>
@@ -83,11 +107,14 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke
   <div id="qhits"></div>
   <div class="k" data-t="collections"></div>
   <div id="books"></div>
+  <div id="mylists"></div>
 </div></section>
 
 <section class="view" id="v-map">
   <div id="map"></div>
   <div class="mapui" id="mapEmpty"></div>
+  <div id="poibar"></div>
+  <div id="sheet"><div class="sh-h"><b data-t="nearby"></b><button id="sheetX">✕</button></div><div id="nearlist"></div></div>
   <button class="fab" id="locBtn" title="My location"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg></button>
 </section>
 
@@ -96,6 +123,10 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke
   <div class="seg" id="langSeg"><button data-v="en">ENGLISH</button><button data-v="nl">NEDERLANDS</button></div>
   <div class="k" data-t="pages"></div>
   <div class="seg" id="lookSeg"><button data-v="orig" data-t="look_orig"></button><button data-v="dark" data-t="look_dark"></button></div>
+  <div class="k" data-t="sync"></div>
+  <div class="tip" id="syncInfo"></div>
+  <button class="big" id="syncOut" style="margin-top:10px"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span data-t="sync_save"></span></button>
+  <div class="tip" data-t="sync_help"></div>
   <div class="k" data-t="howto"></div>
   <div class="tip" data-t="howto_body"></div>
   <div class="k">ABOUT</div>
@@ -112,6 +143,7 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke
   <div id="rload"></div>
   <div id="rhits"></div>
   <iframe id="frame" sandbox="allow-same-origin allow-popups"></iframe>
+  <div id="ract"><button id="aFav">☆</button><button id="aLater">🔖</button></div>
 </div>
 
 <nav>
@@ -134,18 +166,30 @@ const ASSETS = /*ASSETS*/{};
 const T = {
   en:{open:'OPEN FILES', search_all:'Search all collections…', collections:'COLLECTIONS', library:'LIBRARY', map:'MAP', settings:'SETTINGS',
       language:'LANGUAGE', pages:'PAGE LOOK', look_orig:'ORIGINAL', look_dark:'DARK', howto:'HOW TO USE',
-      howto_body:'1. Tap <b>OPEN FILES</b>.<br>2. Pick your <code>.zim</code> files (from <code>NOMAD/data/library</code>) and/or <code>world.pmtiles</code> (from <code>NOMAD/data/maps/world</code>). GPX tracks (<code>NOMAD/data/tracks</code>) also work. You can select several at once.<br>3. Read and search offline. Files are not copied — they are read directly, so this works with huge files too.<br><br>Your phone forgets the files when you close the page; just open them again.',
+      howto_body:'1. Tap <b>OPEN FILES</b>.<br>2. Pick your <code>.zim</code> files (from <code>NOMAD/data/library</code>) and/or <code>world.pmtiles</code> (from <code>NOMAD/data/maps/world</code>), and <code>nomad-user.json</code> (from <code>NOMAD/data</code>) for your favorites, reading list and pins. GPX tracks (<code>NOMAD/data/tracks</code>) also work. You can select several at once.<br>3. Read and search offline. Files are not copied — they are read directly, so this works with huge files too.<br><br>Your phone forgets the files when you close the page; just open them again.',
       empty_t:'NO FILES OPEN', empty:'Tap <b>OPEN FILES</b> and pick .zim (library) or .pmtiles (map) files from your SSD or phone.',
       nomap_t:'NO MAP OPEN', nomap:'Open <code>world.pmtiles</code> (NOMAD/data/maps/world) with <b>OPEN FILES</b>.',
       articles:'articles', opened:'Opened {n} file(s)', xz:'This .zim uses old xz compression — download a newer version.', notzim:'Not a .zim or .pmtiles file: {f}',
-      notfound:'Page not found in this file.', nothing:'Nothing found', loc_err:'Location not available here', search_in:'Search in {b}…', external:'Online link (not available offline)'},
+      notfound:'Page not found in this file.',
+      readlater:'READING LIST', favorites:'FAVORITES', not_open:'open {f} first', nearby:'NEARBY', near_zoom:'Zoom in to street level to see places.', near_none:'No places of this type in view.', route_none:'Route planning needs the NOMAD PC app.',
+      sync:'SYNC WITH YOUR PC (VIA THE SSD)', sync_save:'SAVE CHANGES FOR PC', sync_none:'No file from your PC opened yet. Tap OPEN FILES and pick <code>NOMAD/data/nomad-user.json</code> to see your favorites, reading list and pins.',
+      sync_loaded:'From PC: {f} favorites · {r} on reading list · {p} pins ({date}).', sync_pending:'<b>{n} change(s)</b> on this phone not yet on the PC.', sync_clean:'No changes on this phone.',
+      sync_help:'Phone → PC: tap the button, then move the downloaded <code>nomad-phone-….json</code> to <code>NOMAD/data/inbox</code> on the SSD (Files app). NOMAD on the PC merges it within seconds. PC → phone: open <code>NOMAD/data/nomad-user.json</code> again.',
+      sync_saved:'Saved to your Downloads — move it to NOMAD/data/inbox', pin_name:'Name for this pin', user_loaded:'Your favorites, reading list and pins are loaded',
+      c_fuel:'Fuel', c_charge:'EV charging', c_hospital:'Hospital & doctor', c_pharmacy:'Pharmacy', c_shop:'Supermarket', c_food:'Food & drink', c_parking:'Parking', c_water:'Water & toilets', c_police:'Police & fire', c_camp:'Camping', c_money:'ATM & bank', nothing:'Nothing found', loc_err:'Location not available here', search_in:'Search in {b}…', external:'Online link (not available offline)'},
   nl:{open:'BESTANDEN OPENEN', search_all:'Zoek in alle collecties…', collections:'COLLECTIES', library:'BIBLIOTHEEK', map:'KAART', settings:'INSTELLINGEN',
       language:'TAAL', pages:'WEERGAVE PAGINA’S', look_orig:'ORIGINEEL', look_dark:'DONKER', howto:'ZO WERKT HET',
-      howto_body:'1. Tik op <b>BESTANDEN OPENEN</b>.<br>2. Kies je <code>.zim</code>-bestanden (uit <code>NOMAD/data/library</code>) en/of <code>world.pmtiles</code> (uit <code>NOMAD/data/maps/world</code>). GPX-tracks (<code>NOMAD/data/tracks</code>) werken ook. Je kunt er meerdere tegelijk kiezen.<br>3. Lees en zoek offline. Bestanden worden niet gekopieerd maar direct gelezen, dus ook enorme bestanden werken.<br><br>Je telefoon vergeet de bestanden als je de pagina sluit; open ze dan gewoon opnieuw.',
+      howto_body:'1. Tik op <b>BESTANDEN OPENEN</b>.<br>2. Kies je <code>.zim</code>-bestanden (uit <code>NOMAD/data/library</code>) en/of <code>world.pmtiles</code> (uit <code>NOMAD/data/maps/world</code>), en <code>nomad-user.json</code> (uit <code>NOMAD/data</code>) voor je favorieten, leeslijst en pins. GPX-tracks (<code>NOMAD/data/tracks</code>) werken ook. Je kunt er meerdere tegelijk kiezen.<br>3. Lees en zoek offline. Bestanden worden niet gekopieerd maar direct gelezen, dus ook enorme bestanden werken.<br><br>Je telefoon vergeet de bestanden als je de pagina sluit; open ze dan gewoon opnieuw.',
       empty_t:'GEEN BESTANDEN OPEN', empty:'Tik op <b>BESTANDEN OPENEN</b> en kies .zim- (bibliotheek) of .pmtiles-bestanden (kaart) van je SSD of telefoon.',
       nomap_t:'GEEN KAART OPEN', nomap:'Open <code>world.pmtiles</code> (NOMAD/data/maps/world) via <b>BESTANDEN OPENEN</b>.',
       articles:'artikelen', opened:'{n} bestand(en) geopend', xz:'Deze .zim gebruikt oude xz-compressie — download een nieuwere versie.', notzim:'Geen .zim of .pmtiles: {f}',
-      notfound:'Pagina niet gevonden in dit bestand.', nothing:'Niets gevonden', loc_err:'Locatie is hier niet beschikbaar', search_in:'Zoek in {b}…', external:'Online link (offline niet beschikbaar)'}
+      notfound:'Pagina niet gevonden in dit bestand.',
+      readlater:'LEESLIJST', favorites:'FAVORIETEN', not_open:'open eerst {f}', nearby:'IN DE BUURT', near_zoom:'Zoom in tot straatniveau om plekken te zien.', near_none:'Geen plekken van dit type in beeld.', route_none:'Route plannen kan alleen in de NOMAD-pc-app.',
+      sync:'SYNCHRONISEREN MET JE PC (VIA DE SSD)', sync_save:'WIJZIGINGEN OPSLAAN VOOR PC', sync_none:'Nog geen bestand van je pc geopend. Tik op BESTANDEN OPENEN en kies <code>NOMAD/data/nomad-user.json</code> om je favorieten, leeslijst en pins te zien.',
+      sync_loaded:'Van pc: {f} favorieten · {r} op leeslijst · {p} pins ({date}).', sync_pending:'<b>{n} wijziging(en)</b> op deze telefoon die nog niet op de pc staan.', sync_clean:'Geen wijzigingen op deze telefoon.',
+      sync_help:'Telefoon → pc: tik op de knop en verplaats het gedownloade <code>nomad-phone-….json</code> met de Bestanden-app naar <code>NOMAD/data/inbox</code> op de SSD. NOMAD op de pc voegt het binnen een paar seconden samen. Pc → telefoon: open <code>NOMAD/data/nomad-user.json</code> opnieuw.',
+      sync_saved:'Opgeslagen in Downloads — zet het in NOMAD/data/inbox', pin_name:'Naam voor deze pin', user_loaded:'Je favorieten, leeslijst en pins zijn geladen',
+      c_fuel:'Tankstation', c_charge:'Laadpaal', c_hospital:'Ziekenhuis & dokter', c_pharmacy:'Apotheek', c_shop:'Supermarkt', c_food:'Eten & drinken', c_parking:'Parkeren', c_water:'Water & wc', c_police:'Politie & brandweer', c_camp:'Camping', c_money:'Geldautomaat', nothing:'Niets gevonden', loc_err:'Locatie is hier niet beschikbaar', search_in:'Zoek in {b}…', external:'Online link (offline niet beschikbaar)'}
 };
 const ls = {get(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v) }catch{ return d } }, set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch{} }};
 let LANG = ls.get('nm.lang', (navigator.language || 'en').startsWith('nl') ? 'nl' : 'en'), LOOK = ls.get('nm.look', 'orig');
@@ -157,7 +201,7 @@ function i18n(){
   $$('[data-p]').forEach(e => e.placeholder = t(e.dataset.p));
   $$('#langSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === LANG));
   $$('#lookSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === LOOK));
-  renderBooks(); renderMapEmpty();
+  renderBooks(); renderMapEmpty(); if(typeof renderLists === 'function'){ renderLists(); renderSync(); renderPoiBar() }
 }
 function toast(m){ const e = $('#toast'); e.textContent = m; e.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => e.classList.remove('on'), 2600) }
 const fmtSize = b => b > 1e9 ? (b / 1e9).toFixed(1) + ' GB' : b > 1e6 ? (b / 1e6).toFixed(0) + ' MB' : Math.ceil(b / 1e3) + ' KB';
@@ -186,7 +230,10 @@ class Zim {
     const ill = await this.find('M', 'Illustration_48x48@1').catch(() => null);
     if(ill) this.icon = URL.createObjectURL(new Blob([await this.blob(ill)], {type:'image/png'}));
     this.listing = this.newNs ? await this.find('X', 'listing/titleOrdered/v1').catch(() => null) : null;
-    this.size = this.f.size; return this;
+    this.size = this.f.size;
+    const stem = this.f.name.replace(/\.zim$/i, ''), m = stem.match(/_(\d{4}-\d{2})$/);
+    this.id = m ? stem.slice(0, m.index) : stem;
+    return this;
   }
   async dirent(i){
     if(this.dc.has(i)) return this.dc.get(i);
@@ -310,12 +357,13 @@ async function addFiles(list){
     try{
       if(name.endsWith('.pmtiles')){ await openMapFile(f); n++; continue }
       if(name.endsWith('.gpx')){ addGpx(f.name, await f.text()); n++; continue }
+      if(name.endsWith('.json')){ loadUserFile(JSON.parse(await f.text()), f); n++; continue }
       if(BOOKS.some(b => b.f.name === f.name && b.size === f.size)) continue;
       const z = await new Zim(f).open(); BOOKS.push(z); n++;
     }catch(e){ toast(e.message === 'notzim' ? t('notzim', {f:f.name}) : f.name + ': ' + e.message) }
   }
   BOOKS.sort((a, b) => (/wikipedia/i.test(b.f.name) ? 1 : 0) - (/wikipedia/i.test(a.f.name) ? 1 : 0) || a.title.localeCompare(b.title));
-  renderBooks(); if(n) toast(t('opened', {n}));
+  renderBooks(); renderLists(); if(n) toast(t('opened', {n}));
 }
 $('#openBtn').onclick = () => $('#files').click();
 $('#files').onchange = e => { addFiles([...e.target.files]); e.target.value = '' };
@@ -369,7 +417,7 @@ async function show(path, hash = '', push = true){
   const real = b.base(d);
   if(!b.mime(d).startsWith('text/html')){ const u = await res(b, real); window.open(u); bar.style.width = '0'; return }
   if(push){ if(CUR.page) HIST.push(CUR.page) }
-  CUR.page = real;
+  CUR.page = real; CUR.pageTitle = d.title; updateRact();
   const doc = new DOMParser().parseFromString(td.decode(await b.blob(d)), 'text/html');
   doc.querySelectorAll('script').forEach(s => s.remove());
   bar.style.width = '60%';
@@ -463,7 +511,7 @@ async function openMapFile(f){
   if(!PROTO){ PROTO = new pmtiles.Protocol(); maplibregl.addProtocol('pmtiles', PROTO.tile) }
   const pm = new pmtiles.PMTiles(new pmtiles.FileSource(f));
   await pm.getHeader();
-  PROTO.add(pm); MAPFILE = f; renderMapEmpty();
+  PROTO.add(pm); MAPFILE = f; renderMapEmpty(); renderPoiBar();
   if(MAP){ MAP.remove(); MAP = null }
   if($('#v-map').classList.contains('on')) initMap(); else setView('map');
 }
@@ -474,7 +522,12 @@ function initMap(){
     style:{version:8, glyphs:'nomad://glyphs/{fontstack}/{range}.pbf', sprite:'nomad://sprite/dark',
       sources:{protomaps:{type:'vector', url:'pmtiles://' + MAPFILE.name, attribution:'© OpenStreetMap · Protomaps'}},
       layers:basemaps.layers('protomaps', flavor(), {lang:LANG})}});
-  MAP.on('load', drawGpx);
+  MAP.on('load', () => { drawGpx(); drawPois(); drawPins() });
+  MAP.on('moveend', () => renderNearby());
+  MAP.on('contextmenu', e => {
+    const name = prompt(t('pin_name'), ''); if(name === null) return;
+    toggleItem('pins', {lat:+e.lngLat.lat.toFixed(6), lon:+e.lngLat.lng.toFixed(6), name:name || 'Pin', added:Date.now()});
+  });
   MAP.on('moveend', () => { const c = MAP.getCenter(); ls.set('nm.view', {c:[c.lng, c.lat], z:MAP.getZoom()}) });
 }
 let ME = null;
@@ -498,7 +551,7 @@ function addGpx(name, text){
   });
   d.querySelectorAll('wpt').forEach(p => pts.push({c:[+p.getAttribute('lon'), +p.getAttribute('lat')], n:p.querySelector('name')?.textContent || ''}));
   if(!lines.length && !pts.length) throw new Error('empty GPX');
-  GPX.push({name, lines, pts}); drawGpx();
+  GPX.push({name, lines, pts, text, mine:false}); drawGpx();
   const all = lines.flat().concat(pts.map(p => p.c));
   if(MAP && all.length) MAP.fitBounds([[Math.min(...all.map(c => c[0])), Math.min(...all.map(c => c[1]))], [Math.max(...all.map(c => c[0])), Math.max(...all.map(c => c[1]))]], {padding:60, maxZoom:15});
 }
@@ -515,6 +568,152 @@ function drawGpx(){
   MAP.addLayer({id:'gpx-p', type:'circle', source:'gpx', filter:['==', '$type', 'Point'], paint:{'circle-radius':6, 'circle-color':['get', 'c'], 'circle-stroke-color':'#fff', 'circle-stroke-width':2}});
 }
 
+/* ───────── your own data: favorites, reading list, pins, notes (synced via the SSD) ───────── */
+const UD = ls.get('nm.user', {favorites:[], readlater:[], pins:[], notes:{}});
+const PEND = ls.get('nm.pending', {add:{favorites:[], readlater:[], pins:[]}, removed:{favorites:[], readlater:[], pins:[]}, notes:{}});
+let SYNCINFO = ls.get('nm.syncinfo', null);
+const kFav = x => x.book + '/' + x.path;
+const kPin = x => String(Math.round(x.lat * 1e5) / 1e5) + ',' + String(Math.round(x.lon * 1e5) / 1e5);
+const KEY = {favorites:kFav, readlater:kFav, pins:kPin};
+function saveUD(){ ls.set('nm.user', UD); ls.set('nm.pending', PEND); renderLists(); renderSync(); drawPins() }
+function pendingCount(){ return ['favorites', 'readlater', 'pins'].reduce((n, k) => n + PEND.add[k].length + PEND.removed[k].length, 0) + Object.keys(PEND.notes).length }
+function loadUserFile(data, f){
+  const u = data.user && data.nomad_backup ? data.user : data;
+  if(!u || !Array.isArray(u.favorites)) throw new Error('not nomad-user.json');
+  for(const k of ['favorites', 'readlater', 'pins']){
+    let list = (u[k] || []).filter(x => !PEND.removed[k].includes(KEY[k](x)));
+    const have = new Set(list.map(KEY[k]));
+    PEND.add[k].forEach(x => { if(!have.has(KEY[k](x))) list.unshift(x) });
+    UD[k] = list;
+  }
+  UD.notes = {...(u.notes || {}), ...PEND.notes};
+  SYNCINFO = {date:new Date(f.lastModified || Date.now()).toLocaleString(), f:UD.favorites.length, r:UD.readlater.length, p:UD.pins.length};
+  ls.set('nm.syncinfo', SYNCINFO); saveUD(); toast(t('user_loaded'));
+}
+function toggleItem(kind, item){
+  const key = KEY[kind](item), i = UD[kind].findIndex(x => KEY[kind](x) === key);
+  if(i >= 0){
+    UD[kind].splice(i, 1);
+    const a = PEND.add[kind].findIndex(x => KEY[kind](x) === key);
+    if(a >= 0) PEND.add[kind].splice(a, 1); else if(!PEND.removed[kind].includes(key)) PEND.removed[kind].push(key);
+  } else {
+    UD[kind].unshift(item);
+    const r = PEND.removed[kind].indexOf(key);
+    if(r >= 0) PEND.removed[kind].splice(r, 1); else PEND.add[kind].push(item);
+  }
+  saveUD();
+}
+function renderLists(){
+  const el = $('#mylists'); if(!el) return;
+  const row = (kind, x, i) => {
+    const b = BOOKS.find(z => z.id === x.book);
+    return `<div class="li${b ? '' : ' off'}" data-k="${kind}" data-i="${i}"><span><b>${kind === 'favorites' ? '★' : '🔖'} ${esc(x.title)}</b><small>${b ? esc(b.title) : t('not_open', {f:esc(x.book)})}</small></span><button data-x>✕</button></div>`;
+  };
+  el.innerHTML = ['readlater', 'favorites'].filter(k => UD[k].length).map(k => `<div class="k">${t(k)}</div>` + UD[k].map((x, i) => row(k, x, i)).join('')).join('');
+  el.querySelectorAll('.li').forEach(r => r.onclick = e => {
+    const kind = r.dataset.k, x = UD[kind][+r.dataset.i];
+    if(e.target.dataset.x !== undefined){ toggleItem(kind, x); return }
+    const b = BOOKS.find(z => z.id === x.book); if(b) openBook(b, x.path);
+  });
+}
+function updateRact(){
+  if(!CUR || !CUR.page) return;
+  const it = {book:CUR.id, path:CUR.page};
+  $('#aFav').classList.toggle('on', UD.favorites.some(x => kFav(x) === kFav(it))); $('#aFav').textContent = $('#aFav').classList.contains('on') ? '★' : '☆';
+  $('#aLater').classList.toggle('on', UD.readlater.some(x => kFav(x) === kFav(it)));
+}
+$('#aFav').onclick = () => { toggleItem('favorites', {book:CUR.id, path:CUR.page, title:CUR.pageTitle || CUR.page, added:Date.now()}); updateRact() };
+$('#aLater').onclick = () => { toggleItem('readlater', {book:CUR.id, path:CUR.page, title:CUR.pageTitle || CUR.page, added:Date.now()}); updateRact() };
+function renderSync(){
+  const el = $('#syncInfo'); if(!el) return;
+  const n = pendingCount();
+  el.innerHTML = (SYNCINFO ? t('sync_loaded', SYNCINFO) : t('sync_none')) + '<br>' + (n ? t('sync_pending', {n}) : t('sync_clean'));
+}
+$('#syncOut').onclick = () => {
+  const out = {nomad_phone:1, date:new Date().toISOString(), user:{...PEND.add, notes:PEND.notes}, removed:PEND.removed,
+    tracks:GPX.filter(g => g.mine).map(g => ({name:g.name, gpx:g.text}))};
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], {type:'application/json'}));
+  a.download = 'nomad-phone-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.json'; document.body.appendChild(a); a.click(); a.remove();
+  for(const k of ['favorites', 'readlater', 'pins']){ PEND.add[k] = []; PEND.removed[k] = [] }
+  PEND.notes = {}; saveUD(); toast(t('sync_saved'));
+};
+let PINM = [];
+function drawPins(){
+  if(!MAP) return;
+  PINM.forEach(m => m.remove()); PINM = [];
+  UD.pins.forEach(p => {
+    const el = document.createElement('div'); el.style.cssText = 'width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#2ecf85;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5)';
+    const div = document.createElement('div'); div.className = 'pop';
+    div.innerHTML = `<b>📍 ${esc(p.name)}</b><br><small>${p.lat}, ${p.lon}</small><button>✕</button>`;
+    div.querySelector('button').onclick = () => toggleItem('pins', p);
+    PINM.push(new maplibregl.Marker({element:el}).setLngLat([p.lon, p.lat]).setPopup(new maplibregl.Popup({offset:16}).setDOMContent(div)).addTo(MAP));
+  });
+}
+
+/* ───────── places on the map (same categories as the PC app) ───────── */
+const POI_CATS = [
+  ['fuel', '#ff8a3a', ['fuel'], 'M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16M4 21h12M8 8h4M15 9l3 2v7a1.5 1.5 0 003 0v-9l-3-3'],
+  ['charge', '#29c5f6', ['charging_station'], 'M13 2L4 14h7l-1 8 9-12h-7z'],
+  ['hospital', '#ff4d6a', ['hospital', 'clinic', 'doctors', 'dentist'], 'M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z'],
+  ['pharmacy', '#2fcf7a', ['pharmacy', 'chemist'], 'M9 3h6v4h4v6h-4v8H9v-8H5V7h4z'],
+  ['shop', '#4d8bff', ['supermarket', 'convenience', 'greengrocer', 'grocery', 'bakery', 'butcher'], 'M3 4h2l2.5 11h10L20 7H6.5'],
+  ['food', '#ffb63a', ['restaurant', 'fast_food', 'cafe', 'bar', 'pub'], 'M7 3v8a2 2 0 002 2v8M11 3v8M9 3v6M16 21V3c2.5 1.5 3 5 3 8h-3'],
+  ['parking', '#7f8cff', ['parking'], 'P'],
+  ['water', '#3fb8f0', ['drinking_water', 'toilets', 'water_point'], 'M12 2.7l5.7 5.7a8 8 0 11-11.4 0z'],
+  ['police', '#5b6bff', ['police', 'fire_station'], 'M12 2l8 3v7c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V5z'],
+  ['camp', '#8bc34a', ['camp_site', 'caravan_site', 'alpine_hut', 'shelter', 'wilderness_hut'], 'M12 3L2 21h20zM12 3v18M9 21l3-6 3 6'],
+  ['money', '#c9a24a', ['atm', 'bank', 'bureau_de_change'], '€'],
+];
+const POI_KIND = {}; POI_CATS.forEach(([c, , ks]) => ks.forEach(k => POI_KIND[k] = c));
+let POI_ON = new Set(ls.get('nm.poi', ['fuel', 'hospital', 'pharmacy', 'shop']));
+function poiIcon(color, sym){
+  const s = 2, n = 30 * s, c = document.createElement('canvas'); c.width = c.height = n; const g = c.getContext('2d');
+  g.beginPath(); g.arc(n / 2, n / 2, n / 2 - 2 * s, 0, Math.PI * 2); g.fillStyle = color; g.fill(); g.lineWidth = 2 * s; g.strokeStyle = '#fff'; g.stroke();
+  g.save(); g.translate(n / 2 - 8.5 * s, n / 2 - 8.5 * s); g.scale(17 * s / 24, 17 * s / 24);
+  if(sym.length > 2){ g.lineWidth = 2.4; g.lineCap = g.lineJoin = 'round'; g.strokeStyle = '#fff'; g.stroke(new Path2D(sym)) }
+  else { g.fillStyle = '#fff'; g.font = 'bold 17px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(sym, 12, 13) }
+  g.restore(); return {width:n, height:n, data:g.getImageData(0, 0, n, n).data};
+}
+const poiKinds = () => POI_CATS.filter(([c]) => POI_ON.has(c)).flatMap(([, , k]) => k);
+function drawPois(){
+  if(!MAP || !MAP.isStyleLoaded()) return;
+  POI_CATS.forEach(([c, col, , sym]) => { if(!MAP.hasImage('poi-' + c)) MAP.addImage('poi-' + c, poiIcon(col, sym), {pixelRatio:2}) });
+  const ks = poiKinds(), filter = ['in', ['get', 'kind'], ['literal', ks.length ? ks : ['__none__']]];
+  const cat = ['match', ['get', 'kind']]; POI_CATS.forEach(([c, , k]) => cat.push(k, 'poi-' + c)); cat.push('poi-shop');
+  if(MAP.getLayer('nomad-pois')) return MAP.setFilter('nomad-pois', filter);
+  MAP.addLayer({id:'nomad-pois', type:'symbol', source:'protomaps', 'source-layer':'pois', minzoom:12, filter,
+    layout:{'icon-image':cat, 'icon-size':['interpolate', ['linear'], ['zoom'], 12, .8, 16, 1.05], 'icon-allow-overlap':['step', ['zoom'], false, 15, true],
+      'text-field':['step', ['zoom'], '', 15, ['coalesce', ['get', 'name'], '']], 'text-font':['Noto Sans Regular'], 'text-size':11, 'text-offset':[0, 1.3], 'text-anchor':'top', 'text-optional':true},
+    paint:{'text-color':'#fff', 'text-halo-color':'#000', 'text-halo-width':1.4}});
+  MAP.on('click', 'nomad-pois', e => poiPopup(e.features[0]));
+}
+const poiName = f => f.properties['name:' + LANG] || f.properties.name || t('c_' + (POI_KIND[f.properties.kind] || 'shop'));
+const refPt = () => ME ? ME.getLngLat().toArray() : MAP.getCenter().toArray();
+function dist(a, b){ const r = Math.PI / 180, h = Math.sin((b[1] - a[1]) * r / 2) ** 2 + Math.cos(a[1] * r) * Math.cos(b[1] * r) * Math.sin((b[0] - a[0]) * r / 2) ** 2; return 12742000 * Math.asin(Math.sqrt(h)) }
+const fmtD = m => m >= 1000 ? (m / 1000).toFixed(m >= 10000 ? 0 : 1) + ' km' : Math.round(m) + ' m';
+function poiPopup(f){
+  const c = POI_KIND[f.properties.kind] || 'shop', col = POI_CATS.find(x => x[0] === c)[1], div = document.createElement('div'); div.className = 'pop';
+  div.innerHTML = `<b>${esc(poiName(f))}</b><br><small style="color:${col}">● ${esc(t('c_' + c))}</small> <small>· ${fmtD(dist(refPt(), f.geometry.coordinates))}</small><button>📍 PIN</button>`;
+  div.querySelector('button').onclick = () => { const [lon, lat] = f.geometry.coordinates; toggleItem('pins', {lat:+lat.toFixed(6), lon:+lon.toFixed(6), name:poiName(f), added:Date.now()}); document.querySelector('.maplibregl-popup')?.remove() };
+  new maplibregl.Popup({offset:14}).setLngLat(f.geometry.coordinates).setDOMContent(div).addTo(MAP);
+}
+function renderPoiBar(){
+  $('#poibar').innerHTML = `<button class="pc near" id="nearBtn">◎ ${t('nearby')}</button>` + POI_CATS.map(([c, col, , sym]) => `<button class="pc${POI_ON.has(c) ? ' on' : ''}" data-c="${c}" style="--pc:${col}"><i>${sym.length > 2 ? `<svg viewBox="0 0 24 24"><path d="${sym}"/></svg>` : `<b>${sym}</b>`}</i>${esc(t('c_' + c))}</button>`).join('');
+  $('#poibar').querySelectorAll('[data-c]').forEach(b => b.onclick = () => { POI_ON.has(b.dataset.c) ? POI_ON.delete(b.dataset.c) : POI_ON.add(b.dataset.c); ls.set('nm.poi', [...POI_ON]); renderPoiBar(); drawPois(); setTimeout(renderNearby, 300) });
+  $('#nearBtn').onclick = () => { $('#sheet').classList.toggle('on'); renderNearby() };
+  $('#poibar').style.display = MAPFILE ? '' : 'none';
+}
+function renderNearby(){
+  if(!$('#sheet').classList.contains('on') || !MAP) return;
+  if(MAP.getZoom() < 12){ $('#nearlist').innerHTML = `<div class="tip">${t('near_zoom')}</div>`; return }
+  const ks = poiKinds(), ref = refPt(), seen = new Set();
+  const list = MAP.querySourceFeatures('protomaps', {sourceLayer:'pois'}).filter(f => ks.includes(f.properties.kind)).filter(f => { const k = poiName(f) + f.geometry.coordinates.map(v => v.toFixed(4)); if(seen.has(k)) return false; seen.add(k); return true })
+    .map(f => ({f, d:dist(ref, f.geometry.coordinates)})).sort((a, b) => a.d - b.d).slice(0, 40);
+  $('#nearlist').innerHTML = list.length ? list.map(({f, d}, i) => { const c = POI_KIND[f.properties.kind] || 'shop'; return `<div class="nrow" data-i="${i}"><i style="background:${POI_CATS.find(x => x[0] === c)[1]}"></i><span><b>${esc(poiName(f))}</b><small>${esc(t('c_' + c))}</small></span><em>${fmtD(d)}</em></div>` }).join('') : `<div class="tip">${t('near_none')}</div>`;
+  $('#nearlist').querySelectorAll('.nrow').forEach(r => r.onclick = () => { const f = list[+r.dataset.i].f; $('#sheet').classList.remove('on'); MAP.flyTo({center:f.geometry.coordinates, zoom:Math.max(MAP.getZoom(), 16)}); setTimeout(() => poiPopup(f), 600) });
+}
+$('#sheetX').onclick = () => $('#sheet').classList.remove('on');
+
 /* ───────── views & settings ───────── */
 function setView(v){
   $$('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
@@ -524,7 +723,7 @@ function setView(v){
 $$('nav button').forEach(b => b.onclick = () => setView(b.dataset.v));
 $$('#langSeg button').forEach(b => b.onclick = () => { LANG = b.dataset.v; ls.set('nm.lang', LANG); i18n(); if(MAP){ MAP.remove(); MAP = null; initMap() } });
 $$('#lookSeg button').forEach(b => b.onclick = () => { LOOK = b.dataset.v; ls.set('nm.look', LOOK); i18n(); if($('#reader').classList.contains('on') && CUR?.page) show(CUR.page, '', false) });
-i18n();
+i18n(); renderLists(); renderSync(); renderPoiBar();
 if('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>

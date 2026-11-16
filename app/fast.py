@@ -11,7 +11,10 @@ import threading
 import urllib.request
 import zipfile
 
-import nomad as N
+import sys as _sys
+
+# use the running server module (nomad.py runs as __main__), not a second copy of it
+N = _sys.modules['__main__'] if hasattr(_sys.modules.get('__main__'), 'STATE') else __import__('nomad')
 
 # ───────── fast translation (Argos Translate models, run with CTranslate2) ─────────
 ARGOS_INDEX = "https://raw.githubusercontent.com/argosopentech/argospm-index/main/index.json"

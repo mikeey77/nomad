@@ -13,7 +13,10 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from urllib.parse import unquote, urljoin
 
-import nomad as N
+import sys as _sys
+
+# use the running server module (nomad.py runs as __main__), not a second copy of it
+N = _sys.modules['__main__'] if hasattr(_sys.modules.get('__main__'), 'STATE') else __import__('nomad')
 import features
 
 
@@ -211,7 +214,7 @@ def restore(data, mode="merge"):
     snapshot()  # keep a copy of the current state first
     cur = features.load_user()
     if mode == "replace":
-        new = {k: user.get(k, cur[k]) for k in ("favorites", "notes", "pins", "checklist", "chats", "saved")}
+        new = {k: user.get(k, cur[k]) for k in ("favorites", "readlater", "notes", "pins", "checklist", "chats", "saved")}
     else:
         def merge_list(a, b, key):
             seen = {key(x) for x in a}
@@ -219,6 +222,7 @@ def restore(data, mode="merge"):
         j = lambda x: json.dumps(x, sort_keys=True)
         new = {
             "favorites": merge_list(cur["favorites"], user.get("favorites", []), lambda x: (x.get("book"), x.get("path")) if isinstance(x, dict) else j(x)),
+            "readlater": merge_list(cur["readlater"], user.get("readlater", []), lambda x: (x.get("book"), x.get("path")) if isinstance(x, dict) else j(x)),
             "notes": {**user.get("notes", {}), **cur["notes"]},
             "pins": merge_list(cur["pins"], user.get("pins", []), j),
             "checklist": merge_list(cur["checklist"], user.get("checklist", []), lambda x: x.get("t") if isinstance(x, dict) else j(x)),
@@ -257,3 +261,88 @@ def backup_loop():
         except Exception as e:
             print("backup:", e)
         time.sleep(3600)
+
+
+# ───────── sync with NOMAD Mobile through the SSD (no Wi-Fi, no cloud) ─────────
+# Phone → PC: NOMAD Mobile saves "nomad-phone-*.json"; put it in NOMAD\data\inbox and it is merged here.
+# PC → phone: NOMAD Mobile opens NOMAD\data\nomad-user.json directly.
+def item_key(kind, x):
+    if not isinstance(x, dict):
+        return json.dumps(x, sort_keys=True)
+    if kind in ("favorites", "readlater"):
+        return f"{x.get('book')}/{x.get('path')}"
+    if kind == "pins":
+        return f"{round(float(x.get('lat', 0)), 5)},{round(float(x.get('lon', 0)), 5)}"
+    return json.dumps(x, sort_keys=True)
+
+
+def apply_phone(data):
+    """Merge a phone export: removals first, then additions. Returns counts."""
+    snapshot()
+    cur = features.load_user()
+    removed = data.get("removed") or {}
+    added = data.get("user") or {}
+    out = {"added": 0, "removed": 0}
+    for kind in ("favorites", "readlater", "pins"):
+        gone = set(removed.get(kind) or [])
+        before = len(cur[kind])
+        cur[kind] = [x for x in cur[kind] if item_key(kind, x) not in gone]
+        out["removed"] += before - len(cur[kind])
+        have = {item_key(kind, x) for x in cur[kind]}
+        for x in added.get(kind) or []:
+            k = item_key(kind, x)
+            if k not in have and k not in gone:
+                cur[kind].insert(0, x)
+                have.add(k)
+                out["added"] += 1
+    for k, v in (added.get("notes") or {}).items():
+        if v and cur["notes"].get(k) != v:
+            cur["notes"][k] = v
+            out["added"] += 1
+    for k in removed.get("notes") or []:
+        if cur["notes"].pop(k, None) is not None:
+            out["removed"] += 1
+    features.save_user({k: cur[k] for k in ("favorites", "readlater", "pins", "notes")})
+    for t in data.get("tracks") or []:
+        try:
+            track_save(t.get("name", "phone-track"), t.get("gpx", ""))
+            out["added"] += 1
+        except Exception:
+            pass
+    return out
+
+
+def inbox_dir():
+    return os.path.join(N.DATA, "inbox")
+
+
+def check_inbox():
+    d = inbox_dir()
+    os.makedirs(d, exist_ok=True)
+    done = os.path.join(d, "done")
+    results = []
+    for f in sorted(glob.glob(os.path.join(d, "*.json"))):
+        try:
+            with open(f, encoding="utf-8") as fh:
+                data = json.load(fh)
+            if data.get("nomad_phone") or data.get("nomad_backup"):
+                r = apply_phone(data) if data.get("nomad_phone") else restore(data, "merge")
+                os.makedirs(done, exist_ok=True)
+                os.replace(f, os.path.join(done, os.path.basename(f)))
+                results.append({"file": os.path.basename(f), **(r if isinstance(r, dict) else {})})
+        except Exception as e:
+            print("inbox:", os.path.basename(f), e)
+    if results:
+        N.STATE["data_version"] = N.STATE.get("data_version", 0) + 1
+        N.STATE["data_msg"] = "phone sync"
+        N.STATE["sync_msg"] = results
+    return results
+
+
+def inbox_loop():
+    while True:
+        try:
+            check_inbox()
+        except Exception as e:
+            print("inbox:", e)
+        time.sleep(10)

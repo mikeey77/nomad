@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.13.0"
+VERSION = "0.14.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -56,6 +56,8 @@ README_TEXT = {
     "data/maps/world": "The Protomaps world map goes here: one .pmtiles file (~120 GB), named world.pmtiles.",
     "data/maps/terrain": "The elevation map goes here (JAXA Terrarium z0-11, ~91 GB, torrent). Rename the .pmtiles file to terrain.pmtiles.",
     "data/maps/satellite": "The satellite layer goes here (satellite.pmtiles).",
+    "data/inbox": "Phone sync: put the nomad-phone-*.json file from NOMAD Mobile here. NOMAD merges it within ~10 seconds and moves it to done.",
+    "data/tracks": "GPX tracks shown on the map. Add your own .gpx files here.",
     "data/search": "Address search database (Photon). Filled by setup from downloads\\photon-db-*.tar.bz2.",
     "ai/models": "The local AI (Ollama) keeps its models here. Filled by setup / Downloads > AI models.",
     "tools": "Offline programs: portable Python, Ollama, Java, Photon, GraphHopper. Filled by setup.",
@@ -1208,7 +1210,7 @@ class Handler(BaseHTTPRequestHandler):
         lib_size = sum(b.size for b in BOOKS.values())
         self.json({
             "version": VERSION, "online": STATE["online"], "disk": disk, "lan_url": STATE.get("lan_url"),
-            "app_update": STATE.get("app_update"), "data_version": STATE.get("data_version", 0), "scanning": STATE.get("scanning", False), "data_msg": STATE.get("data_msg", ""),
+            "app_update": STATE.get("app_update"), "data_version": STATE.get("data_version", 0), "scanning": STATE.get("scanning", False), "sync_msg": STATE.get("sync_msg"), "data_msg": STATE.get("data_msg", ""),
             "launcher": bool(os.environ.get("NOMAD_LAUNCHER")),
             "library": {"books": len(BOOKS), "size": lib_size,
                         "articles": sum(b.archive.article_count for b in BOOKS.values()),
@@ -1400,7 +1402,7 @@ def main():
     a = ap.parse_args()
 
     print(f"\n  PROJECT NOMAD v{VERSION}\n  {ROOT}\n")
-    for d in [LIB_DIR, GEO_DIR, AI_DIR, DL_DIR] + list(MAP_LAYERS.values()):
+    for d in [LIB_DIR, GEO_DIR, AI_DIR, DL_DIR, os.path.join(DATA, "inbox"), os.path.join(DATA, "tracks")] + list(MAP_LAYERS.values()):
         if d == LIB_DIR and len(LIB_DIRS) > 1:
             continue
         if not any(d == MAP_LAYERS[k] and legacy("data/maps/" + k) for k in MAP_LAYERS):
@@ -1417,6 +1419,7 @@ def main():
     threading.Thread(target=_scan, daemon=True).start()
     import more
     threading.Thread(target=more.backup_loop, daemon=True).start()
+    threading.Thread(target=more.inbox_loop, daemon=True).start()
     if not a.no_services:
         threading.Thread(target=lambda: (start_ollama(), warm_model()), daemon=True).start()
         threading.Thread(target=start_photon, daemon=True).start()

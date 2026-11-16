@@ -12,7 +12,7 @@ const fmtN = n => (n||0).toLocaleString(LANG === 'nl' ? 'nl-NL' : 'en-GB');
 const debounce = (f, ms) => { let tm; return (...a) => { clearTimeout(tm); tm = setTimeout(() => f(...a), ms) } };
 function toast(msg){ const e = $('#toast'); e.textContent = msg; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 2200) }
 
-let STATUS = {}, BOOKS = [], VIEW = 'home', SET = {}, USER = {favorites:[], notes:{}, pins:[], checklist:[]};
+let STATUS = {}, BOOKS = [], VIEW = 'home', SET = {}, USER = {favorites:[], readlater:[], notes:{}, pins:[], checklist:[]};
 const VIEWS = ['home','lib','map','ai','sos','dl','set'];
 const ICON = {
   lib:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5a1 1 0 011-1h4v16H5a1 1 0 01-1-1zM9 4h5v16H9zM14 5l4-1 3 15-4 1z"/></svg>',
@@ -137,8 +137,11 @@ function renderDash(){
       <div class="big">${A.state==='aan'?(A.models?.length||0)+' '+t('model')+((A.models?.length||0)!==1&&LANG!=='nl'?'s':''):'—'}</div><div class="sub">${esc(A.model||'')} · ${t('local_ollama')}</div>
       <div class="status"><span class="dot ${stateDot(A.state)}"></span>${esc(stTxt(A.state))}</div></div>`;
   $$('#mods .card').forEach(c => c.onclick = () => location.hash = c.dataset.h);
-  $('#favHome').innerHTML = USER.favorites.length ? `<div class="sec-t">${t('favorites')}</div><div class="chips">` +
-    USER.favorites.slice(0, 12).map(f => `<span class="chip" data-b="${esc(f.book)}" data-p="${esc(f.path)}">★ ${esc(f.title)}</span>`).join('') + '</div>' : '';
+  const RL = USER.readlater || [];
+  $('#favHome').innerHTML = (RL.length ? `<div class="sec-t">${t('readlater')}</div><div class="chips">` +
+    RL.slice(0, 12).map(f => `<span class="chip" data-b="${esc(f.book)}" data-p="${esc(f.path)}">🔖 ${esc(f.title)}</span>`).join('') + '</div>' : '') +
+    (USER.favorites.length ? `<div class="sec-t">${t('favorites')}</div><div class="chips">` +
+    USER.favorites.slice(0, 12).map(f => `<span class="chip" data-b="${esc(f.book)}" data-p="${esc(f.path)}">★ ${esc(f.title)}</span>`).join('') + '</div>' : '');
   $$('#favHome .chip').forEach(c => c.onclick = () => location.hash = 'lib/' + c.dataset.b + '/' + c.dataset.p);
   const lan = S.lan_url, mobile = /iphone|ipad|android/i.test(navigator.userAgent);
   $('#phoneT').style.display = $('#phone').style.display = (lan && !mobile) ? '' : 'none';
@@ -213,6 +216,9 @@ function renderArtBlock(){
   const fav = isFav(CUR);
   $('#favBtn').textContent = fav ? t('fav_rm') : t('fav_add');
   $('#favBtn').classList.toggle('pri', fav);
+  const later = isLater(CUR);
+  $('#laterBtn').textContent = later ? t('rl_rm') : t('rl_add');
+  $('#laterBtn').classList.toggle('pri', later);
   $('#noteBox').value = USER.notes[keyOf(CUR)] || '';
   const m = store.get('nomad.amode', {})[CUR.book] || 'auto';
   $$('#aMode button').forEach(b => b.classList.toggle('on', b.dataset.v === m));
@@ -222,6 +228,12 @@ $('#favBtn').onclick = () => {
   const favs = isFav(CUR) ? USER.favorites.filter(f => !(f.book === CUR.book && f.path === CUR.path))
                           : [{...CUR, added:Date.now()}, ...USER.favorites];
   saveUser({favorites:favs}); renderArtBlock(); renderFavs(); renderDash();
+};
+$('#laterBtn').onclick = () => {
+  if(!CUR) return;
+  const l = USER.readlater || [];
+  saveUser({readlater:isLater(CUR) ? l.filter(f => !(f.book === CUR.book && f.path === CUR.path)) : [{...CUR, added:Date.now()}, ...l]});
+  renderArtBlock(); renderHist(); renderDash();
 };
 $('#noteBox').addEventListener('input', debounce(() => {
   if(!CUR) return;
@@ -234,14 +246,16 @@ function renderFavs(){
     : `<div class="empty">${t('no_fav')}</div>`;
   $$('#favs .lnk').forEach(a => a.onclick = () => location.hash = 'lib/' + a.dataset.b + '/' + a.dataset.p);
 }
-function addHist(book, path, title){
-  let h = store.get('nomad.hist', []).filter(x => !(x.book === book && x.path === path));
-  h.unshift({book, path, title}); store.set('nomad.hist', h.slice(0, 30)); renderHist();
-}
+/* v0.14: no reading history anymore — a reading list ("read later") instead */
+function addHist(){}
+try{ localStorage.removeItem('nomad.hist') }catch(e){}
+const isLater = c => (USER.readlater || []).some(f => f.book === c.book && f.path === c.path);
 function renderHist(){
-  const h = store.get('nomad.hist', []);
-  $('#hist').innerHTML = h.length ? h.map(x => `<a class="lnk" data-b="${esc(x.book)}" data-p="${esc(x.path)}">${esc(x.title)}</a>`).join('') : `<div class="empty">${t('no_hist')}</div>`;
+  const l = USER.readlater || [];
+  $('#hist').innerHTML = l.length ? l.map((x, i) => `<div class="rl"><a class="lnk" data-b="${esc(x.book)}" data-p="${esc(x.path)}">🔖 ${esc(x.title)}</a><button data-done="${i}" title="${t('rl_done')}">✓</button></div>`).join('')
+    : `<div class="empty" style="white-space:normal">${t('no_later')}</div>`;
   $$('#hist .lnk').forEach(a => a.onclick = () => location.hash = 'lib/' + a.dataset.b + '/' + a.dataset.p);
+  $$('#hist [data-done]').forEach(b => b.onclick = () => { saveUser({readlater:l.filter((_, j) => j !== +b.dataset.done)}); renderHist(); renderArtBlock(); renderDash() });
 }
 async function fulltextView(q){
   CUR = null; renderArtBlock();

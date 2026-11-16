@@ -1,6 +1,10 @@
 /* NOMAD — vertalingen. Engels is standaard; Nederlands kiesbaar in Settings. */
 window.I18N = {
   en: {
+    readlater:'READING LIST', no_later:'Nothing on your reading list. Open an article and tap 🔖 Read later.', rl_add:'🔖 Read later', rl_rm:'🔖 On list', rl_done:'Done — remove from list',
+    places:'PLACES', nearby:'NEARBY', near_zoom:'Zoom in to street level to see places.', near_none:'No places of this type in view.', route_here:'Route here', p_on:'Show on map',
+    c_fuel:'Fuel', c_charge:'EV charging', c_hospital:'Hospital & doctor', c_pharmacy:'Pharmacy', c_shop:'Supermarket', c_food:'Food & drink', c_parking:'Parking', c_water:'Water & toilets', c_police:'Police & fire', c_camp:'Camping & shelter', c_money:'ATM & bank',
+    sync_done:'Phone sync: {a} added, {r} removed',
     sun:'Sun', tracks:'TRACKS', gpx_import:'+ GPX', gpx_tip:'Open a .gpx file (or drop it on the map)', no_tracks:'Drop a .gpx file on the map, or use + GPX.',
     gpx_saved:'Track saved', export_gpx:'Save as GPX track', km_climb:'{km} km · ↑ {m} m', del_track_q:'Delete track “{n}”?',
     tr_photo_tip:'Photo of a sign, menu or label → text', tr_reading:'Reading the text in the photo…',
@@ -32,7 +36,7 @@ window.I18N = {
     storage:'STORAGE', used_of:'{u} used of {t}', free:'free',
     collections:'COLLECTIONS', favorites:'FAVORITES', sections:'SECTIONS', note:'NOTE', history:'HISTORY',
     no_coll:'No collections yet', no_art:'No article open', no_sec:'No sections', no_hist:'Nothing read yet', no_fav:'No favorites yet',
-    note_ph:'Your note on this article…', fav_add:'☆ Add to favorites', fav_rm:'★ In favorites',
+    note_ph:'Your note on this article…', fav_add:'☆ Favorite', fav_rm:'★ Favorite',
     lib_empty_t:'LIBRARY IS EMPTY', lib_empty:'Put .zim files (Wikipedia, Gutenberg, iFixit…) in <code>NOMAD\\data\\library</code> or use <b>Downloads</b>.',
     results_for:'{n} RESULTS FOR “{q}”', searching:'SEARCHING “{q}”…', nothing:'Nothing found', articles:'articles',
     map_search:'Search a place or address…', layers:'LAYERS', l_streets:'Map', l_sat:'Satellite', l_hill:'Relief', l_3d:'3D terrain', pins:'PINS', no_pins:'Right-click the map to save a pin',
@@ -83,6 +87,10 @@ window.I18N = {
     saved:'Saved', g_green:'Green', g_blue:'Blue', g_amber:'Amber', g_red:'Red',
   },
   nl: {
+    readlater:'LEESLIJST', no_later:'Je leeslijst is leeg. Open een artikel en tik op 🔖 Later lezen.', rl_add:'🔖 Later lezen', rl_rm:'🔖 Op leeslijst', rl_done:'Gelezen — van de lijst halen',
+    places:'PLEKKEN', nearby:'IN DE BUURT', near_zoom:'Zoom in tot straatniveau om plekken te zien.', near_none:'Geen plekken van dit type in beeld.', route_here:'Route hierheen', p_on:'Toon op kaart',
+    c_fuel:'Tankstation', c_charge:'Laadpaal', c_hospital:'Ziekenhuis & dokter', c_pharmacy:'Apotheek', c_shop:'Supermarkt', c_food:'Eten & drinken', c_parking:'Parkeren', c_water:'Water & wc', c_police:'Politie & brandweer', c_camp:'Camping & schuilplek', c_money:'Geldautomaat & bank',
+    sync_done:'Telefoon-sync: {a} toegevoegd, {r} verwijderd',
     sun:'Zon', tracks:'TRACKS', gpx_import:'+ GPX', gpx_tip:'Open een .gpx-bestand (of sleep het op de kaart)', no_tracks:'Sleep een .gpx-bestand op de kaart, of gebruik + GPX.',
     gpx_saved:'Track opgeslagen', export_gpx:'Opslaan als GPX-track', km_climb:'{km} km · ↑ {m} m', del_track_q:'Track “{n}” verwijderen?',
     tr_photo_tip:'Foto van een bord, menu of etiket → tekst', tr_reading:'Tekst in de foto lezen…',
@@ -114,7 +122,7 @@ window.I18N = {
     storage:'OPSLAG', used_of:'{u} gebruikt van {t}', free:'vrij',
     collections:'COLLECTIES', favorites:'FAVORIETEN', sections:'SECTIES', note:'NOTITIE', history:'HISTORIE',
     no_coll:'Nog geen collecties', no_art:'Geen artikel geopend', no_sec:'Geen secties', no_hist:'Nog niets gelezen', no_fav:'Nog geen favorieten',
-    note_ph:'Jouw notitie bij dit artikel…', fav_add:'☆ Aan favorieten toevoegen', fav_rm:'★ In favorieten',
+    note_ph:'Jouw notitie bij dit artikel…', fav_add:'☆ Favoriet', fav_rm:'★ Favoriet',
     lib_empty_t:'BIBLIOTHEEK IS LEEG', lib_empty:'Zet .zim-bestanden (Wikipedia, Gutenberg, iFixit…) in <code>NOMAD\\data\\library</code> of gebruik <b>Downloads</b>.',
     results_for:'{n} RESULTATEN VOOR “{q}”', searching:'ZOEKEN NAAR “{q}”…', nothing:'Niets gevonden', articles:'artikelen',
     map_search:'Zoek een plaats of adres…', layers:'LAGEN', l_streets:'Kaart', l_sat:'Satelliet', l_hill:'Reliëf', l_3d:'3D-terrein', pins:'PINS', no_pins:'Rechtsklik op de kaart om een pin op te slaan',
