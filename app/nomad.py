@@ -28,7 +28,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -444,18 +444,6 @@ def check_updates():
             found.append({"id": "zim:" + b.id, "type": "bibliotheek", "title": b.title,
                           "current": b.date, "latest": date, "file": name,
                           "url": CFG["kiwix_base"] + kiwix_dir(b.prefix) + "/" + name})
-    # app (via GitHub)
-    try:
-        sha = json.loads(urllib.request.urlopen(urllib.request.Request(
-            "https://api.github.com/repos/mikeey77/nomad/commits/main",
-            headers={"User-Agent": "NOMAD/" + VERSION}), timeout=10).read())["sha"]
-        stamp = os.path.join(APP, ".commit")
-        cur = open(stamp).read().strip() if os.path.exists(stamp) else ""
-        if sha != cur:
-            found.append({"id": "app", "type": "app", "title": "NOMAD-app",
-                          "current": VERSION + (" (" + cur[:7] + ")" if cur else ""), "latest": "nieuwe versie " + sha[:7]})
-    except Exception:
-        pass
     # AI-model
     if STATE["ai"] == "aan" and ai_models():
         found.append({"id": "ai", "type": "ai", "title": "AI-model " + CFG["ai_model"],
@@ -464,7 +452,69 @@ def check_updates():
     STATE["last_check"] = datetime.now().strftime("%d-%m %H:%M")
 
 
+def app_update_loop():
+    """Werkt de app op de achtergrond bij. Klaar = banner in de UI met 'Herstart'."""
+    import update
+    STATE["app_update"] = {"status": "none"}
+    if not CFG.get("app_update", True) or os.path.isdir(os.path.join(ROOT, ".git")):
+        return  # uitgeschakeld, of een ontwikkel-clone
+    time.sleep(3)
+    while True:
+        try:
+            l = update.latest()
+            if l and l[0] != update.current():
+                STATE["app_update"] = {"status": "downloading", "msg": l[1]}
+                update.apply(l[0])
+                STATE["app_update"] = {"status": "ready", "msg": l[1], "sha": l[0][:7]}
+        except Exception as e:
+            STATE["app_update"] = {"status": "error", "msg": str(e)}
+        time.sleep(30 * 60)
+
+
+def data_signature():
+    sig = []
+    for f in glob.glob(os.path.join(LIB_DIR, "*.zim")):
+        try:
+            st = os.stat(f)
+            sig.append((os.path.basename(f), st.st_size, int(st.st_mtime)))
+        except OSError:
+            pass
+    for layer in MAP_LAYERS:
+        f = map_file(layer)
+        sig.append((layer, os.path.getsize(f) if f else 0))
+    sig.append(("photon", os.path.isdir(os.path.join(GEO_DIR, "photon_data"))))
+    return tuple(sorted(sig, key=str))
+
+
+def watch_loop():
+    """Herkent bestanden die je zelf in de mappen zet (pas als ze klaar zijn met kopiëren)."""
+    STATE["data_version"] = 0
+    last = data_signature()
+    pending = None
+    while True:
+        time.sleep(15)
+        try:
+            sig = data_signature()
+            if sig == last:
+                pending = None
+                continue
+            if sig != pending:  # nog aan het veranderen: wachten tot het stabiel is
+                pending = sig
+                continue
+            before = set(BOOKS)
+            scan_library()
+            new = [BOOKS[k].title for k in BOOKS if k not in before]
+            STATE["data_version"] += 1
+            STATE["data_msg"] = ", ".join(new) if new else "data"
+            if os.path.isdir(os.path.join(GEO_DIR, "photon_data")) and STATE["geo"] != "aan":
+                threading.Thread(target=start_photon, daemon=True).start()
+            last, pending = sig, None
+        except Exception as e:
+            print("watcher:", e)
+
+
 def update_loop():
+    time.sleep(20)
     while True:
         try:
             if CFG.get("update_check", True):
@@ -697,6 +747,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json(features.remove(self.body_json().get("id")))
             if p == "/api/ai/use":
                 return self.json(features.use_model(self.body_json().get("model")))
+            if p == "/api/restart":
+                self.json({"ok": True})
+                threading.Thread(target=lambda: (time.sleep(0.4), stop_services(), os._exit(3)), daemon=True).start()
+                return
             if p == "/api/shutdown" and self.client_address[0] == "127.0.0.1":
                 self.json({"ok": True})
                 threading.Thread(target=lambda: (time.sleep(0.3), stop_services(), os._exit(0)), daemon=True).start()
@@ -799,6 +853,8 @@ class Handler(BaseHTTPRequestHandler):
         lib_size = sum(b.size for b in BOOKS.values())
         self.json({
             "version": VERSION, "online": STATE["online"], "disk": disk, "lan_url": STATE.get("lan_url"),
+            "app_update": STATE.get("app_update"), "data_version": STATE.get("data_version", 0), "data_msg": STATE.get("data_msg", ""),
+            "launcher": bool(os.environ.get("NOMAD_LAUNCHER")),
             "library": {"books": len(BOOKS), "size": lib_size,
                         "articles": sum(b.archive.article_count for b in BOOKS.values()),
                         "zim": HAVE_ZIM},
@@ -968,6 +1024,8 @@ def main():
         threading.Thread(target=start_ollama, daemon=True).start()
         threading.Thread(target=start_photon, daemon=True).start()
     threading.Thread(target=update_loop, daemon=True).start()
+    threading.Thread(target=app_update_loop, daemon=True).start()
+    threading.Thread(target=watch_loop, daemon=True).start()
 
     srv = ThreadingHTTPServer(("127.0.0.1" if a.local else "0.0.0.0", a.port), Handler)
     srv.daemon_threads = True

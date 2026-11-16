@@ -105,8 +105,87 @@ def shutdown_running():
 def start_server():
     global SERVER
     log = open(os.path.join(ROOT, "downloads", "nomad.log"), "a", encoding="utf-8")
-    SERVER = subprocess.Popen([PY, os.path.join(ROOT, "app", "nomad.py"), "--no-browser"], cwd=ROOT,
+    env = dict(os.environ, NOMAD_LAUNCHER="1")
+    SERVER = subprocess.Popen([PY, os.path.join(ROOT, "app", "nomad.py"), "--no-browser"], cwd=ROOT, env=env,
                               stdout=log, stderr=log, creationflags=NOWIN)
+
+
+def keeper():
+    """Herstart de server als die om een herstart vraagt (exitcode 3, na een update)."""
+    while True:
+        time.sleep(1)
+        if SERVER and SERVER.poll() == 3:
+            start_server()
+
+
+EXE_REPO = "mikeey77/nomad"
+
+
+def self_update():
+    """Haalt een nieuwe NOMAD.exe op de achtergrond; wordt actief bij de volgende start."""
+    if not getattr(sys, "frozen", False):
+        return
+    import json
+    import urllib.request
+    exe = sys.executable
+    stamp = os.path.join(ROOT, "app", ".exe_asset")
+    try:
+        old = exe[:-4] + ".old.exe"
+        if os.path.exists(old):
+            os.remove(old)
+        rel = json.loads(urllib.request.urlopen(urllib.request.Request(
+            f"https://api.github.com/repos/{EXE_REPO}/releases/tags/exe-latest", headers={"User-Agent": "NOMAD"}), timeout=10).read())
+        asset = next(a for a in rel["assets"] if a["name"] == "NOMAD.exe")
+        key = f'{asset["id"]}-{asset["updated_at"]}'
+        cur = open(stamp).read().strip() if os.path.exists(stamp) else ""
+        if not cur:  # eerste keer: huidige exe als bekend markeren
+            open(stamp, "w").write(key)
+            return
+        if key == cur:
+            return
+        new = exe + ".new"
+        with urllib.request.urlopen(asset["browser_download_url"], timeout=300) as r, open(new, "wb") as f:
+            shutil.copyfileobj(r, f)
+        os.replace(exe, old)      # een draaiende exe mag hernoemd worden
+        os.replace(new, exe)
+        open(stamp, "w").write(key)
+    except Exception:
+        pass
+
+
+def splash():
+    """Klein startscherm zolang de server opstart."""
+    try:
+        import tkinter as tk
+    except Exception:
+        return None
+    root = tk.Tk()
+    root.overrideredirect(True)
+    root.configure(bg="#030806")
+    w, h = 360, 150
+    root.geometry(f"{w}x{h}+{(root.winfo_screenwidth() - w) // 2}+{(root.winfo_screenheight() - h) // 2}")
+    root.attributes("-topmost", True)
+    tk.Label(root, text="N O M A D", fg="#3dffa0", bg="#030806", font=("Consolas", 26, "bold")).pack(pady=(30, 4))
+    msg = tk.Label(root, text="starting…", fg="#7a9a8a", bg="#030806", font=("Consolas", 10))
+    msg.pack()
+    bar = tk.Canvas(root, width=280, height=4, bg="#0b1a13", highlightthickness=0)
+    bar.pack(pady=14)
+    state = {"x": 0}
+
+    def tick():
+        if port_open():
+            root.destroy()
+            return
+        if SERVER and SERVER.poll() is not None and SERVER.poll() != 3:
+            root.destroy()
+            return
+        state["x"] = (state["x"] + 6) % 340
+        bar.delete("all")
+        bar.create_rectangle(state["x"] - 60, 0, state["x"], 4, fill="#3dffa0", width=0)
+        root.after(30, tick)
+
+    root.after(30, tick)
+    return root
 
 
 def stop_server():
@@ -164,12 +243,7 @@ def main():
         if msg("NOMAD is nog niet ingesteld op deze schijf.\n\nNu de setup starten?", "NOMAD", 0x04 | 0x20) == 6:
             run_setup()
         return
-    # 1. app bijwerken (stil, max 90 s)
-    try:
-        subprocess.run([PY, os.path.join(ROOT, "app", "update.py")], cwd=ROOT, creationflags=NOWIN, timeout=90,
-                       stdout=open(os.path.join(ROOT, "downloads", "update.log"), "w"), stderr=subprocess.STDOUT)
-    except Exception:
-        pass
+    threading.Thread(target=self_update, daemon=True).start()
     # 2. draait er al een NOMAD? Zelfde versie: alleen venster openen. Oude versie: vervangen.
     if port_open():
         if running_version() == local_version():
@@ -177,10 +251,14 @@ def main():
             return
         shutdown_running()
     start_server()
+    sp = splash()
+    if sp:
+        sp.mainloop()
     if not splash_wait():
         msg("NOMAD kon niet starten.\nKijk in downloads\\nomad.log voor details.", "NOMAD", 0x10)
         return
     # 3. venster + tray
+    threading.Thread(target=keeper, daemon=True).start()
     open_window()
     tray()
     stop_server()

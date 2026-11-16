@@ -425,3 +425,16 @@ select.inp option{background:var(--bg2);color:var(--txt)}
 .bit input{accent-color:var(--acc)}.bit span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bit em{font:11px var(--mono);font-style:normal;color:var(--dim)}.bit.inst em{color:var(--acc)}
 .btn:disabled{opacity:.35}
+
+/* ═════════ v0.7 ═════════ */
+#banner{position:fixed;top:66px;left:50%;transform:translate(-50%,-20px);opacity:0;pointer-events:none;z-index:70;transition:.3s;
+  display:flex;align-items:center;gap:12px;padding:10px 14px 10px 16px;border-radius:12px;border:1px solid var(--acc);background:rgba(var(--b),.96);box-shadow:var(--glow),0 20px 50px rgba(0,0,0,.5);font-size:13.5px;max-width:92vw}
+#banner.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#banner .dim{color:var(--dim);max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#restarting{position:fixed;inset:0;z-index:110;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--acc);letter-spacing:.3em}
+#restarting.on{display:flex}
+.flavs{display:flex;gap:6px;flex-wrap:wrap}
+.flavs button{background:transparent;border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:5px 9px;cursor:pointer;font:11px var(--sans);display:flex;flex-direction:column;align-items:flex-start;line-height:1.25}
+.flavs button small{font:10px var(--mono);opacity:.8}
+.flavs button.on{border-color:var(--acc);color:var(--acc);background:rgba(var(--a),.08)}
+.lang{font-style:normal;color:var(--acc)}

@@ -70,10 +70,38 @@ window.addEventListener('hashchange', route);
 $$('[data-go]').forEach(b => b.onclick = () => { location.hash = b.dataset.go });
 
 /* ───────── status / dashboard ───────── */
+let DATAV = null;
 async function loadStatus(){
+  const prev = STATUS;
   STATUS = await api('/api/status').catch(() => ({}));
   BOOKS = await api('/api/library').catch(() => []);
-  renderAll();
+  renderAll(); renderBanner();
+  if(DATAV !== null && STATUS.data_version !== DATAV){
+    toast((LANG === 'nl' ? 'Nieuwe inhoud gevonden: ' : 'New content found: ') + (STATUS.data_msg || ''));
+    const M = STATUS.maps || {}, P = prev.maps || {};
+    if(MAP && (M.terrain?.present !== P.terrain?.present || M.satellite?.present !== P.satellite?.present)){ MAP.setStyle(buildStyle()); MAP.once('styledata', applyLayers) }
+    if(!MAP && M.world?.present && VIEW === 'map') initMap();
+    CAT = null;
+  }
+  DATAV = STATUS.data_version;
+}
+function renderBanner(){
+  const u = STATUS.app_update || {}, el = $('#banner');
+  if(u.status !== 'ready'){ el.classList.remove('on'); return }
+  el.innerHTML = `<span class="dot ok"></span><b>${t('upd_ready')}</b><span class="dim">${esc(u.msg || '')}</span>
+    ${STATUS.launcher ? `<button class="btn pri" id="restartBtn">${t('restart_now')}</button>` : `<span class="mono">${t('restart_manual')}</span>`}`;
+  el.classList.add('on');
+  const rb = $('#restartBtn'); if(rb) rb.onclick = restartNomad;
+}
+async function restartNomad(){
+  $('#restarting').classList.add('on');
+  await post('/api/restart').catch(() => {});
+  await new Promise(r => setTimeout(r, 1500));
+  for(let i = 0; i < 120; i++){
+    try{ const r = await fetch('/api/status', {cache:'no-store'}); if(r.ok){ location.reload(); return } }catch(e){}
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  location.reload();
 }
 function renderAll(){
   $('#ver').textContent = $('#ver2').textContent = STATUS.version || '';
@@ -617,7 +645,7 @@ async function pollJobs(){
     const before = JSON.stringify(Object.values(window.__jobs).map(j => j.status));
     await pollJobs();
     if(before !== JSON.stringify(Object.values(window.__jobs).map(j => j.status))){ CAT = null; await loadStatus(); loadDownloads() }
-    else { renderZim(true); renderExtras(); if(BUN) renderBundles() }
+    else { renderZim(); renderExtras(); if(BUN) renderBundles() }
   }, 1500);
 }
 function jobOf(id){ return (window.__jobs || {})[id] }
@@ -635,25 +663,66 @@ function renderQueue(){
   const d = STATUS.disk || {};
   $('#dlFree').innerHTML = `SSD <b style="color:var(--acc)">${fmtB(d.free)}</b> ${t('free')} / ${fmtB(d.total)}`;
 }
-function renderCats(){
-  const langs = $('#flang').value.split(',').filter(Boolean);
-  const counts = {};
-  (CAT.zim || []).forEach(i => { if(!langs.length || langs.some(l => i.lang.split(',').includes(l))) counts[i.cat] = (counts[i.cat] || 0) + 1 });
-  const cats = Object.keys(counts).sort((a, b) => (POP.indexOf(a) + 1 || 99) - (POP.indexOf(b) + 1 || 99) || counts[b] - counts[a]);
-  $('#fcats').innerHTML = `<span class="chip${FCAT ? '' : ' on'}" data-c="">${t('cat_all')}</span>` +
-    cats.map(c => `<span class="chip${FCAT === c ? ' on' : ''}" data-c="${esc(c)}">${esc(CATNAMES[c] || c)} <small>${counts[c]}</small></span>`).join('');
-  $$('#fcats .chip').forEach(c => c.onclick = () => { FCAT = c.dataset.c; SHOW = 60; renderCats(); renderZim() });
+const LANGS = {eng:'English', nld:'Nederlands', deu:'Deutsch', fra:'Français', spa:'Español', ita:'Italiano', por:'Português', mul:'Multilingual', ara:'العربية', zho:'中文', rus:'Русский', jpn:'日本語'};
+const langName = l => l.split(',').map(x => LANGS[x] || x).join(', ');
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const bname = i => i.name.replace(/_(maxi|nopic|mini)$/, '');
+function prettyTitle(i){
+  const parts = bname(i).split('_'), topic = parts.slice(2).join(' ').replace(/-/g, ' ');
+  if(!topic || topic === 'all') return i.cat === 'wikipedia' ? i.title + (LANG === 'nl' ? ' · volledig' : ' · complete') : i.title;
+  return i.title.toLowerCase().includes(topic.toLowerCase()) ? i.title : i.title + ' · ' + cap(topic);
+}
+const FLAV = {maxi:'with images', nopic:'no images', mini:'intro only', '':'standard'};
+const FLAV_NL = {maxi:'met afbeeldingen', nopic:'zonder afbeeldingen', mini:'alleen intro', '':'standaard'};
+const PICKS = ['wikipedia_en_all','wikipedia_nl_all','mdwiki_en_all','ifixit_en_all','gutenberg_en_all','wikivoyage_en_all','khanacademy_en_all','survivorlibrary.com_en_all','wiktionary_en_all','stackoverflow.com_en_all','ted_mul_all','wikibooks_en_all','crashcourse_en_all','wikipedia_en_medicine'];
+function groups(){
+  const g = new Map();
+  for(const i of (CAT.zim || [])){ const k = bname(i) + '|' + i.lang; if(!g.has(k)) g.set(k, []); g.get(k).push(i) }
+  return [...g.values()].map(v => {
+    const ord = {maxi:0, '':1, nopic:2, mini:3};
+    v.sort((a, b) => (ord[a.flavour] ?? 9) - (ord[b.flavour] ?? 9));
+    const inst = v.find(x => x.installed);
+    return {key:bname(v[0]) + '|' + v[0].lang, v, inst, base:v[0], title:prettyTitle(v[0])};
+  });
 }
 function filtered(){
   const q = $('#fq').value.trim().toLowerCase(), langs = $('#flang').value.split(',').filter(Boolean), fl = $('#fflav').value, inst = $('#finst').classList.contains('on');
-  let list = (CAT.zim || []).filter(i =>
-    (!langs.length || langs.some(l => i.lang.split(',').includes(l))) && (!FCAT || i.cat === FCAT) && (!fl || i.flavour === fl) && (!inst || i.installed) &&
-    (!q || (i.title + ' ' + i.summary + ' ' + i.name).toLowerCase().includes(q)));
-  const s = $('#fsort').value;
-  const pop = i => (POP.indexOf(i.cat) + 1 || 50) * 1e12 - i.articles;
-  list.sort(s === 'size' ? (a, b) => b.size - a.size : s === 'small' ? (a, b) => a.size - b.size : s === 'name' ? (a, b) => a.title.localeCompare(b.title)
-    : s === 'date' ? (a, b) => b.date.localeCompare(a.date) : (a, b) => (b.installed ? 1 : 0) - (a.installed ? 1 : 0) || pop(a) - pop(b));
+  let list = groups().filter(G => {
+    const i = G.base;
+    return (!langs.length || langs.some(l => i.lang.split(',').includes(l))) && (!FCAT || i.cat === FCAT) && (!fl || G.v.some(x => x.flavour === fl)) && (!inst || G.inst) &&
+      (!q || (G.title + ' ' + i.summary + ' ' + i.name).toLowerCase().includes(q));
+  });
+  const s = $('#fsort').value, size = G => G.v[0].size;
+  const pick = G => { const p = PICKS.indexOf(bname(G.base)); return p < 0 ? 100 : p };
+  list.sort(s === 'size' ? (a, b) => size(b) - size(a) : s === 'small' ? (a, b) => size(a) - size(b) : s === 'name' ? (a, b) => a.title.localeCompare(b.title)
+    : s === 'date' ? (a, b) => b.base.date.localeCompare(a.base.date)
+    : (a, b) => (b.inst ? 1 : 0) - (a.inst ? 1 : 0) || pick(a) - pick(b) || (POP.indexOf(a.base.cat) + 1 || 50) - (POP.indexOf(b.base.cat) + 1 || 50) || b.base.articles - a.base.articles);
   return list;
+}
+function renderCats(){
+  const langs = $('#flang').value.split(',').filter(Boolean), counts = {};
+  groups().forEach(G => { const i = G.base; if(!langs.length || langs.some(l => i.lang.split(',').includes(l))) counts[i.cat] = (counts[i.cat] || 0) + 1 });
+  const cats = Object.keys(counts).sort((a, b) => (POP.indexOf(a) + 1 || 99) - (POP.indexOf(b) + 1 || 99) || counts[b] - counts[a]);
+  $('#fcats').innerHTML = `<span class="chip${FCAT ? '' : ' on'}" data-c="">${t('cat_all')}</span>` +
+    cats.map(c => `<span class="chip${FCAT === c ? ' on' : ''}" data-c="${esc(c)}">${esc(CATNAMES[c] || cap(c))} <small>${counts[c]}</small></span>`).join('');
+  $$('#fcats .chip').forEach(c => c.onclick = () => { FCAT = c.dataset.c; SHOW = 60; renderCats(); renderZim() });
+}
+const SELFLAV = {};
+function renderZim(){
+  if(!CAT) return;
+  const list = filtered();
+  $('#fcount').textContent = (CAT.online ? '' : t('offline_cat') + ' · ') + t('shown', {n:fmtN(Math.min(SHOW, list.length)), t:fmtN(list.length)});
+  $('#zimgrid').innerHTML = list.slice(0, SHOW).map(G => {
+    const sel = G.v.find(x => x.id === SELFLAV[G.key]) || G.inst || G.v[0], i = sel, id = 'zim:' + i.id, j = jobOf(id);
+    const fl = G.v.length > 1 ? `<div class="flavs">${G.v.map(x => `<button class="${x === sel ? 'on' : ''}" data-g="${esc(G.key)}" data-f="${x.id}">${esc((LANG === 'nl' ? FLAV_NL : FLAV)[x.flavour] || x.flavour)}<small>${fmtB(x.size)}</small></button>`).join('')}</div>` : '';
+    const ico = `<img class="cico" loading="lazy" src="/api/icon/${i.id}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cico ph',textContent:'${esc(G.title[0] || '?')}'}))">`;
+    return `<div class="ccard${i.installed ? ' inst' : ''}"><div class="ctop">${ico}<div class="cmain"><b title="${esc(G.title)}">${esc(G.title)}</b>
+        <span class="mono dim"><em class="lang">${esc(langName(i.lang))}</em> · ${fmtN(i.articles)} ${t('articles')} · ${esc(i.date)}</span></div><em class="csize">${fmtB(i.size)}</em></div>
+      <div class="csum">${esc(i.summary || '')}</div>${fl}${j && j.status !== 'klaar' ? jobBar(j) : ''}<div class="cbtns">${itemBtns(id, i, 'zim')}</div></div>`;
+  }).join('') || `<div class="empty">${t('nothing')}</div>`;
+  $('#more').style.display = list.length > SHOW ? '' : 'none';
+  $$('#zimgrid .flavs button').forEach(b => b.onclick = () => { SELFLAV[b.dataset.g] = b.dataset.f; renderZim() });
+  bindBtns('#zimgrid');
 }
 function itemBtns(id, i, kind){
   const j = jobOf(id);
@@ -674,15 +743,6 @@ function card(id, i, kind, iconHtml){
     ? `${esc(i.lang)} · ${esc(i.flavour || '—')} · ${fmtN(i.articles)} ${t('articles')} · ${esc(i.date)}` : esc(i.date || '');
   return `<div class="ccard${i.installed ? ' inst' : ''}"><div class="ctop">${iconHtml}<div class="cmain"><b>${esc(i.title)}</b><span class="mono dim">${meta}</span></div><em class="csize">${fmtB(i.size)}</em></div>
     <div class="csum">${esc(i.summary || '')}</div>${j && j.status !== 'klaar' ? jobBar(j) : ''}<div class="cbtns">${itemBtns(id, i, kind)}</div></div>`;
-}
-function renderZim(keepScroll){
-  if(!CAT) return;
-  const list = filtered();
-  $('#fcount').textContent = (CAT.online ? '' : t('offline_cat') + ' · ') + t('shown', {n:fmtN(Math.min(SHOW, list.length)), t:fmtN(list.length)});
-  $('#zimgrid').innerHTML = list.slice(0, SHOW).map(i => card('zim:' + i.id, i, 'zim', `<img class="cico" loading="lazy" src="/api/icon/${i.id}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cico ph',textContent:'${esc(i.title[0] || '?')}'}))">`)).join('')
-    || `<div class="empty">${t('nothing')}</div>`;
-  $('#more').style.display = list.length > SHOW ? '' : 'none';
-  bindBtns('#zimgrid');
 }
 function renderExtras(){
   if(!CAT) return;
@@ -818,7 +878,7 @@ $('#bRand').onclick = random;
 
 /* ───────── start ───────── */
 setInterval(() => { $('#clock').textContent = new Date().toLocaleString(LANG === 'nl' ? 'nl-NL' : 'en-GB', {weekday:'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', second:'2-digit'}).toUpperCase() }, 1000);
-setInterval(loadStatus, 30000);
+setInterval(loadStatus, 15000);
 (async () => {
   [SET, USER] = await Promise.all([api('/api/settings').catch(() => ({lang:'en'})), api('/api/user').catch(() => USER)]);
   applyLook(); renderChat(); fillIcons();
