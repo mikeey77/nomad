@@ -173,8 +173,10 @@ async function routeNow(){
     MAP.addLayer({id:'route', type:'line', source:'route', layout:{'line-cap':'round','line-join':'round'}, paint:{'line-color':'#eafff3', 'line-width':4}});
   }
   const bb = p.bbox; if(bb) MAP.fitBounds([[bb[0], bb[1]], [bb[2], bb[3]]], {padding:80});
+  window.LAST_ROUTE = {p, mode:RMODE, from:RFROM, to:RTO};
   $('#rRes').innerHTML = `<div class="rsum"><b>${km} km</b><b>${min >= 60 ? Math.floor(min / 60) + 'h ' + (min % 60) + 'm' : min + ' min'}</b></div>
     <div class="rins">${(p.instructions || []).map(x => `<div><span>${esc(x.text)}</span><em>${x.distance > 0 ? (x.distance >= 1000 ? (x.distance / 1000).toFixed(1) + ' km' : Math.round(x.distance) + ' m') : ''}</em></div>`).join('')}</div>`;
+  if(window.routeExtras) routeExtras();
 }
 
 /* ───────── home: groet + wist-je-dat ───────── */

@@ -61,7 +61,7 @@
     if(m.type === 'look'){
       MODE = m.mode || 'auto'; applyMode();
       document.documentElement.style.setProperty('--fs', m.scale || 1);
-      document.documentElement.classList.toggle('light', m.theme === 'light');
+      document.documentElement.classList.toggle('light', m.theme === 'light' || m.theme === 'sun');
     }
     if(m.type === 'goto'){
       const n = document.getElementById(m.id);

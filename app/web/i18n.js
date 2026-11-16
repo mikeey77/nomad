@@ -1,6 +1,13 @@
 /* NOMAD — vertalingen. Engels is standaard; Nederlands kiesbaar in Settings. */
 window.I18N = {
   en: {
+    sun:'Sun', tracks:'TRACKS', gpx_import:'+ GPX', gpx_tip:'Open a .gpx file (or drop it on the map)', no_tracks:'Drop a .gpx file on the map, or use + GPX.',
+    gpx_saved:'Track saved', export_gpx:'Save as GPX track', km_climb:'{km} km · ↑ {m} m', del_track_q:'Delete track “{n}”?',
+    tr_photo_tip:'Photo of a sign, menu or label → text', tr_reading:'Reading the text in the photo…',
+    s_backup:'BACKUP', s_backup_help:'Your favorites, notes, pins, chats, saved answers, checklist and settings in one file. NOMAD also makes an automatic copy every day in <code>data\\backups</code> (last 14 days).',
+    b_download:'DOWNLOAD BACKUP', b_restore:'RESTORE FROM FILE', b_now:'BACK UP NOW', b_merge:'Merge (keep what you have, add from backup)', b_replace:'Replace everything with the backup',
+    b_restore_q:'Restore backup', b_done:'Backup restored', b_made:'Backup made', b_auto:'Automatic backups', scanning:'Loading library…',
+    s_mobile_file:'Or without the PC: open <b>NOMAD-mobile.html</b> (in the NOMAD folder) on your phone and pick your .zim / world.pmtiles files.', m_download:'DOWNLOAD NOMAD-MOBILE.HTML',
     photo_ready:'Photo attached', photo_q:'What is this?', s_vision:'Looking at the photo ({m})…', s_lookup:'Recognised “{x}” — searching your library…',
     tr_fast:'⚡ FAST TRANSLATOR', tr_ai:'AI TRANSLATION (slower)', tr_tip:'Tip: download <b>Fast translator · {l}</b> in Downloads → AI models for instant translation (about 10× faster).', tr_detected:'Detected: {l}',
     c_translate:'Fast translators', c_photo:'Photo recognition',
@@ -76,6 +83,13 @@ window.I18N = {
     saved:'Saved', g_green:'Green', g_blue:'Blue', g_amber:'Amber', g_red:'Red',
   },
   nl: {
+    sun:'Zon', tracks:'TRACKS', gpx_import:'+ GPX', gpx_tip:'Open een .gpx-bestand (of sleep het op de kaart)', no_tracks:'Sleep een .gpx-bestand op de kaart, of gebruik + GPX.',
+    gpx_saved:'Track opgeslagen', export_gpx:'Opslaan als GPX-track', km_climb:'{km} km · ↑ {m} m', del_track_q:'Track “{n}” verwijderen?',
+    tr_photo_tip:'Foto van een bord, menu of etiket → tekst', tr_reading:'Tekst in de foto lezen…',
+    s_backup:'BACK-UP', s_backup_help:'Je favorieten, notities, pins, chats, bewaarde antwoorden, checklist en instellingen in één bestand. NOMAD maakt ook elke dag automatisch een kopie in <code>data\\backups</code> (laatste 14 dagen).',
+    b_download:'BACK-UP DOWNLOADEN', b_restore:'HERSTELLEN UIT BESTAND', b_now:'NU BACK-UP MAKEN', b_merge:'Samenvoegen (wat je hebt blijft, back-up wordt toegevoegd)', b_replace:'Alles vervangen door de back-up',
+    b_restore_q:'Back-up terugzetten', b_done:'Back-up teruggezet', b_made:'Back-up gemaakt', b_auto:'Automatische back-ups', scanning:'Bibliotheek laden…',
+    s_mobile_file:'Of zonder pc: open <b>NOMAD-mobile.html</b> (in de NOMAD-map) op je telefoon en kies je .zim- / world.pmtiles-bestanden.', m_download:'NOMAD-MOBILE.HTML DOWNLOADEN',
     photo_ready:'Foto toegevoegd', photo_q:'Wat is dit?', s_vision:'Foto bekijken ({m})…', s_lookup:'Herkend: “{x}” — zoeken in je bibliotheek…',
     tr_fast:'⚡ SNELLE VERTALER', tr_ai:'AI-VERTALING (langzamer)', tr_tip:'Tip: download <b>Fast translator · {l}</b> bij Downloads → AI-modellen voor directe vertaling (ongeveer 10× sneller).', tr_detected:'Herkend: {l}',
     c_translate:'Snelle vertalers', c_photo:'Fotoherkenning',

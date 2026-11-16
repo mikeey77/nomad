@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.12.0"
+VERSION = "0.13.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -298,6 +298,11 @@ def scan_library():
     with BOOKS_LOCK:
         BOOKS.clear()
         BOOKS.update(found)
+    try:
+        import more
+        more.SEARCH_CACHE.clear()
+    except Exception:
+        pass
     print(f"Bibliotheek: {len(found)} collectie(s)")
 
 
@@ -745,7 +750,7 @@ def data_signature():
 
 def watch_loop():
     """Herkent bestanden die je zelf in de mappen zet (pas als ze klaar zijn met kopiëren)."""
-    STATE["data_version"] = 0
+    STATE.setdefault("data_version", 0)
     last = data_signature()
     pending = None
     while True:
@@ -759,6 +764,8 @@ def watch_loop():
                 pending = sig
                 continue
             before = set(BOOKS)
+            import more
+            more.close_handles()
             scan_library()
             new = [BOOKS[k].title for k in BOOKS if k not in before]
             STATE["data_version"] += 1
@@ -823,6 +830,11 @@ def download(job, url, target, retries=50):
             job["msg"] = f"connection lost, retrying ({attempt + 1})…"
             time.sleep(min(60, 5 * (attempt + 1)))
     job["msg"] = ""
+    try:
+        import more
+        more.close_handles()
+    except Exception:
+        pass
     os.replace(part, target)
 
 
@@ -957,7 +969,22 @@ class Handler(BaseHTTPRequestHandler):
                 except Exception as e:
                     return self.json({"error": str(e)})
             if p == "/api/fact":
-                return self.json(extra.fact())
+                import more
+                f = extra.fact()
+                if f.get("book") in BOOKS:
+                    f["img"] = more.first_image(BOOKS[f["book"]], f["path"])
+                return self.json(f)
+            if p == "/api/tracks":
+                import more
+                return self.json(more.tracks())
+            if p == "/api/backup":
+                import more
+                body = json.dumps(more.export_all(), ensure_ascii=False, indent=1)
+                name = "nomad-backup-" + datetime.now().strftime("%Y-%m-%d") + ".json"
+                return self.send(200, body, "application/json; charset=utf-8", extra={"Content-Disposition": f'attachment; filename="{name}"'})
+            if p == "/api/backups":
+                import more
+                return self.json(more.backups())
             if p == "/api/status":
                 return self.api_status()
             if p == "/api/library":
@@ -1026,6 +1053,29 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json(features.remove(self.body_json().get("id")))
             if p == "/api/ai/use":
                 return self.json(features.use_model(self.body_json().get("model")))
+            if p == "/api/ocr":
+                import more
+                try:
+                    return self.json(more.ocr(self.body_json().get("image", "")))
+                except Exception as e:
+                    return self.json({"error": str(e)}, 500)
+            if p == "/api/tracks/save":
+                import more
+                b = self.body_json()
+                try:
+                    return self.json(more.track_save(b.get("name", "track"), b.get("gpx", "")))
+                except Exception as e:
+                    return self.json({"error": "Not a valid GPX file (" + str(e)[:80] + ")"}, 400)
+            if p == "/api/tracks/delete":
+                import more
+                return self.json(more.track_delete(self.body_json().get("name", "")))
+            if p == "/api/backup/restore":
+                import more
+                b = self.body_json()
+                return self.json(more.restore(b.get("data"), b.get("mode", "merge")))
+            if p == "/api/backup/now":
+                import more
+                return self.json({"ok": True, "file": os.path.basename(more.snapshot())})
             if p == "/api/stt":
                 ln = int(self.headers.get("Content-Length") or 0)
                 return self.json(extra.stt(self.rfile.read(ln)))
@@ -1092,11 +1142,17 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", ctype or "application/octet-stream")
         self.send_header("Accept-Ranges", "bytes")
         self.send_header("Content-Length", str(length))
-        self.send_header("Cache-Control", "public, max-age=3600")
+        st = os.stat(path)
+        self.send_header("Cache-Control", "public, max-age=86400")
+        self.send_header("ETag", f'"{int(st.st_mtime)}-{st.st_size}"')
         if rng:
             self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
         self.end_headers()
         if self.command == "HEAD":
+            return
+        if length <= (4 << 20):  # map tiles & index reads: keep the file open per thread
+            import more
+            self.wfile.write(more.read_range(path, start, length))
             return
         with open(path, "rb") as f:
             f.seek(start)
@@ -1152,7 +1208,7 @@ class Handler(BaseHTTPRequestHandler):
         lib_size = sum(b.size for b in BOOKS.values())
         self.json({
             "version": VERSION, "online": STATE["online"], "disk": disk, "lan_url": STATE.get("lan_url"),
-            "app_update": STATE.get("app_update"), "data_version": STATE.get("data_version", 0), "data_msg": STATE.get("data_msg", ""),
+            "app_update": STATE.get("app_update"), "data_version": STATE.get("data_version", 0), "scanning": STATE.get("scanning", False), "data_msg": STATE.get("data_msg", ""),
             "launcher": bool(os.environ.get("NOMAD_LAUNCHER")),
             "library": {"books": len(BOOKS), "size": lib_size,
                         "articles": sum(b.archive.article_count for b in BOOKS.values()),
@@ -1167,6 +1223,10 @@ class Handler(BaseHTTPRequestHandler):
         q = q.strip()
         if not q:
             return self.json([])
+        import more
+        hit = more.SEARCH_CACHE.get(("s", q.lower(), bid))
+        if hit is not None:
+            return self.json(hit)
         books = [BOOKS[bid]] if bid in BOOKS else sorted(BOOKS.values(), key=book_order)
         out = []
         for b in books:
@@ -1176,10 +1236,16 @@ class Handler(BaseHTTPRequestHandler):
                 pass
         for r in out:
             r["bookTitle"] = BOOKS[r["book"]].title
+        more.SEARCH_CACHE.put(("s", q.lower(), bid), out[:40])
         self.json(out[:40])
 
     def api_search(self, q, bid, start):
         q = q.strip()
+        import more
+        key = ("f", q.lower(), bid, start)
+        hit = more.SEARCH_CACHE.get(key)
+        if hit is not None:
+            return self.json(hit)
         books = [BOOKS[bid]] if bid in BOOKS else sorted(BOOKS.values(), key=book_order)
         total, res = 0, []
         for b in books:
@@ -1191,6 +1257,7 @@ class Handler(BaseHTTPRequestHandler):
                 pass
         for r in res:
             r["bookTitle"] = BOOKS[r["book"]].title
+        more.SEARCH_CACHE.put(key, {"total": total, "results": res})
         self.json({"total": total, "results": res})
 
     def api_random(self, bid):
@@ -1340,7 +1407,16 @@ def main():
             os.makedirs(d, exist_ok=True)
     migrate_folders()  # README.txt in fresh folders
     copy_mobile()
-    scan_library()
+    STATE["scanning"] = True
+
+    def _scan():
+        scan_library()
+        STATE["scanning"] = False
+        STATE["data_version"] = STATE.get("data_version", 0) + 1
+        STATE["data_msg"] = ""
+    threading.Thread(target=_scan, daemon=True).start()
+    import more
+    threading.Thread(target=more.backup_loop, daemon=True).start()
     if not a.no_services:
         threading.Thread(target=lambda: (start_ollama(), warm_model()), daemon=True).start()
         threading.Thread(target=start_photon, daemon=True).start()

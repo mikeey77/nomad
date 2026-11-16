@@ -263,7 +263,7 @@ const LAYERSTATE = store.get('nomad.layers', {streets:true, satellite:false, hil
 function whenMap(fn){ if(MAP && MAP.loaded()) fn(MAP); else mapWaiters.push(fn) }
 const ACC = {green:['#2ecf85','#1f8a58','#9dffcf','#2f8f62'], blue:['#3aa8ff','#1f5f9a','#a8dcff','#2f6f9f'], amber:['#ffb63a','#9a6a1f','#ffe0a8','#9f7a2f'], red:['#ff5a5a','#9a2f2f','#ffb0b0','#9f3f3f']};
 function mapFlavor(){
-  const style = SET.map_style || 'color';
+  const style = SET.theme === 'sun' ? 'light' : (SET.map_style || 'color');
   if(style === 'light') return Object.assign({}, basemaps.namedFlavor('light'));
   const f = Object.assign({}, basemaps.namedFlavor('dark'));
   if(style === 'color'){
@@ -303,7 +303,7 @@ function mapFlavor(){
 function buildStyle(){
   const o = location.origin, M = STATUS.maps || {};
   const style = {
-    version:8, glyphs:o + '/web/assets/fonts/{fontstack}/{range}.pbf', sprite:o + '/web/assets/sprites/v4/' + (SET.map_style === 'light' ? 'light' : 'dark'),
+    version:8, glyphs:o + '/web/assets/fonts/{fontstack}/{range}.pbf', sprite:o + '/web/assets/sprites/v4/' + (SET.map_style === 'light' || SET.theme === 'sun' ? 'light' : 'dark'),
     sources:{ protomaps:{ type:'vector', url:'pmtiles://' + o + '/kaart/world.pmtiles', attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a> · Protomaps' } },
     layers:basemaps.layers('protomaps', mapFlavor(), {lang:LANG}),
   };

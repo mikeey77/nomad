@@ -134,14 +134,14 @@ const ASSETS = /*ASSETS*/{};
 const T = {
   en:{open:'OPEN FILES', search_all:'Search all collections…', collections:'COLLECTIONS', library:'LIBRARY', map:'MAP', settings:'SETTINGS',
       language:'LANGUAGE', pages:'PAGE LOOK', look_orig:'ORIGINAL', look_dark:'DARK', howto:'HOW TO USE',
-      howto_body:'1. Tap <b>OPEN FILES</b>.<br>2. Pick your <code>.zim</code> files (from <code>NOMAD/data/library</code>) and/or <code>world.pmtiles</code> (from <code>NOMAD/data/maps/world</code>). You can select several at once.<br>3. Read and search offline. Files are not copied — they are read directly, so this works with huge files too.<br><br>Your phone forgets the files when you close the page; just open them again.',
+      howto_body:'1. Tap <b>OPEN FILES</b>.<br>2. Pick your <code>.zim</code> files (from <code>NOMAD/data/library</code>) and/or <code>world.pmtiles</code> (from <code>NOMAD/data/maps/world</code>). GPX tracks (<code>NOMAD/data/tracks</code>) also work. You can select several at once.<br>3. Read and search offline. Files are not copied — they are read directly, so this works with huge files too.<br><br>Your phone forgets the files when you close the page; just open them again.',
       empty_t:'NO FILES OPEN', empty:'Tap <b>OPEN FILES</b> and pick .zim (library) or .pmtiles (map) files from your SSD or phone.',
       nomap_t:'NO MAP OPEN', nomap:'Open <code>world.pmtiles</code> (NOMAD/data/maps/world) with <b>OPEN FILES</b>.',
       articles:'articles', opened:'Opened {n} file(s)', xz:'This .zim uses old xz compression — download a newer version.', notzim:'Not a .zim or .pmtiles file: {f}',
       notfound:'Page not found in this file.', nothing:'Nothing found', loc_err:'Location not available here', search_in:'Search in {b}…', external:'Online link (not available offline)'},
   nl:{open:'BESTANDEN OPENEN', search_all:'Zoek in alle collecties…', collections:'COLLECTIES', library:'BIBLIOTHEEK', map:'KAART', settings:'INSTELLINGEN',
       language:'TAAL', pages:'WEERGAVE PAGINA’S', look_orig:'ORIGINEEL', look_dark:'DONKER', howto:'ZO WERKT HET',
-      howto_body:'1. Tik op <b>BESTANDEN OPENEN</b>.<br>2. Kies je <code>.zim</code>-bestanden (uit <code>NOMAD/data/library</code>) en/of <code>world.pmtiles</code> (uit <code>NOMAD/data/maps/world</code>). Je kunt er meerdere tegelijk kiezen.<br>3. Lees en zoek offline. Bestanden worden niet gekopieerd maar direct gelezen, dus ook enorme bestanden werken.<br><br>Je telefoon vergeet de bestanden als je de pagina sluit; open ze dan gewoon opnieuw.',
+      howto_body:'1. Tik op <b>BESTANDEN OPENEN</b>.<br>2. Kies je <code>.zim</code>-bestanden (uit <code>NOMAD/data/library</code>) en/of <code>world.pmtiles</code> (uit <code>NOMAD/data/maps/world</code>). GPX-tracks (<code>NOMAD/data/tracks</code>) werken ook. Je kunt er meerdere tegelijk kiezen.<br>3. Lees en zoek offline. Bestanden worden niet gekopieerd maar direct gelezen, dus ook enorme bestanden werken.<br><br>Je telefoon vergeet de bestanden als je de pagina sluit; open ze dan gewoon opnieuw.',
       empty_t:'GEEN BESTANDEN OPEN', empty:'Tik op <b>BESTANDEN OPENEN</b> en kies .zim- (bibliotheek) of .pmtiles-bestanden (kaart) van je SSD of telefoon.',
       nomap_t:'GEEN KAART OPEN', nomap:'Open <code>world.pmtiles</code> (NOMAD/data/maps/world) via <b>BESTANDEN OPENEN</b>.',
       articles:'artikelen', opened:'{n} bestand(en) geopend', xz:'Deze .zim gebruikt oude xz-compressie — download een nieuwere versie.', notzim:'Geen .zim of .pmtiles: {f}',
@@ -304,10 +304,12 @@ function renderBooks(){
 }
 async function addFiles(list){
   let n = 0;
+  list = [...list].sort((a, b) => /\.pmtiles$/i.test(b.name) - /\.pmtiles$/i.test(a.name));
   for(const f of list){
     const name = f.name.toLowerCase();
     try{
       if(name.endsWith('.pmtiles')){ await openMapFile(f); n++; continue }
+      if(name.endsWith('.gpx')){ addGpx(f.name, await f.text()); n++; continue }
       if(BOOKS.some(b => b.f.name === f.name && b.size === f.size)) continue;
       const z = await new Zim(f).open(); BOOKS.push(z); n++;
     }catch(e){ toast(e.message === 'notzim' ? t('notzim', {f:f.name}) : f.name + ': ' + e.message) }
@@ -383,7 +385,7 @@ async function show(path, hash = '', push = true){
   await Promise.all(jobs);
   const head = doc.head || doc.documentElement;
   const st = doc.createElement('style');
-  st.textContent = 'html{-webkit-text-size-adjust:100%}body{max-width:100%;overflow-x:hidden;padding:0 10px;word-wrap:break-word}img{max-width:100%;height:auto}table{display:block;overflow-x:auto;max-width:100%}' +
+  st.textContent = 'html{-webkit-text-size-adjust:100%}body{max-width:100%;overflow-x:hidden;padding:0 10px;word-wrap:break-word}img{max-width:100%;height:auto}table{display:block;overflow-x:auto;max-width:100%}@media(max-width:600px){.thumb,.tright,.tleft,figure,.infobox,[style*="float"]{float:none!important;margin:10px 0!important;max-width:100%!important;width:auto!important}}' +
     (LOOK === 'dark' ? 'html{filter:invert(.92) hue-rotate(180deg);background:#fff}img,video,picture,svg image,[style*="background-image"]{filter:invert(1) hue-rotate(180deg)}' : '');
   head.appendChild(st);
   const mv = doc.createElement('meta'); mv.name = 'viewport'; mv.content = 'width=device-width,initial-scale=1'; head.prepend(mv);
@@ -472,6 +474,7 @@ function initMap(){
     style:{version:8, glyphs:'nomad://glyphs/{fontstack}/{range}.pbf', sprite:'nomad://sprite/dark',
       sources:{protomaps:{type:'vector', url:'pmtiles://' + MAPFILE.name, attribution:'© OpenStreetMap · Protomaps'}},
       layers:basemaps.layers('protomaps', flavor(), {lang:LANG})}});
+  MAP.on('load', drawGpx);
   MAP.on('moveend', () => { const c = MAP.getCenter(); ls.set('nm.view', {c:[c.lng, c.lat], z:MAP.getZoom()}) });
 }
 let ME = null;
@@ -484,6 +487,33 @@ $('#locBtn').onclick = () => {
     ME.setLngLat(ll).addTo(MAP); MAP.flyTo({center:ll, zoom:15});
   }, () => toast(t('loc_err')), {enableHighAccuracy:true, timeout:15000});
 };
+
+/* ───────── GPX tracks on the map ───────── */
+const GPX = [];
+function addGpx(name, text){
+  const d = new DOMParser().parseFromString(text, 'application/xml'), lines = [], pts = [];
+  d.querySelectorAll('trkseg, rte').forEach(seg => {
+    const c = [...seg.querySelectorAll('trkpt, rtept')].map(p => [+p.getAttribute('lon'), +p.getAttribute('lat')]);
+    if(c.length > 1) lines.push(c);
+  });
+  d.querySelectorAll('wpt').forEach(p => pts.push({c:[+p.getAttribute('lon'), +p.getAttribute('lat')], n:p.querySelector('name')?.textContent || ''}));
+  if(!lines.length && !pts.length) throw new Error('empty GPX');
+  GPX.push({name, lines, pts}); drawGpx();
+  const all = lines.flat().concat(pts.map(p => p.c));
+  if(MAP && all.length) MAP.fitBounds([[Math.min(...all.map(c => c[0])), Math.min(...all.map(c => c[1]))], [Math.max(...all.map(c => c[0])), Math.max(...all.map(c => c[1]))]], {padding:60, maxZoom:15});
+}
+function drawGpx(){
+  if(!MAP || !MAP.isStyleLoaded() || !GPX.length) return;
+  const cols = ['#ff5ad1', '#3ad7ff', '#ffd23a', '#9b7bff'], feats = [];
+  GPX.forEach((g, i) => { g.lines.forEach(l => feats.push({type:'Feature', properties:{c:cols[i % 4]}, geometry:{type:'LineString', coordinates:l}}));
+    g.pts.forEach(p => feats.push({type:'Feature', properties:{c:cols[i % 4], n:p.n}, geometry:{type:'Point', coordinates:p.c}})) });
+  const data = {type:'FeatureCollection', features:feats};
+  if(MAP.getSource('gpx')) return MAP.getSource('gpx').setData(data);
+  MAP.addSource('gpx', {type:'geojson', data});
+  MAP.addLayer({id:'gpx-c', type:'line', source:'gpx', filter:['==', '$type', 'LineString'], layout:{'line-cap':'round', 'line-join':'round'}, paint:{'line-color':'#000', 'line-width':7, 'line-opacity':.45}});
+  MAP.addLayer({id:'gpx-l', type:'line', source:'gpx', filter:['==', '$type', 'LineString'], layout:{'line-cap':'round', 'line-join':'round'}, paint:{'line-color':['get', 'c'], 'line-width':4}});
+  MAP.addLayer({id:'gpx-p', type:'circle', source:'gpx', filter:['==', '$type', 'Point'], paint:{'circle-radius':6, 'circle-color':['get', 'c'], 'circle-stroke-color':'#fff', 'circle-stroke-width':2}});
+}
 
 /* ───────── views & settings ───────── */
 function setView(v){

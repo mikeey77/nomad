@@ -573,3 +573,48 @@ details.think>div{white-space:pre-wrap;color:var(--dim);font-size:13.5px;line-he
 .clb.ok{color:var(--acc);border-color:rgba(var(--a),.5)}
 .clb.warn{color:#ffb63a;border-color:rgba(255,182,58,.5)}
 .cld{font-size:13px;color:var(--dim);margin:4px 0 8px}
+
+/* v0.13 — sun mode (outdoors, bright light, gloves): maximum contrast, bigger targets, no effects */
+[data-theme=sun]{--b:255,255,255;--bg:#ffffff;--bg2:#f1f1f1;--txt:#000;--dim:#2b2b2b;--hi:#000;--a:0,110,55;--a2:0,80,160;
+  --acc:#006e37;--acc2:#004d27;--panel:#fff;--line:#000;--line2:#000;color-scheme:light;font-weight:500}
+[data-theme=sun] body{background:#fff!important}
+[data-theme=sun] #bg,[data-theme=sun] #fx2,[data-theme=sun] #bg::after{display:none!important}
+[data-theme=sun] #globe canvas{filter:invert(.92) hue-rotate(180deg) saturate(.7)}
+[data-theme=sun] *{text-shadow:none!important;box-shadow:none!important;backdrop-filter:none!important}
+[data-theme=sun] .card,[data-theme=sun] .glass,[data-theme=sun] .ccard,[data-theme=sun] .mod{background:#fff!important;border:2px solid #000!important}
+[data-theme=sun] .btn{border:2px solid #000!important;color:#000!important;background:#fff!important;min-height:44px;font-weight:700}
+[data-theme=sun] .btn.pri{background:#006e37!important;color:#fff!important;border-color:#006e37!important}
+[data-theme=sun] .rail a,[data-theme=sun] .rail button{color:#000!important}
+[data-theme=sun] .rail .on{background:#006e37!important;color:#fff!important}
+[data-theme=sun] input,[data-theme=sun] textarea,[data-theme=sun] select,[data-theme=sun] .inp{background:#fff!important;color:#000!important;border:2px solid #000!important}
+[data-theme=sun] .sub,[data-theme=sun] .dim,[data-theme=sun] p{color:#1a1a1a!important}
+[data-theme=sun] .hero h1{filter:none;color:#000;-webkit-text-fill-color:#000}
+
+/* home: did-you-know with picture */
+.fact.withimg{display:flex;gap:16px;align-items:stretch;padding:0;overflow:hidden}
+.fact .fimg{flex:0 0 190px;min-height:130px;background:#0a1510;position:relative;overflow:hidden}
+.fact .fimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 6s ease-out}
+.fact:hover .fimg img{transform:scale(1.08)}
+.fact.withimg .ftxt{padding:16px 18px 16px 0}
+@media(max-width:700px){.fact.withimg{flex-direction:column}.fact .fimg{flex-basis:160px}.fact.withimg .ftxt{padding:0 16px 16px}}
+
+/* map: GPX tracks */
+.trk{display:flex;align-items:center;gap:8px;padding:6px;border-radius:8px;cursor:pointer;font-size:12.5px}
+.trk:hover{background:rgba(var(--a),.07)}
+.trk>i{width:10px;height:10px;border-radius:50%;flex:none}
+.trk span{flex:1;min-width:0}.trk b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trk small{color:var(--dim);font-family:var(--mono);font-size:10.5px}
+.trk button{border:0;background:none;color:var(--dim);cursor:pointer;font-size:12px;padding:2px 4px}
+.trk.off{opacity:.45}
+
+/* startup indicator */
+.scanning{display:inline-flex;align-items:center;gap:8px;margin-left:14px;color:var(--dim);font:11px var(--mono);letter-spacing:.1em}
+
+/* smoother view changes: cards rise in one after another */
+.view.on .ccard,.view.on .card,.view.on .mod{animation:riseIn .45s cubic-bezier(.2,.7,.2,1) both}
+.view.on .ccard:nth-child(2),.view.on .card:nth-child(2),.view.on .mod:nth-child(2){animation-delay:.04s}
+.view.on .ccard:nth-child(3),.view.on .card:nth-child(3),.view.on .mod:nth-child(3){animation-delay:.08s}
+.view.on .ccard:nth-child(4),.view.on .card:nth-child(4),.view.on .mod:nth-child(4){animation-delay:.12s}
+.view.on .ccard:nth-child(n+5),.view.on .card:nth-child(n+5),.view.on .mod:nth-child(n+5){animation-delay:.16s}
+@keyframes riseIn{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.view.on *{animation:none!important}}

@@ -88,6 +88,9 @@
         <div class="tog" data-l="terrain3d"><i></i><span data-t="l_3d"></span></div>
         <div class="hud" style="margin:12px 6px 6px" data-t="pins"></div>
         <div id="pinlist"></div>
+        <div class="hud" style="margin:12px 6px 6px;display:flex;align-items:center"><span data-t="tracks"></span>
+          <label class="btn" style="height:24px;margin-left:auto;padding:0 8px;font-size:10px" data-tt="gpx_tip"><span data-t="gpx_import"></span><input type="file" id="gpxIn" accept=".gpx,application/gpx+xml" multiple hidden></label></div>
+        <div id="tracklist"></div>
       </div>
       <div class="mapui glass" id="mapcoord">—</div>
       <div class="mapui glass" id="routebox">
@@ -189,7 +192,7 @@
       <div id="trHint"></div>
       <div class="trgrid">
         <div class="trbox"><textarea id="trIn" data-tp="tr_ph"></textarea>
-          <div class="tract"><button class="btn mic" data-mic="trIn" title="Microphone"><span class="ic" data-i="mic"></span></button><button class="btn" id="trSpeakIn" title="Speak">🔊</button><span class="mono dim" id="trCount"></span><button class="btn pri" id="trGo" data-t="tr_go"></button></div></div>
+          <div class="tract"><button class="btn mic" data-mic="trIn" title="Microphone"><span class="ic" data-i="mic"></span></button><button class="btn" id="trSpeakIn" title="Speak">🔊</button><label class="btn" id="trPhoto" data-tt="tr_photo_tip"><span class="ic" data-i="camera"></span><input type="file" id="trPhotoIn" accept="image/*" hidden></label><span class="mono dim" id="trCount"></span><button class="btn pri" id="trGo" data-t="tr_go"></button></div></div>
         <div class="trbox out"><div id="trOut" class="trout"></div>
           <div class="tract"><button class="btn" id="trSpeak" title="Speak">🔊</button><button class="btn" id="trCopy" data-t="copy"></button><button class="btn" id="trSave" data-t="save_ans"></button></div></div>
       </div>
@@ -209,7 +212,7 @@
       <div class="card setc">
         <div class="row"><span data-t="s_lang"></span><div class="seg" id="sLang"><button data-v="en">English</button><button data-v="nl">Nederlands</button></div></div>
         <div class="row"><span data-t="s_accent"></span><div class="seg" id="sAccent"><button data-v="green" data-t="g_green"></button><button data-v="blue" data-t="g_blue"></button><button data-v="amber" data-t="g_amber"></button><button data-v="red" data-t="g_red"></button></div></div>
-        <div class="row"><span data-t="s_theme"></span><div class="seg" id="sTheme"><button data-v="dark" data-t="dark"></button><button data-v="light" data-t="light"></button></div></div>
+        <div class="row"><span data-t="s_theme"></span><div class="seg" id="sTheme"><button data-v="dark" data-t="dark"></button><button data-v="light" data-t="light"></button><button data-v="sun" data-t="sun"></button></div></div>
         <div class="row"><span data-t="s_map"></span><div class="seg" id="sMap"><button data-v="color" data-t="m_color"></button><button data-v="accent" data-t="m_accent"></button><button data-v="light" data-t="m_light"></button></div></div>
         <div class="row"><span data-t="s_font"></span><input type="range" min="0.8" max="1.6" step="0.05" id="sFont"><b id="sFontV" style="font-family:var(--mono);width:48px;text-align:right"></b></div>
       </div>
@@ -220,10 +223,17 @@
       </div>
       <div class="sec-t" data-t="s_start"></div>
       <div class="card setc"><div class="row"><span data-t="s_autostart"></span><div class="tog" id="sAuto"><i></i></div></div><div class="sub" id="sAutoNote"></div></div>
+      <div class="sec-t" data-t="s_backup"></div>
+      <div class="card setc"><div class="sub" data-t="s_backup_help"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <a class="btn pri" href="/api/backup" data-t="b_download"></a>
+          <label class="btn"><span data-t="b_restore"></span><input type="file" id="bkIn" accept=".json" hidden></label>
+          <button class="btn" id="bkNow" data-t="b_now"></button></div>
+        <div id="bkList" class="sub" style="margin-top:10px"></div></div>
       <div class="sec-t" data-t="s_storage"></div>
       <div class="card setc"><div id="cleanList"></div><button class="btn" id="cleanBtn" data-t="s_clean" style="margin-top:12px"></button></div>
       <div class="sec-t" data-t="s_mobile"></div>
-      <div class="card setc"><div class="sub" data-t="s_mobile_help"></div><div class="big" style="font-size:16px"><a target="_blank" href="https://mikeey77.github.io/nomad/">mikeey77.github.io/nomad</a></div></div>
+      <div class="card setc"><div class="sub" data-t="s_mobile_help"></div><div class="sub" style="margin-top:10px" data-t="s_mobile_file"></div><div style="display:flex;gap:8px;margin-top:10px"><a class="btn pri" href="/mobile" data-t="m_download"></a><a class="btn" target="_blank" href="https://mikeey77.github.io/nomad/mobile/">mikeey77.github.io/nomad/mobile</a></div></div>
       <div class="sec-t" data-t="s_about"></div>
       <div class="card setc"><div class="sub">PROJECT NOMAD v<span id="ver2"></span> · <a href="https://github.com/mikeey77/nomad" target="_blank">github.com/mikeey77/nomad</a> · OpenStreetMap, Protomaps, Kiwix, JAXA, Photon, Ollama</div></div>
     </div></section>
@@ -262,6 +272,7 @@
 <script src="/web/app2.js"></script>
 <script src="/web/ai.js"></script>
 <script src="/web/v12.js"></script>
+<script src="/web/v13.js"></script>
 <script src="/web/fx.js"></script>
 </body>
 </html>
