@@ -50,6 +50,10 @@
 
   addEventListener('message', e => {
     const m = e.data || {};
+    if(m.type === 'look'){
+      document.documentElement.style.setProperty('--fs', m.scale || 1);
+      document.documentElement.classList.toggle('light', m.theme === 'light');
+    }
     if(m.type === 'goto'){
       const n = document.getElementById(m.id);
       if(n){ n.closest('details') && (n.closest('details').open = true); n.scrollIntoView({ behavior: 'smooth', block: 'start' }) }

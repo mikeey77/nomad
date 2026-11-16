@@ -1,0 +1,35 @@
+name: Build NOMAD.exe
+
+on:
+  push:
+    branches: [main]
+    paths: ["launcher/**", ".github/workflows/build-exe.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install pyinstaller pystray pillow
+      - name: Build
+        run: pyinstaller --onefile --windowed --name NOMAD --icon launcher/nomad.ico --add-data "launcher/nomad.ico;." launcher/launcher.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NOMAD-exe
+          path: dist/NOMAD.exe
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: exe-latest
+          name: NOMAD.exe (latest)
+          body: "Zet NOMAD.exe in de NOMAD-map op je SSD en dubbelklik. De app werkt zichzelf daarna bij."
+          files: dist/NOMAD.exe
+          make_latest: true

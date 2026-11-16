@@ -1,0 +1,93 @@
+/* NOMAD — vertalingen. Engels is standaard; Nederlands kiesbaar in Settings. */
+window.I18N = {
+  en: {
+    home:'HOME', lib:'LIBRARY', map:'MAP', ai:'AI', sos:'SURVIVAL', dl:'DOWNLOADS', set:'SETTINGS',
+    v_home:'// COMMAND CENTER', v_lib:'// LIBRARY', v_map:'// WORLD MAP', v_ai:'// AI ASSISTANT', v_sos:'// SURVIVAL KIT', v_dl:'// DOWNLOADS & UPDATES', v_set:'// SETTINGS',
+    search_all:'Search everything…', what:'What do you want to know or find?', random:'Random article (R)',
+    tagline:'NODE FOR OFFLINE MEDIA,<br>ARCHIVES AND DATA',
+    mod:'MODULE', library:'Library', worldmap:'World map', geo:'Address search', assistant:'AI assistant',
+    articles_in:'articles in {n} collection(s)', ready:'READY', empty_lib:'EMPTY — PUT .ZIM FILES IN DATA\\BIBLIOTHEEK', nozim:'LIBZIM MISSING',
+    no_mapdata:'no map data yet', world_missing:'WORLD.PMTILES MISSING', streets:'streets', elevation:'elevation', satellite:'satellite',
+    photon:'Photon geocoder · worldwide', local_ollama:'local via Ollama', model:'model',
+    st_aan:'ON', st_uit:'OFF', 'st_niet geïnstalleerd':'NOT INSTALLED', 'st_geen database':'NO DATABASE', st_opstarten:'STARTING', 'st_start niet':'FAILED TO START',
+    phone:'ON YOUR PHONE', scan:'SCAN WITH YOUR CAMERA', phone_help:'Phone or iPad on the same Wi-Fi. Then: <b>Share → Add to Home Screen</b> (iPhone) or <b>⋮ → Install app</b> (Android).',
+    storage:'STORAGE', used_of:'{u} used of {t}', free:'free',
+    collections:'COLLECTIONS', favorites:'FAVORITES', sections:'SECTIONS', note:'NOTE', history:'HISTORY',
+    no_coll:'No collections yet', no_art:'No article open', no_sec:'No sections', no_hist:'Nothing read yet', no_fav:'No favorites yet',
+    note_ph:'Your note on this article…', fav_add:'☆ Add to favorites', fav_rm:'★ In favorites',
+    lib_empty_t:'LIBRARY IS EMPTY', lib_empty:'Put .zim files (Wikipedia, Gutenberg, iFixit…) in <code>NOMAD\\data\\bibliotheek</code> or use <b>Downloads</b>.',
+    results_for:'{n} RESULTS FOR “{q}”', searching:'SEARCHING “{q}”…', nothing:'Nothing found', articles:'articles',
+    map_search:'Search a place or address…', layers:'LAYERS', l_streets:'Map', l_sat:'Satellite', l_hill:'Relief', l_3d:'3D terrain', pins:'PINS', no_pins:'Right-click the map to save a pin',
+    no_world_t:'NO WORLD MAP FOUND', no_world:'Put the Protomaps world map in <code>NOMAD\\data\\kaart\\basis\\world.pmtiles</code> (or use Downloads) and reload.',
+    location:'Location', save_pin:'Save pin', pin_name:'Pin name', delete:'Delete', geo_off:'Address search is off',
+    ask_ph:'Ask a question… (Enter = send, Shift+Enter = new line)', send:'SEND', use_wiki:'Answer using Wikipedia as source', new_chat:'NEW CHAT',
+    ai_hello:'Hi! I run entirely on your SSD. With “Wikipedia as source” on, I search your offline Wikipedia first and answer from it, with the sources attached.',
+    you:'YOU', error:'Error',
+    sos_guides:'QUICK GUIDES', sos_tools:'TOOLS', compass:'Compass', compass_na:'Only on a phone with a compass (via NOMAD Mobile).', compass_start:'START COMPASS',
+    sun:'Sun', sunrise:'Sunrise', sunset:'Sunset', daylight:'Daylight', sun_loc:'for the map center / your position', my_pos:'MY POSITION',
+    sos_signal:'SOS signal', sos_help:'Flashes S-O-S (… — — — …) full screen, with sound. Tap to stop.', start:'START',
+    checklist:'EMERGENCY CHECKLIST', add_item:'Add item…', torch:'Flashlight', torch_help:'Full white screen at max brightness. Tap to stop.',
+    updates:'UPDATES', check_now:'CHECK NOW', rescan:'RESCAN LIBRARY', up_to_date:'Everything is up to date.', offline_note:' (as far as known; you are offline).',
+    last_check:'last check', never_auto:'NOMAD never downloads anything until you click Update or Download.', online:'Online', offline:'Offline', update:'UPDATE',
+    catalog:'CATALOG', download:'DOWNLOAD', cancel:'CANCEL', installed:'INSTALLED', newer:'NEWER VERSION', torrent:'OPEN TORRENT', need_online:'Connect to the internet to see the catalog.',
+    loading:'Loading…', resume:'RESUME', status_bezig:'downloading', status_klaar:'done', status_fout:'stopped',
+    c_encyclopedia:'Encyclopedia', c_dictionary:'Dictionary', c_books:'Books', c_learning:'Learning', c_repair:'Repair', c_medical:'Medical', c_travel:'Travel', 'c_q&a':'Q&A', c_map:'Maps', c_search:'Search',
+    s_lang:'Language', s_look:'APPEARANCE', s_accent:'Accent color', s_theme:'Theme', dark:'Dark', light:'Light', s_font:'Text size', s_updates:'UPDATES',
+    s_autocheck:'Check for updates automatically when online', s_interval:'Check every (minutes)', s_start:'STARTUP', s_autostart:'Start NOMAD automatically with Windows',
+    s_autostart_na:'Only available on Windows.', s_storage:'STORAGE CLEANUP', s_clean:'DELETE SELECTED', s_nothing_clean:'Nothing to clean up.',
+    k_old:'old version', k_partial:'unfinished download', k_installer:'installer / log', k_archive:'extracted archive', s_confirm:'Permanently delete {n} file(s) ({s})? This cannot be undone.',
+    s_freed:'{s} freed.', s_about:'ABOUT', s_mobile:'NOMAD MOBILE', s_mobile_help:'Plug the SSD into your phone and open NOMAD Mobile (works offline after the first visit):',
+    saved:'Saved', g_green:'Green', g_blue:'Blue', g_amber:'Amber', g_red:'Red',
+  },
+  nl: {
+    home:'HOME', lib:'BIEB', map:'KAART', ai:'AI', sos:'NOOD', dl:'DOWNLOADS', set:'OPTIES',
+    v_home:'// COMMANDOCENTRUM', v_lib:'// BIBLIOTHEEK', v_map:'// WERELDKAART', v_ai:'// AI-ASSISTENT', v_sos:'// NOODPAKKET', v_dl:'// DOWNLOADS & UPDATES', v_set:'// INSTELLINGEN',
+    search_all:'Zoek in alles…', what:'Wat wil je weten of vinden?', random:'Willekeurig artikel (R)',
+    tagline:'NODE FOR OFFLINE MEDIA,<br>ARCHIVES AND DATA',
+    mod:'MODULE', library:'Bibliotheek', worldmap:'Wereldkaart', geo:'Adres zoeken', assistant:'AI-assistent',
+    articles_in:'artikelen in {n} collectie(s)', ready:'GEREED', empty_lib:'LEEG — ZET .ZIM IN DATA\\BIBLIOTHEEK', nozim:'LIBZIM ONTBREEKT',
+    no_mapdata:'nog geen kaartdata', world_missing:'WORLD.PMTILES ONTBREEKT', streets:'straten', elevation:'hoogte', satellite:'satelliet',
+    photon:'Photon geocoder · wereldwijd', local_ollama:'lokaal via Ollama', model:'model',
+    st_aan:'AAN', st_uit:'UIT', 'st_niet geïnstalleerd':'NIET GEÏNSTALLEERD', 'st_geen database':'GEEN DATABASE', st_opstarten:'OPSTARTEN', 'st_start niet':'START NIET',
+    phone:'OP JE TELEFOON', scan:'SCAN MET JE CAMERA', phone_help:'Telefoon of iPad op dezelfde wifi. Daarna: <b>Deel → Zet op beginscherm</b> (iPhone) of <b>⋮ → App installeren</b> (Android).',
+    storage:'OPSLAG', used_of:'{u} gebruikt van {t}', free:'vrij',
+    collections:'COLLECTIES', favorites:'FAVORIETEN', sections:'SECTIES', note:'NOTITIE', history:'HISTORIE',
+    no_coll:'Nog geen collecties', no_art:'Geen artikel geopend', no_sec:'Geen secties', no_hist:'Nog niets gelezen', no_fav:'Nog geen favorieten',
+    note_ph:'Jouw notitie bij dit artikel…', fav_add:'☆ Aan favorieten toevoegen', fav_rm:'★ In favorieten',
+    lib_empty_t:'BIBLIOTHEEK IS LEEG', lib_empty:'Zet .zim-bestanden (Wikipedia, Gutenberg, iFixit…) in <code>NOMAD\\data\\bibliotheek</code> of gebruik <b>Downloads</b>.',
+    results_for:'{n} RESULTATEN VOOR “{q}”', searching:'ZOEKEN NAAR “{q}”…', nothing:'Niets gevonden', articles:'artikelen',
+    map_search:'Zoek een plaats of adres…', layers:'LAGEN', l_streets:'Kaart', l_sat:'Satelliet', l_hill:'Reliëf', l_3d:'3D-terrein', pins:'PINS', no_pins:'Rechtsklik op de kaart om een pin op te slaan',
+    no_world_t:'GEEN WERELDKAART GEVONDEN', no_world:'Zet de Protomaps-wereldkaart in <code>NOMAD\\data\\kaart\\basis\\world.pmtiles</code> (of gebruik Downloads) en herlaad.',
+    location:'Locatie', save_pin:'Pin opslaan', pin_name:'Naam van de pin', delete:'Verwijderen', geo_off:'Adres zoeken staat uit',
+    ask_ph:'Stel een vraag… (Enter = versturen, Shift+Enter = nieuwe regel)', send:'VERSTUUR', use_wiki:'Antwoord met Wikipedia als bron', new_chat:'NIEUW GESPREK',
+    ai_hello:'Hoi! Ik draai volledig lokaal op je SSD. Met “Wikipedia als bron” zoek ik eerst in je offline Wikipedia en antwoord ik op basis daarvan, met de bronnen erbij.',
+    you:'JIJ', error:'Fout',
+    sos_guides:'SNELGIDSEN', sos_tools:'GEREEDSCHAP', compass:'Kompas', compass_na:'Alleen op een telefoon met kompas (via NOMAD Mobile).', compass_start:'KOMPAS STARTEN',
+    sun:'Zon', sunrise:'Zonsopkomst', sunset:'Zonsondergang', daylight:'Daglicht', sun_loc:'voor het kaartmidden / je positie', my_pos:'MIJN POSITIE',
+    sos_signal:'SOS-signaal', sos_help:'Knippert S-O-S (… — — — …) schermvullend, met geluid. Tik om te stoppen.', start:'START',
+    checklist:'NOODCHECKLIST', add_item:'Item toevoegen…', torch:'Zaklamp', torch_help:'Volledig wit scherm op max helderheid. Tik om te stoppen.',
+    updates:'UPDATES', check_now:'NU CONTROLEREN', rescan:'BIBLIOTHEEK OPNIEUW SCANNEN', up_to_date:'Alles is up-to-date.', offline_note:' (voor zover bekend; je bent offline).',
+    last_check:'laatste controle', never_auto:'NOMAD downloadt nooit iets zonder dat jij op Updaten of Downloaden klikt.', online:'Online', offline:'Offline', update:'UPDATEN',
+    catalog:'CATALOGUS', download:'DOWNLOADEN', cancel:'STOPPEN', installed:'GEÏNSTALLEERD', newer:'NIEUWERE VERSIE', torrent:'TORRENT OPENEN', need_online:'Maak verbinding met internet om de catalogus te zien.',
+    loading:'Laden…', resume:'HERVATTEN', status_bezig:'bezig', status_klaar:'klaar', status_fout:'gestopt',
+    c_encyclopedia:'Encyclopedie', c_dictionary:'Woordenboek', c_books:'Boeken', c_learning:'Leren', c_repair:'Reparatie', c_medical:'Medisch', c_travel:'Reizen', 'c_q&a':'Vraag & antwoord', c_map:'Kaarten', c_search:'Zoeken',
+    s_lang:'Taal', s_look:'WEERGAVE', s_accent:'Accentkleur', s_theme:'Thema', dark:'Donker', light:'Licht', s_font:'Tekstgrootte', s_updates:'UPDATES',
+    s_autocheck:'Automatisch op updates controleren als er internet is', s_interval:'Controleren elke (minuten)', s_start:'OPSTARTEN', s_autostart:'NOMAD automatisch starten met Windows',
+    s_autostart_na:'Alleen beschikbaar op Windows.', s_storage:'OPSLAG OPRUIMEN', s_clean:'GESELECTEERDE VERWIJDEREN', s_nothing_clean:'Niets om op te ruimen.',
+    k_old:'oude versie', k_partial:'onafgemaakte download', k_installer:'installatiebestand / log', k_archive:'uitgepakt archief', s_confirm:'{n} bestand(en) ({s}) definitief verwijderen? Dit kan niet ongedaan worden gemaakt.',
+    s_freed:'{s} vrijgemaakt.', s_about:'OVER', s_mobile:'NOMAD MOBILE', s_mobile_help:'Steek de SSD in je telefoon en open NOMAD Mobile (werkt offline na het eerste bezoek):',
+    saved:'Opgeslagen', g_green:'Groen', g_blue:'Blauw', g_amber:'Amber', g_red:'Rood',
+  },
+};
+let LANG = 'en';
+function t(k, vars){
+  let s = (I18N[LANG] && I18N[LANG][k]) ?? I18N.en[k] ?? k;
+  if(vars) for(const [a, b] of Object.entries(vars)) s = s.replace('{' + a + '}', b);
+  return s;
+}
+function applyI18n(){
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-t]').forEach(e => e.innerHTML = t(e.dataset.t));
+  document.querySelectorAll('[data-tp]').forEach(e => e.placeholder = t(e.dataset.tp));
+  document.querySelectorAll('[data-tt]').forEach(e => e.title = t(e.dataset.tt));
+}

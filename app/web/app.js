@@ -2,31 +2,53 @@
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const api = (u, o) => fetch(u, o).then(r => r.json());
+const post = (u, body) => api(u, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body || {})});
 const store = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
   set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
 };
 const fmtB = n => { if(!n) return '0 B'; const u=['B','KB','MB','GB','TB']; let i=0; while(n>=1024&&i<4){n/=1024;i++} return n.toFixed(n>=100||i<3?0:1)+' '+u[i] };
-const fmtN = n => (n||0).toLocaleString('nl-NL');
+const fmtN = n => (n||0).toLocaleString(LANG === 'nl' ? 'nl-NL' : 'en-GB');
+const debounce = (f, ms) => { let tm; return (...a) => { clearTimeout(tm); tm = setTimeout(() => f(...a), ms) } };
+function toast(msg){ const e = $('#toast'); e.textContent = msg; e.classList.add('on'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 2200) }
 
-let STATUS = {}, BOOKS = [], VIEW = 'home';
-const VIEWS = { home:'// COMMANDOCENTRUM', lib:'// BIBLIOTHEEK', map:'// WERELDKAART', ai:'// AI-ASSISTENT', upd:'// UPDATES' };
+let STATUS = {}, BOOKS = [], VIEW = 'home', SET = {}, USER = {favorites:[], notes:{}, pins:[], checklist:[]};
+const VIEWS = ['home','lib','map','ai','sos','dl','set'];
 const ICON = {
   lib:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5a1 1 0 011-1h4v16H5a1 1 0 01-1-1zM9 4h5v16H9zM14 5l4-1 3 15-4 1z"/></svg>',
   map:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>',
   ai:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M9 12h.01M15 12h.01M9 16h6"/></svg>',
   geo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6.2-7-11a7 7 0 1114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
-  ter:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 19l6-9 4 6 3-4 5 7z"/></svg>',
 };
+
+/* ───────── instellingen & weergave ───────── */
+function applyLook(){
+  LANG = SET.lang || 'en';
+  document.documentElement.dataset.accent = SET.accent || 'green';
+  document.documentElement.dataset.theme = SET.theme || 'dark';
+  applyI18n();
+  $('#viewName').textContent = t('v_' + VIEW);
+  try{ frame.contentWindow.postMessage({type:'look', scale:SET.font_scale || 1, theme:SET.theme}, '*') }catch(e){}
+}
+async function saveSet(patch){
+  SET = await post('/api/settings', patch);
+  applyLook(); renderSettings(); renderAll();
+}
+async function saveUser(patch){
+  Object.assign(USER, patch);
+  await post('/api/user', patch).catch(() => {});
+}
 
 /* ───────── routing ───────── */
 function setView(v){
   VIEW = v;
-  $$('.view').forEach(e => e.classList.toggle('on', e.id === 'v-'+v));
-  $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.go === v));
-  $('#viewName').textContent = VIEWS[v] || '';
+  $$('.view').forEach(e => e.classList.toggle('on', e.id === 'v-' + v));
+  $$('.tab').forEach(x => x.classList.toggle('on', x.dataset.go === v));
+  $('#viewName').textContent = t('v_' + v);
   if(v === 'map') initMap();
-  if(v === 'upd') loadUpdates();
+  if(v === 'dl'){ loadUpdates(); loadCatalog() }
+  if(v === 'set'){ renderSettings(); loadCleanup() }
+  if(v === 'sos') renderSos();
 }
 function route(){
   const h = decodeURI(location.hash.slice(1) || 'home');
@@ -42,7 +64,7 @@ function route(){
     setView('map');
     const m = (rest[0]||'').match(/^@(-?[\d.]+),(-?[\d.]+),([\d.]+)/);
     if(m) whenMap(map => map.jumpTo({center:[+m[2], +m[1]], zoom:+m[3]}));
-  } else setView(VIEWS[v] ? v : 'home');
+  } else setView(VIEWS.includes(v) ? v : 'home');
 }
 window.addEventListener('hashchange', route);
 $$('[data-go]').forEach(b => b.onclick = () => { location.hash = b.dataset.go });
@@ -51,61 +73,69 @@ $$('[data-go]').forEach(b => b.onclick = () => { location.hash = b.dataset.go })
 async function loadStatus(){
   STATUS = await api('/api/status').catch(() => ({}));
   BOOKS = await api('/api/library').catch(() => []);
-  $('#ver').textContent = STATUS.version || '';
+  renderAll();
+}
+function renderAll(){
+  $('#ver').textContent = $('#ver2').textContent = STATUS.version || '';
   const on = STATUS.online;
   $('#netDot').className = 'dot ' + (on ? 'ok' : 'warn');
-  $('#netTxt').textContent = on ? 'ONLINE · UPDATES MOGELIJK' : 'OFFLINE · VOLLEDIG LOKAAL';
-  $('#fLib').innerHTML = 'ARTIKELEN <b>' + fmtN(STATUS.library?.articles) + '</b>';
+  $('#netTxt').textContent = (on ? t('online') : t('offline')).toUpperCase();
+  $('#fLib').innerHTML = t('articles').toUpperCase() + ' <b>' + fmtN(STATUS.library?.articles) + '</b>';
   const b = $('#updBadge'); b.textContent = STATUS.updates || ''; b.classList.toggle('on', !!STATUS.updates);
-  $('#aiModel').textContent = 'MODEL: ' + (STATUS.ai?.model || '—');
-  renderDash(); renderBooks();
+  $('#aiModel').textContent = t('model').toUpperCase() + ': ' + (STATUS.ai?.model || '—');
+  renderDash(); renderBooks(); renderFavs(); renderHist();
+  if(VIEW === 'lib' && $('#shelf').style.display !== 'none' && !location.hash.startsWith('#search')) showShelf();
 }
 function stateDot(s){ return s === 'aan' ? 'ok' : (s === 'opstarten' ? 'warn' : 'bad') }
+function stTxt(s){ return t('st_' + s) !== 'st_' + s ? t('st_' + s) : String(s || '').toUpperCase() }
 function renderDash(){
   const S = STATUS, L = S.library || {}, M = S.maps || {}, A = S.ai || {};
-  const mapParts = [M.world?.present && 'straten', M.terrain?.present && 'hoogte', M.satellite?.present && 'satelliet'].filter(Boolean);
+  const parts = [M.world?.present && t('streets'), M.terrain?.present && t('elevation'), M.satellite?.present && t('satellite')].filter(Boolean);
   const mapSize = Object.values(M).reduce((a, x) => a + (x.size||0), 0);
   $('#mods').innerHTML = `
-    <div class="card" data-h="lib"><div class="k">MODULE 01</div><h3>${ICON.lib}Bibliotheek</h3>
-      <div class="big">${fmtN(L.articles)}</div><div class="sub">artikelen in ${L.books||0} collectie(s) · ${fmtB(L.size)}</div>
-      <div class="status"><span class="dot ${L.books?'ok':'bad'}"></span>${L.zim===false?'LIBZIM ONTBREEKT':L.books?'GEREED':'LEEG — ZET .ZIM IN DATA\\BIBLIOTHEEK'}</div></div>
-    <div class="card" data-h="map"><div class="k">MODULE 02</div><h3>${ICON.map}Wereldkaart</h3>
-      <div class="big">${mapParts.length ? mapParts.length + '/3' : '—'}</div><div class="sub">${mapParts.join(' · ') || 'nog geen kaartdata'} · ${fmtB(mapSize)}</div>
-      <div class="status"><span class="dot ${M.world?.present?'ok':'bad'}"></span>${M.world?.present?'GEREED':'WORLD.PMTILES ONTBREEKT'}</div></div>
-    <div class="card" data-h="map"><div class="k">MODULE 03</div><h3>${ICON.geo}Adres zoeken</h3>
-      <div class="big">${S.geo==='aan'?'AAN':'—'}</div><div class="sub">Photon geocoder · wereldwijd</div>
-      <div class="status"><span class="dot ${stateDot(S.geo)}"></span>${esc((S.geo||'').toUpperCase())}</div></div>
-    <div class="card" data-h="ai"><div class="k">MODULE 04</div><h3>${ICON.ai}AI-assistent</h3>
-      <div class="big">${A.state==='aan'?(A.models?.length||0)+' model':'—'}</div><div class="sub">${esc(A.model||'')} · lokaal via Ollama</div>
-      <div class="status"><span class="dot ${stateDot(A.state)}"></span>${esc((A.state||'').toUpperCase())}</div></div>`;
+    <div class="card" data-h="lib"><div class="k">${t('mod')} 01</div><h3>${ICON.lib}${t('library')}</h3>
+      <div class="big">${fmtN(L.articles)}</div><div class="sub">${t('articles_in', {n:L.books||0})} · ${fmtB(L.size)}</div>
+      <div class="status"><span class="dot ${L.books?'ok':'bad'}"></span>${L.zim===false?t('nozim'):L.books?t('ready'):t('empty_lib')}</div></div>
+    <div class="card" data-h="map"><div class="k">${t('mod')} 02</div><h3>${ICON.map}${t('worldmap')}</h3>
+      <div class="big">${parts.length ? parts.length + '/3' : '—'}</div><div class="sub">${parts.join(' · ') || t('no_mapdata')} · ${fmtB(mapSize)}</div>
+      <div class="status"><span class="dot ${M.world?.present?'ok':'bad'}"></span>${M.world?.present?t('ready'):t('world_missing')}</div></div>
+    <div class="card" data-h="map"><div class="k">${t('mod')} 03</div><h3>${ICON.geo}${t('geo')}</h3>
+      <div class="big">${S.geo==='aan'?t('st_aan'):'—'}</div><div class="sub">${t('photon')}</div>
+      <div class="status"><span class="dot ${stateDot(S.geo)}"></span>${esc(stTxt(S.geo))}</div></div>
+    <div class="card" data-h="ai"><div class="k">${t('mod')} 04</div><h3>${ICON.ai}${t('assistant')}</h3>
+      <div class="big">${A.state==='aan'?(A.models?.length||0)+' '+t('model'):'—'}</div><div class="sub">${esc(A.model||'')} · ${t('local_ollama')}</div>
+      <div class="status"><span class="dot ${stateDot(A.state)}"></span>${esc(stTxt(A.state))}</div></div>`;
   $$('#mods .card').forEach(c => c.onclick = () => location.hash = c.dataset.h);
+  $('#favHome').innerHTML = USER.favorites.length ? `<div class="sec-t">${t('favorites')}</div><div class="chips">` +
+    USER.favorites.slice(0, 12).map(f => `<span class="chip" data-b="${esc(f.book)}" data-p="${esc(f.path)}">★ ${esc(f.title)}</span>`).join('') + '</div>' : '';
+  $$('#favHome .chip').forEach(c => c.onclick = () => location.hash = 'lib/' + c.dataset.b + '/' + c.dataset.p);
   const lan = S.lan_url, mobile = /iphone|ipad|android/i.test(navigator.userAgent);
   $('#phoneT').style.display = $('#phone').style.display = (lan && !mobile) ? '' : 'none';
   if(lan && !mobile && window.qrcode){
     const qr = qrcode(0, 'M'); qr.addData(lan); qr.make();
-    $('#phone').innerHTML = `<div style="flex:none;background:#d6efe2;padding:10px;border-radius:10px;line-height:0">${qr.createSvgTag({cellSize:4, margin:0})}</div>
-      <div><div class="k">SCAN MET JE CAMERA</div><div class="big" style="font-size:20px">${esc(lan)}</div>
-      <div class="sub">Telefoon of iPad op dezelfde wifi. Daarna: <b>Deel → Zet op beginscherm</b> (iPhone) of <b>⋮ → App installeren</b> (Android).</div></div>`;
+    $('#phone').innerHTML = `<div style="flex:none;background:#eaf5ef;padding:10px;border-radius:10px;line-height:0">${qr.createSvgTag({cellSize:4, margin:0})}</div>
+      <div><div class="k">${t('scan')}</div><div class="big" style="font-size:20px">${esc(lan)}</div><div class="sub">${t('phone_help')}</div></div>`;
   }
   const d = S.disk || {}, pct = d.total ? d.used / d.total * 100 : 0;
   $('#disk').innerHTML = `<div class="k">SSD</div><div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div>
-    <div class="sub">${fmtB(d.used)} gebruikt van ${fmtB(d.total)} · <b style="color:var(--acc)">${fmtB(d.free)} vrij</b></div>`;
+    <div class="sub">${t('used_of', {u:fmtB(d.used), t:fmtB(d.total)})} · <b style="color:var(--acc)">${fmtB(d.free)} ${t('free')}</b></div>`;
 }
 
 /* ───────── bibliotheek ───────── */
 const frame = $('#frame');
+let CUR = null;
 function renderBooks(){
   $('#books').innerHTML = BOOKS.length ? BOOKS.map(b => `<a class="lnk" data-b="${esc(b.id)}" title="${esc(b.description)}">${esc(b.title)}<small>${esc(b.date)}</small></a>`).join('')
-    : '<div class="empty">Nog geen collecties</div>';
+    : `<div class="empty">${t('no_coll')}</div>`;
   $$('#books .lnk').forEach(a => a.onclick = () => location.hash = 'lib/' + a.dataset.b);
 }
 function showShelf(){
-  frame.style.display = 'none'; $('#shelf').style.display = 'block'; $('#progress').style.width = 0; setToc([]); $('#fDoc').textContent = '';
-  $('#shelf').innerHTML = BOOKS.length ? `<div class="sec-t" style="margin-top:0">COLLECTIES</div><div class="grid">` + BOOKS.map(b => `
+  CUR = null; $('#artBlock').style.display = 'none';
+  frame.style.display = 'none'; $('#shelf').style.display = 'block'; $('#progress').style.width = 0; setToc(null); $('#fDoc').textContent = '';
+  $('#shelf').innerHTML = BOOKS.length ? `<div class="sec-t" style="margin-top:0">${t('collections')}</div><div class="grid">` + BOOKS.map(b => `
     <div class="card book" data-b="${esc(b.id)}"><div class="ico">${esc(b.title[0]||'?')}</div><div class="k">${esc(b.kind)}</div>
-      <h3>${esc(b.title)}</h3><div class="sub">${fmtN(b.articles)} artikelen · ${fmtB(b.size)} · ${esc(b.date)}</div></div>`).join('') + '</div>'
-    : `<div class="note"><b style="color:var(--acc);font-family:var(--mono);letter-spacing:.2em">BIBLIOTHEEK IS LEEG</b><br><br>
-       Zet .zim-bestanden (Wikipedia, Gutenberg, iFixit…) in <code>NOMAD\\data\\bibliotheek</code> en klik bij Updates op <i>Bibliotheek opnieuw scannen</i>.</div>`;
+      <h3>${esc(b.title)}</h3><div class="sub">${fmtN(b.articles)} ${t('articles')} · ${fmtB(b.size)} · ${esc(b.date)}</div></div>`).join('') + '</div>'
+    : `<div class="note"><b class="nt">${t('lib_empty_t')}</b><br><br>${t('lib_empty')}</div>`;
   $$('#shelf .book').forEach(c => c.onclick = () => location.hash = 'lib/' + c.dataset.b);
 }
 function openArticle(book, path){
@@ -121,21 +151,50 @@ frame.addEventListener('load', () => {
   if(!p.startsWith('/lib/')) return;
   const want = '#lib/' + decodeURIComponent(p.slice(5));
   if(decodeURI(location.hash) !== want) history.replaceState(null, '', encodeURI(want));
+  frame.contentWindow.postMessage({type:'look', scale:SET.font_scale || 1, theme:SET.theme}, '*');
 });
 window.addEventListener('message', e => {
   const m = e.data || {};
   if(m.type === 'doc'){
+    CUR = {book:m.book, path:m.path, title:m.title};
     document.title = m.title + ' · NOMAD';
     $('#fDoc').innerHTML = '▸ <b>' + esc(m.title) + '</b>';
-    setToc(m.headings); addHist(m.book, m.path, m.title);
+    setToc(m.headings); addHist(m.book, m.path, m.title); renderArtBlock();
   } else if(m.type === 'scroll'){
     $('#progress').style.width = (m.p*100).toFixed(1) + '%';
     $$('#toc .lnk').forEach(a => a.classList.toggle('active', a.dataset.id === m.active));
   } else if(m.type === 'key') handleKey(m);
 });
 function setToc(hs){
-  $('#toc').innerHTML = hs && hs.length ? hs.map(h => `<a class="lnk h${h.l}" data-id="${esc(h.id)}">${esc(h.t)}</a>`).join('') : '<div class="empty">Geen secties</div>';
+  $('#toc').innerHTML = hs && hs.length ? hs.map(h => `<a class="lnk h${h.l}" data-id="${esc(h.id)}">${esc(h.t)}</a>`).join('') : `<div class="empty">${hs ? t('no_sec') : t('no_art')}</div>`;
   $$('#toc .lnk').forEach(a => a.onclick = () => frame.contentWindow.postMessage({type:'goto', id:a.dataset.id}, '*'));
+}
+const keyOf = c => c.book + '/' + c.path;
+function isFav(c){ return USER.favorites.some(f => f.book === c.book && f.path === c.path) }
+function renderArtBlock(){
+  if(!CUR){ $('#artBlock').style.display = 'none'; return }
+  $('#artBlock').style.display = '';
+  const fav = isFav(CUR);
+  $('#favBtn').textContent = fav ? t('fav_rm') : t('fav_add');
+  $('#favBtn').classList.toggle('pri', fav);
+  $('#noteBox').value = USER.notes[keyOf(CUR)] || '';
+}
+$('#favBtn').onclick = () => {
+  if(!CUR) return;
+  const favs = isFav(CUR) ? USER.favorites.filter(f => !(f.book === CUR.book && f.path === CUR.path))
+                          : [{...CUR, added:Date.now()}, ...USER.favorites];
+  saveUser({favorites:favs}); renderArtBlock(); renderFavs(); renderDash();
+};
+$('#noteBox').addEventListener('input', debounce(() => {
+  if(!CUR) return;
+  const notes = {...USER.notes}, v = $('#noteBox').value.trim();
+  if(v) notes[keyOf(CUR)] = v; else delete notes[keyOf(CUR)];
+  saveUser({notes}); toast(t('saved')); renderFavs();
+}, 600));
+function renderFavs(){
+  $('#favs').innerHTML = USER.favorites.length ? USER.favorites.map(f => `<a class="lnk" data-b="${esc(f.book)}" data-p="${esc(f.path)}">★ ${esc(f.title)}${USER.notes[keyOf(f)] ? ' <small>✎</small>' : ''}</a>`).join('')
+    : `<div class="empty">${t('no_fav')}</div>`;
+  $$('#favs .lnk').forEach(a => a.onclick = () => location.hash = 'lib/' + a.dataset.b + '/' + a.dataset.p);
 }
 function addHist(book, path, title){
   let h = store.get('nomad.hist', []).filter(x => !(x.book === book && x.path === path));
@@ -143,15 +202,16 @@ function addHist(book, path, title){
 }
 function renderHist(){
   const h = store.get('nomad.hist', []);
-  $('#hist').innerHTML = h.length ? h.map(x => `<a class="lnk" data-b="${esc(x.book)}" data-p="${esc(x.path)}">${esc(x.title)}</a>`).join('') : '<div class="empty">Nog niets gelezen</div>';
+  $('#hist').innerHTML = h.length ? h.map(x => `<a class="lnk" data-b="${esc(x.book)}" data-p="${esc(x.path)}">${esc(x.title)}</a>`).join('') : `<div class="empty">${t('no_hist')}</div>`;
   $$('#hist .lnk').forEach(a => a.onclick = () => location.hash = 'lib/' + a.dataset.b + '/' + a.dataset.p);
 }
 async function fulltextView(q){
+  CUR = null; renderArtBlock();
   frame.style.display = 'none'; const box = $('#shelf'); box.style.display = 'block';
-  box.innerHTML = `<div class="sec-t" style="margin-top:0">ZOEKEN NAAR “${esc(q)}”…</div>`;
+  box.innerHTML = `<div class="sec-t" style="margin-top:0">${t('searching', {q:esc(q)})}</div>`;
   const r = await api('/api/search?q=' + encodeURIComponent(q)).catch(() => ({total:0, results:[]}));
-  box.innerHTML = `<div class="sec-t" style="margin-top:0">${fmtN(r.total)} RESULTATEN VOOR “${esc(q)}”</div>` +
-    (r.results.map(x => `<a class="res" data-b="${esc(x.book)}" data-p="${esc(x.path)}">${esc(x.title)}<span>${esc(x.bookTitle)} · /${esc(x.path)}</span></a>`).join('') || '<div class="empty">Niets gevonden</div>');
+  box.innerHTML = `<div class="sec-t" style="margin-top:0">${t('results_for', {n:fmtN(r.total), q:esc(q)})}</div>` +
+    (r.results.map(x => `<a class="res" data-b="${esc(x.book)}" data-p="${esc(x.path)}">${esc(x.title)}<span>${esc(x.bookTitle)} · /${esc(x.path)}</span></a>`).join('') || `<div class="empty">${t('nothing')}</div>`);
   $$('#shelf .res').forEach(a => a.onclick = () => location.hash = 'lib/' + a.dataset.b + '/' + a.dataset.p);
 }
 async function random(){
@@ -160,43 +220,40 @@ async function random(){
 }
 
 /* ───────── kaart ───────── */
-let MAP = null, mapWaiters = [];
+let MAP = null, mapWaiters = [], PINMARKERS = [];
 const LAYERSTATE = store.get('nomad.layers', {streets:true, satellite:false, hillshade:false, terrain3d:false});
 function whenMap(fn){ if(MAP && MAP.loaded()) fn(MAP); else mapWaiters.push(fn) }
-function greenFlavor(){
+const ACC = {green:['#2ecf85','#1f8a58','#9dffcf','#2f8f62'], blue:['#3aa8ff','#1f5f9a','#a8dcff','#2f6f9f'], amber:['#ffb63a','#9a6a1f','#ffe0a8','#9f7a2f'], red:['#ff5a5a','#9a2f2f','#ffb0b0','#9f3f3f']};
+function mapFlavor(){
   const f = Object.assign({}, basemaps.namedFlavor('dark'));
+  const [hi, maj, lab, bnd] = ACC[SET.accent] || ACC.green;
   Object.assign(f, {
     background:'#040b08', earth:'#08130e', water:'#04201c', park_a:'#0b2117', park_b:'#0d2a1c', wood_a:'#0b1d14', wood_b:'#0d2318',
     scrub_a:'#0b1a13', scrub_b:'#0b1a13', glacier:'#10201a', sand:'#13190f', beach:'#151c12', hospital:'#14140f', school:'#11180f',
     industrial:'#0e1511', aerodrome:'#0f1813', pedestrian:'#0d1611', zoo:'#0c1812', military:'#121510', runway:'#1d2b23',
-    buildings:'#0f241a', boundaries:'#2f8f62',
-    highway:'#2ecf85', highway_casing_early:'#062014', highway_casing_late:'#062014',
-    major:'#1f8a58', major_casing_early:'#05170f', major_casing_late:'#05170f',
-    link:'#1f8a58', minor_a:'#1a4a33', minor_b:'#163d2b', minor_service:'#13321f', other:'#13321f', railway:'#2a5a43',
-    bridges_highway:'#2ecf85', bridges_major:'#1f8a58', bridges_minor:'#1a4a33', bridges_link:'#1f8a58', bridges_other:'#13321f',
+    buildings:'#0f241a', boundaries:bnd,
+    highway:hi, highway_casing_early:'#062014', highway_casing_late:'#062014',
+    major:maj, major_casing_early:'#05170f', major_casing_late:'#05170f',
+    link:maj, minor_a:'#1a4a33', minor_b:'#163d2b', minor_service:'#13321f', other:'#13321f', railway:'#2a5a43',
+    bridges_highway:hi, bridges_major:maj, bridges_minor:'#1a4a33', bridges_link:maj, bridges_other:'#13321f',
     tunnel_highway:'#1a5c3d', tunnel_major:'#154530', tunnel_minor:'#11301f', tunnel_link:'#154530', tunnel_other:'#0f2a1b',
-    roads_label_major:'#8fe8bb', roads_label_major_halo:'#04100a', roads_label_minor:'#5f9a7d', roads_label_minor_halo:'#04100a',
-    ocean_label:'#2f9a8a', subplace_label:'#7fb79a', subplace_label_halo:'#04100a', city_label:'#d8ffe9', city_label_halo:'#04100a',
-    state_label:'#4f8a6d', state_label_halo:'#04100a', country_label:'#9dffcf', address_label:'#4f7a64', address_label_halo:'#04100a',
+    roads_label_major:lab, roads_label_major_halo:'#04100a', roads_label_minor:'#5f9a7d', roads_label_minor_halo:'#04100a',
+    ocean_label:'#2f9a8a', subplace_label:'#7fb79a', subplace_label_halo:'#04100a', city_label:'#e4fff0', city_label_halo:'#04100a',
+    state_label:'#4f8a6d', state_label_halo:'#04100a', country_label:lab, address_label:'#4f7a64', address_label_halo:'#04100a',
   });
   return f;
 }
 function buildStyle(){
   const o = location.origin, M = STATUS.maps || {};
   const style = {
-    version: 8,
-    glyphs: o + '/web/assets/fonts/{fontstack}/{range}.pbf',
-    sprite: o + '/web/assets/sprites/v4/dark',
-    sources: {
-      protomaps: { type:'vector', url:'pmtiles://' + o + '/kaart/world.pmtiles',
-        attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a> · Protomaps' },
-    },
-    layers: basemaps.layers('protomaps', greenFlavor(), {lang:'en'}),
+    version:8, glyphs:o + '/web/assets/fonts/{fontstack}/{range}.pbf', sprite:o + '/web/assets/sprites/v4/dark',
+    sources:{ protomaps:{ type:'vector', url:'pmtiles://' + o + '/kaart/world.pmtiles', attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a> · Protomaps' } },
+    layers:basemaps.layers('protomaps', mapFlavor(), {lang:LANG}),
   };
-  if(M.satellite?.present) style.sources.sat = { type:'raster', url:'pmtiles://' + o + '/kaart/satellite.pmtiles', tileSize:256, attribution:'Satelliet' };
+  if(M.satellite?.present) style.sources.sat = {type:'raster', url:'pmtiles://' + o + '/kaart/satellite.pmtiles', tileSize:256};
   if(M.terrain?.present){
-    style.sources.dem = { type:'raster-dem', url:'pmtiles://' + o + '/kaart/terrain.pmtiles', encoding:'terrarium', attribution:'JAXA AW3D30' };
-    style.sources.dem3d = { type:'raster-dem', url:'pmtiles://' + o + '/kaart/terrain.pmtiles', encoding:'terrarium' };
+    style.sources.dem = {type:'raster-dem', url:'pmtiles://' + o + '/kaart/terrain.pmtiles', encoding:'terrarium', attribution:'JAXA AW3D30'};
+    style.sources.dem3d = {type:'raster-dem', url:'pmtiles://' + o + '/kaart/terrain.pmtiles', encoding:'terrarium'};
   }
   return style;
 }
@@ -204,13 +261,12 @@ function firstId(pred){ const l = MAP.getStyle().layers.find(pred); return l && 
 function applyLayers(){
   const M = STATUS.maps || {};
   store.set('nomad.layers', LAYERSTATE);
-  $$('#maplayers .tog').forEach(t => {
-    const l = t.dataset.l, avail = l === 'streets' ? true : l === 'satellite' ? M.satellite?.present : M.terrain?.present;
-    t.classList.toggle('dis', !avail); t.classList.toggle('on', !!(avail && LAYERSTATE[l]));
+  $$('#maplayers .tog').forEach(x => {
+    const l = x.dataset.l, avail = l === 'streets' ? true : l === 'satellite' ? M.satellite?.present : M.terrain?.present;
+    x.classList.toggle('dis', !avail); x.classList.toggle('on', !!(avail && LAYERSTATE[l]));
   });
   if(!MAP || !MAP.isStyleLoaded()) return;
-  const roadsAt = firstId(l => /roads|transit|buildings/.test(l.id));
-  const labelsAt = firstId(l => l.type === 'symbol');
+  const roadsAt = firstId(l => /roads|transit|buildings/.test(l.id)), labelsAt = firstId(l => l.type === 'symbol');
   if(M.satellite?.present){
     if(LAYERSTATE.satellite && !MAP.getLayer('sat')) MAP.addLayer({id:'sat', type:'raster', source:'sat', paint:{'raster-saturation':-0.15,'raster-contrast':0.1}}, roadsAt);
     if(!LAYERSTATE.satellite && MAP.getLayer('sat')) MAP.removeLayer('sat');
@@ -230,27 +286,50 @@ function applyLayers(){
     if(l.source === 'protomaps' || l.type === 'background') MAP.setLayoutProperty(l.id, 'visibility', vis ? 'visible' : 'none');
   });
 }
-$$('#maplayers .tog').forEach(t => t.onclick = () => { LAYERSTATE[t.dataset.l] = !LAYERSTATE[t.dataset.l]; applyLayers() });
-
+$$('#maplayers .tog').forEach(x => x.onclick = () => { LAYERSTATE[x.dataset.l] = !LAYERSTATE[x.dataset.l]; applyLayers() });
 function initMap(){
-  if(MAP) { setTimeout(() => MAP.resize(), 50); return }
-  if(!STATUS.maps?.world?.present){ $('#mapempty').style.display = 'grid'; applyLayers(); return }
-  const protocol = new pmtiles.Protocol();
-  maplibregl.addProtocol('pmtiles', protocol.tile);
+  if(MAP){ setTimeout(() => MAP.resize(), 50); return }
+  if(!STATUS.maps?.world?.present){ $('#mapempty').style.display = 'grid'; applyLayers(); renderPins(); return }
+  $('#mapempty').style.display = 'none';
+  if(!window.__pmProto){ window.__pmProto = new pmtiles.Protocol(); maplibregl.addProtocol('pmtiles', window.__pmProto.tile) }
   const last = store.get('nomad.view', {center:[4.9, 52.37], zoom:6});
-  MAP = new maplibregl.Map({ container:'map', style:buildStyle(), center:last.center, zoom:last.zoom, attributionControl:{compact:true}, maxPitch:80 });
+  MAP = new maplibregl.Map({container:'map', style:buildStyle(), center:last.center, zoom:last.zoom, attributionControl:{compact:true}, maxPitch:80});
   MAP.addControl(new maplibregl.NavigationControl({visualizePitch:true}), 'bottom-right');
   MAP.addControl(new maplibregl.ScaleControl({unit:'metric'}), 'bottom-right');
-  MAP.on('load', () => { applyLayers(); mapWaiters.splice(0).forEach(f => f(MAP)) });
+  MAP.on('load', () => { applyLayers(); renderPins(); mapWaiters.splice(0).forEach(f => f(MAP)) });
   MAP.on('mousemove', e => { $('#mapcoord').textContent = `${e.lngLat.lat.toFixed(5)}, ${e.lngLat.lng.toFixed(5)} · z${MAP.getZoom().toFixed(1)}` });
   MAP.on('moveend', () => {
     const c = MAP.getCenter(); store.set('nomad.view', {center:[c.lng, c.lat], zoom:MAP.getZoom()});
     if(VIEW === 'map') history.replaceState(null, '', `#map/@${c.lat.toFixed(5)},${c.lng.toFixed(5)},${MAP.getZoom().toFixed(2)}`);
   });
-  MAP.on('contextmenu', async e => {
-    const r = await api(`/api/geocode?lat=${e.lngLat.lat}&lon=${e.lngLat.lng}`).catch(() => ({}));
-    const f = (r.features || [])[0];
-    new maplibregl.Popup().setLngLat(e.lngLat).setHTML(`<b>${esc(placeName(f) || 'Locatie')}</b><br><span style="font-family:var(--mono);font-size:11px;color:var(--dim)">${e.lngLat.lat.toFixed(5)}, ${e.lngLat.lng.toFixed(5)}</span>`).addTo(MAP);
+  MAP.on('contextmenu', e => pinPopup(e.lngLat));
+  let pressT;
+  MAP.on('touchstart', e => { pressT = setTimeout(() => pinPopup(e.lngLat), 600) });
+  ['touchend','touchmove','dragstart'].forEach(ev => MAP.on(ev, () => clearTimeout(pressT)));
+}
+async function pinPopup(ll){
+  const r = await api(`/api/geocode?lat=${ll.lat}&lon=${ll.lng}`).catch(() => ({}));
+  const name = placeName((r.features || [])[0]) || t('location');
+  const div = document.createElement('div');
+  div.innerHTML = `<b>${esc(name)}</b><br><span class="mono dim">${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}</span>
+    <div style="display:flex;gap:6px;margin-top:8px"><input class="inp" style="flex:1;height:30px" value="${esc(name)}"><button class="btn pri" style="height:30px">${t('save_pin')}</button></div>`;
+  const pop = new maplibregl.Popup().setLngLat(ll).setDOMContent(div).addTo(MAP);
+  div.querySelector('button').onclick = () => {
+    const pins = [...USER.pins, {lat:+ll.lat.toFixed(6), lon:+ll.lng.toFixed(6), name:div.querySelector('input').value.trim() || name, added:Date.now()}];
+    saveUser({pins}); pop.remove(); renderPins();
+  };
+}
+function renderPins(){
+  $('#pinlist').innerHTML = USER.pins.length ? USER.pins.map((p, i) => `<a class="lnk" data-i="${i}">📍 ${esc(p.name)}</a>`).join('') : `<div class="empty" style="white-space:normal">${t('no_pins')}</div>`;
+  $$('#pinlist .lnk').forEach(a => a.onclick = () => { const p = USER.pins[+a.dataset.i]; MAP && MAP.flyTo({center:[p.lon, p.lat], zoom:Math.max(MAP.getZoom(), 13)}) });
+  if(!MAP) return;
+  PINMARKERS.forEach(m => m.remove()); PINMARKERS = [];
+  USER.pins.forEach((p, i) => {
+    const el = document.createElement('div'); el.className = 'pin';
+    const div = document.createElement('div');
+    div.innerHTML = `<b>📍 ${esc(p.name)}</b><br><span class="mono dim">${p.lat}, ${p.lon}</span><br><button class="btn" style="height:28px;margin-top:8px">${t('delete')}</button>`;
+    div.querySelector('button').onclick = () => { saveUser({pins:USER.pins.filter((_, j) => j !== i)}); renderPins() };
+    PINMARKERS.push(new maplibregl.Marker({element:el}).setLngLat([p.lon, p.lat]).setPopup(new maplibregl.Popup().setDOMContent(div)).addTo(MAP));
   });
 }
 let marker = null;
@@ -264,49 +343,44 @@ function flyToFeature(f){
   location.hash = 'map';
   whenMap(map => {
     const ext = f.properties?.extent;
-    if(ext) map.fitBounds([[ext[0], ext[3]], [ext[2], ext[1]]], {padding:60, maxZoom:16});
-    else map.flyTo({center:[lon, lat], zoom:15});
+    if(ext) map.fitBounds([[ext[0], ext[3]], [ext[2], ext[1]]], {padding:60, maxZoom:16}); else map.flyTo({center:[lon, lat], zoom:15});
     if(marker) marker.remove();
-    const el = document.createElement('div');
-    el.style.cssText = 'width:18px;height:18px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 6px rgba(61,255,160,.25),0 0 20px var(--acc)';
+    const el = document.createElement('div'); el.className = 'pin hit';
     marker = new maplibregl.Marker({element:el}).setLngLat([lon, lat]).setPopup(new maplibregl.Popup().setHTML('<b>' + esc(placeName(f)) + '</b>')).addTo(map);
   });
 }
-let geoT = null;
-$('#mapq').addEventListener('input', e => {
-  clearTimeout(geoT); const q = e.target.value.trim();
-  geoT = setTimeout(async () => {
-    if(!q){ $('#maphits').innerHTML = ''; return }
-    const c = MAP ? MAP.getCenter() : null;
-    const r = await api('/api/geocode?q=' + encodeURIComponent(q) + (c ? `&lat=${c.lat}&lon=${c.lng}` : '')).catch(() => ({features:[]}));
-    window.__hits = r.features || [];
-    $('#maphits').innerHTML = r.error ? `<div class="empty" style="padding:10px 14px">${esc(r.error)}</div>` :
-      __hits.map((f, i) => `<a class="lnk" data-i="${i}">${esc(placeName(f))}<small>${esc(f.properties?.osm_value || '')}</small></a>`).join('') || '<div class="empty" style="padding:10px 14px">Niets gevonden</div>';
-    $$('#maphits .lnk').forEach(a => a.onclick = () => { flyToFeature(__hits[+a.dataset.i]); $('#maphits').innerHTML = '' });
-  }, 180);
-});
+$('#mapq').addEventListener('input', debounce(async e => {
+  const q = e.target.value.trim();
+  if(!q){ $('#maphits').innerHTML = ''; return }
+  const c = MAP ? MAP.getCenter() : null;
+  const r = await api('/api/geocode?q=' + encodeURIComponent(q) + (c ? `&lat=${c.lat}&lon=${c.lng}` : '')).catch(() => ({features:[]}));
+  window.__hits = r.features || [];
+  $('#maphits').innerHTML = r.error ? `<div class="empty" style="padding:10px 14px">${t('geo_off')}</div>` :
+    __hits.map((f, i) => `<a class="lnk" data-i="${i}">${esc(placeName(f))}<small>${esc(f.properties?.osm_value || '')}</small></a>`).join('') || `<div class="empty" style="padding:10px 14px">${t('nothing')}</div>`;
+  $$('#maphits .lnk').forEach(a => a.onclick = () => { flyToFeature(__hits[+a.dataset.i]); $('#maphits').innerHTML = '' });
+}, 180));
 $('#mapq').addEventListener('keydown', e => { if(e.key === 'Enter' && window.__hits?.length){ flyToFeature(__hits[0]); $('#maphits').innerHTML = '' } });
 
 /* ───────── AI ───────── */
 let CHAT = store.get('nomad.chat', []), busy = false;
 function renderChat(){
-  $('#chat').innerHTML = CHAT.length ? CHAT.map((m, i) => `<div class="msg ${m.role === 'user' ? 'u' : 'a'}">
-      <div class="av">${m.role === 'user' ? 'JIJ' : 'AI'}</div>
+  $('#chat').innerHTML = CHAT.length ? CHAT.map(m => `<div class="msg ${m.role === 'user' ? 'u' : 'a'}">
+      <div class="av">${m.role === 'user' ? t('you') : 'AI'}</div>
       <div class="bub${m.err ? ' err' : ''}${m.live ? ' cursor' : ''}">${esc(m.content)}${m.sources?.length ? '<div class="src">' +
         m.sources.map(s => `<span class="chip" data-b="${esc(s.book)}" data-p="${esc(s.path)}">↗ ${esc(s.title)}</span>`).join('') + '</div>' : ''}</div></div>`).join('')
-    : `<div class="msg"><div class="av">AI</div><div class="bub" style="color:var(--dim)">Hoi! Ik draai volledig lokaal op je SSD. Met “Wikipedia als bron” zoek ik eerst in je offline Wikipedia en antwoord ik op basis daarvan, met de bronnen erbij.</div></div>`;
+    : `<div class="msg"><div class="av">AI</div><div class="bub" style="color:var(--dim)">${t('ai_hello')}</div></div>`;
   $$('#chat .chip').forEach(c => c.onclick = () => location.hash = 'lib/' + c.dataset.b + '/' + c.dataset.p);
   $('#chat').scrollTop = 1e9;
 }
 async function send(){
-  const t = $('#prompt').value.trim(); if(!t || busy) return;
+  const q = $('#prompt').value.trim(); if(!q || busy) return;
   busy = true; $('#send').disabled = true; $('#prompt').value = ''; autoGrow();
-  CHAT.push({role:'user', content:t});
+  CHAT.push({role:'user', content:q});
   const msg = {role:'assistant', content:'', live:true}; CHAT.push(msg); renderChat();
   try{
     const res = await fetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({wiki: $('#useWiki').classList.contains('on'), messages: CHAT.filter(m => m !== msg && !m.err).map(m => ({role:m.role, content:m.content}))})});
-    if(!res.ok && res.headers.get('content-type')?.includes('json') && !res.body){ throw new Error((await res.json()).error) }
+      body:JSON.stringify({wiki:$('#useWiki').classList.contains('on'), messages:CHAT.filter(m => m !== msg && !m.err).map(m => ({role:m.role, content:m.content}))})});
+    if(!res.ok){ throw new Error((await res.json().catch(() => ({}))).error || res.status) }
     const reader = res.body.getReader(), dec = new TextDecoder(); let buf = '';
     for(;;){
       const {value, done} = await reader.read(); if(done) break;
@@ -320,7 +394,7 @@ async function send(){
         renderChat();
       }
     }
-  }catch(e){ msg.content = 'Fout: ' + e.message; msg.err = true }
+  }catch(e){ msg.content = t('error') + ': ' + e.message; msg.err = true }
   msg.live = false; busy = false; $('#send').disabled = false;
   store.set('nomad.chat', CHAT.slice(-40)); renderChat();
 }
@@ -331,54 +405,182 @@ $('#send').onclick = send;
 $('#useWiki').onclick = () => $('#useWiki').classList.toggle('on');
 $('#newChat').onclick = () => { CHAT = []; store.set('nomad.chat', []); renderChat() };
 
-/* ───────── updates ───────── */
-let updTimer = null;
+/* ───────── noodpakket ───────── */
+const GUIDES = [
+  ['❤','CPR','Cardiopulmonary resuscitation','Reanimatie'], ['🩸','Bleeding','Bleeding','Bloeding stoppen'], ['🔥','Burns','Burn','Brandwonden'],
+  ['😮','Choking','Choking','Verslikken'], ['🦴','Fracture','Bone fracture','Botbreuk'], ['🥶','Hypothermia','Hypothermia','Onderkoeling'],
+  ['🥵','Heat stroke','Heat stroke','Zonnesteek'], ['⚡','Shock','Shock (circulatory)','Shock'], ['🐍','Snakebite','Snakebite','Slangenbeet'],
+  ['🤧','Anaphylaxis','Anaphylaxis','Allergische reactie'], ['💧','Water purification','Water purification','Water zuiveren'], ['🔥','Fire making','Fire making','Vuur maken'],
+  ['⛺','Shelter','Survival skills','Onderdak'], ['🧭','Navigation','Navigation','Navigeren'], ['🪢','Knots','List of knots','Knopen'], ['📻','Radio','Emergency communication system','Noodcommunicatie'],
+];
+async function openGuide(term){
+  const med = BOOKS.find(b => b.id.startsWith('mdwiki'));
+  for(const b of [med, BOOKS.find(b => b.id.startsWith('wikipedia_'))].filter(Boolean)){
+    const r = await api(`/api/suggest?book=${encodeURIComponent(b.id)}&q=${encodeURIComponent(term)}`).catch(() => []);
+    if(r.length){ location.hash = 'lib/' + r[0].book + '/' + r[0].path; return }
+  }
+  location.hash = 'search/' + encodeURIComponent(term);
+}
+function renderSos(){
+  $('#guides').innerHTML = GUIDES.map(g => `<div class="card guide" data-q="${esc(g[2])}"><div class="gi">${g[0]}</div><b>${LANG === 'nl' ? g[3] : g[1]}</b></div>`).join('');
+  $$('#guides .guide').forEach(c => c.onclick = () => openGuide(c.dataset.q));
+  renderSun(); renderCheck();
+  const hasSensor = 'DeviceOrientationEvent' in window && /iphone|ipad|android/i.test(navigator.userAgent);
+  $('#compassNote').textContent = hasSensor ? '' : t('compass_na');
+  $('#compassBtn').style.display = hasSensor ? '' : 'none';
+}
+let POS = null;
+function renderSun(){
+  const v = store.get('nomad.view', {center:[4.9, 52.37]});
+  const lat = POS ? POS.lat : v.center[1], lon = POS ? POS.lon : v.center[0];
+  const s = sunTimes(new Date(), lat, lon), f = d => d ? d.toLocaleTimeString(LANG === 'nl' ? 'nl-NL' : 'en-GB', {hour:'2-digit', minute:'2-digit'}) : '—';
+  const len = s.rise && s.set ? (s.set - s.rise) / 36e5 : 0;
+  $('#sunbox').innerHTML = `<div class="big" style="font-size:22px">☀ ${f(s.rise)} → ${f(s.set)}</div>
+    ${t('daylight')}: ${Math.floor(len)}h ${Math.round((len % 1) * 60)}m<br><span class="mono dim">${lat.toFixed(3)}, ${lon.toFixed(3)} · ${t('sun_loc')}</span>`;
+}
+$('#posBtn').onclick = () => navigator.geolocation?.getCurrentPosition(p => { POS = {lat:p.coords.latitude, lon:p.coords.longitude}; renderSun();
+  whenMap(m => m.flyTo({center:[POS.lon, POS.lat], zoom:14})) }, e => toast(e.message), {enableHighAccuracy:true, timeout:15000});
+$('#compassBtn').onclick = async () => {
+  try{ if(DeviceOrientationEvent.requestPermission) await DeviceOrientationEvent.requestPermission() }catch(e){}
+  addEventListener('deviceorientationabsolute', onOri, true); addEventListener('deviceorientation', onOri, true);
+};
+function onOri(e){
+  const h = e.webkitCompassHeading ?? (e.absolute || e.type === 'deviceorientationabsolute' ? (360 - e.alpha) % 360 : null);
+  if(h == null) return;
+  $('#needle').style.transform = `rotate(${-h}deg)`;
+  const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+  $('#heading').textContent = Math.round(h) + '° ' + dirs[Math.round(h / 45) % 8];
+}
+function renderCheck(){
+  $('#check').innerHTML = USER.checklist.map((c, i) => `<div class="chk${c.done ? ' done' : ''}" data-i="${i}"><i></i><span>${esc(c.t)}</span><b data-x="${i}">×</b></div>`).join('');
+  $$('#check .chk').forEach(el => el.onclick = e => {
+    const i = +el.dataset.i, list = USER.checklist.map(x => ({...x}));
+    if(e.target.dataset.x !== undefined) list.splice(i, 1); else list[i].done = !list[i].done;
+    saveUser({checklist:list}); renderCheck();
+  });
+}
+$('#checkAdd').onclick = () => { const v = $('#checkIn').value.trim(); if(!v) return; $('#checkIn').value = ''; saveUser({checklist:[...USER.checklist, {t:v, done:false}]}); renderCheck() };
+$('#checkIn').addEventListener('keydown', e => { if(e.key === 'Enter') $('#checkAdd').click() });
+let flashing = null, audio = null;
+function stopFlash(){ clearTimeout(flashing); flashing = null; $('#flash').className = ''; try{ audio && audio.close() }catch(e){} audio = null }
+$('#flash').onclick = stopFlash;
+$('#torchBtn').onclick = () => { $('#flash').className = 'on white'; flashing = 1 };
+$('#sosBtn').onclick = () => {
+  const u = 220, seq = [1,1,1,1,1,3, 3,1,3,1,3,3, 1,1,1,1,1,7];
+  try{ audio = new (window.AudioContext || window.webkitAudioContext)() }catch(e){}
+  let i = 0; $('#flash').className = 'on';
+  const step = () => {
+    const on = i % 2 === 0; $('#flash').classList.toggle('white', on);
+    if(audio && on){ const o = audio.createOscillator(), g = audio.createGain(); o.frequency.value = 880; o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + seq[i] * u / 1000) }
+    flashing = setTimeout(step, seq[i] * u); i = (i + 1) % seq.length;
+  };
+  step();
+};
+
+/* ───────── downloads & updates ───────── */
+let dlTimer = null, CAT = null;
+const stLabel = s => t('status_' + s);
 async function loadUpdates(){
   const u = await api('/api/updates').catch(() => ({updates:[], jobs:{}}));
-  $('#updInfo').innerHTML = (u.online ? '<span class="dot ok"></span>Online' : '<span class="dot warn"></span>Offline') +
-    ' · laatste controle: ' + (u.last_check || 'nog niet') + ' · NOMAD downloadt nooit iets zonder dat jij op “Updaten” klikt.';
+  window.__jobs = u.jobs || {};
+  $('#updInfo').innerHTML = `<span class="dot ${u.online ? 'ok' : 'warn'}"></span>${u.online ? t('online') : t('offline')} · ${t('last_check')}: ${u.last_check || '—'} · ${t('never_auto')}`;
   const jobs = u.jobs || {};
-  const rows = u.updates.map(x => {
-    const j = jobs[x.id];
-    return `<div class="upd"><div class="t"><b>${esc(x.title)}</b><span>${esc(x.type.toUpperCase())} · ${esc(x.current)} → ${esc(x.latest)}</span>
-      ${j ? `<div class="bar"><i style="width:${j.total ? (j.done/j.total*100).toFixed(1) : 0}%"></i></div><span>${esc(j.status)} ${j.total ? fmtB(j.done) + ' / ' + fmtB(j.total) : ''} ${esc(j.msg||'')}</span>` : ''}</div>
-      <button class="btn pri" data-u="${esc(x.id)}" ${j && j.status === 'bezig' ? 'disabled' : ''}>UPDATEN</button></div>`;
-  });
-  const done = Object.entries(jobs).filter(([id, j]) => j.status !== 'bezig' && !u.updates.find(x => x.id === id))
-    .map(([id, j]) => `<div class="upd"><div class="t"><b>${esc(j.title)}</b><span>${esc(j.status.toUpperCase())} ${esc(j.msg||'')}</span></div></div>`);
-  $('#updList').innerHTML = rows.concat(done).join('') || '<div class="note">Alles is up-to-date' + (u.online ? '.' : ' (voor zover bekend; je bent offline).') + '</div>';
-  $$('#updList [data-u]').forEach(b => b.onclick = async () => { await api('/api/updates/run', {method:'POST', body:JSON.stringify({id:b.dataset.u})}); loadUpdates() });
-  clearTimeout(updTimer);
-  if(VIEW === 'upd' && Object.values(jobs).some(j => j.status === 'bezig')) updTimer = setTimeout(loadUpdates, 1500);
+  const rows = u.updates.map(x => { const j = jobs[x.id]; return `<div class="upd"><div class="t"><b>${esc(x.title)}</b><span>${esc(x.type.toUpperCase())} · ${esc(x.current)} → ${esc(x.latest)}</span>${jobBar(j)}</div>
+      <button class="btn pri" data-u="${esc(x.id)}" ${j && j.status === 'bezig' ? 'disabled' : ''}>${t('update')}</button></div>` });
+  $('#updList').innerHTML = rows.join('') || `<div class="note">${t('up_to_date')}${u.online ? '' : t('offline_note')}</div>`;
+  $$('#updList [data-u]').forEach(b => b.onclick = async () => { await post('/api/updates/run', {id:b.dataset.u}); loadUpdates() });
+  if(CAT) renderCatalog();
+  clearTimeout(dlTimer);
+  if(VIEW === 'dl' && Object.values(jobs).some(j => j.status === 'bezig')) dlTimer = setTimeout(loadUpdates, 1500);
 }
-$('#updCheck').onclick = async () => { await api('/api/updates/check', {method:'POST'}); $('#updInfo').textContent = 'Controleren…'; setTimeout(loadUpdates, 4000) };
-$('#rescan').onclick = async () => { const r = await api('/api/rescan', {method:'POST'}); await loadStatus(); $('#updInfo').textContent = r.books + ' collectie(s) gevonden.' };
+function jobBar(j){
+  if(!j) return '';
+  const pct = j.total ? (j.done / j.total * 100) : 0;
+  return `<div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div><span>${stLabel(j.status)} ${j.total ? fmtB(j.done) + ' / ' + fmtB(j.total) + ' · ' + pct.toFixed(1) + '%' : ''} ${esc(j.msg || '')}</span>`;
+}
+async function loadCatalog(force){
+  $('#catalog').innerHTML = `<div class="empty">${t('loading')}</div>`;
+  CAT = await api('/api/catalog' + (force ? '?force=1' : '')).catch(() => ({online:false, items:[]}));
+  renderCatalog();
+}
+function renderCatalog(){
+  const d = STATUS.disk || {};
+  $('#dlFree').innerHTML = `SSD: <b style="color:var(--acc)">${fmtB(d.free)} ${t('free')}</b>`;
+  if(!CAT.online){ $('#catalog').innerHTML = `<div class="note">${t('need_online')}</div>`; return }
+  const jobs = window.__jobs || {}, groups = {};
+  CAT.items.forEach(i => (groups[i.cat] = groups[i.cat] || []).push(i));
+  $('#catalog').innerHTML = Object.entries(groups).map(([cat, items]) => `<div class="hud" style="margin:18px 2px 8px">${t('c_' + cat).toUpperCase()}</div>` + items.map(i => {
+    const j = jobs[i.id], running = j && j.status === 'bezig', newer = i.installed && i.installed !== 'yes' && i.installed < i.date;
+    const badge = i.installed ? `<em class="${newer ? 'warnb' : 'okb'}">${newer ? t('newer') : t('installed')}</em>` : '';
+    const btn = i.kind === 'torrent' ? `<a class="btn" href="${esc(i.url)}" target="_blank">${t('torrent')}</a>`
+      : running ? `<button class="btn" data-c="${esc(i.id)}">${t('cancel')}</button>`
+      : (i.installed && !newer) ? '' : `<button class="btn pri" data-d="${esc(i.id)}">${j && j.status === 'fout' ? t('resume') : t('download')}</button>`;
+    return `<div class="upd"><div class="t"><b>${esc(i.title)} ${badge}</b><span>${esc(i.file)} · ${esc(i.date)} · ${fmtB(i.size)}</span>${jobBar(j)}</div>${btn}</div>`;
+  }).join('')).join('');
+  $$('#catalog [data-d]').forEach(b => b.onclick = async () => { const r = await post('/api/download', {id:b.dataset.d}); if(r.error) toast(r.error); loadUpdates() });
+  $$('#catalog [data-c]').forEach(b => b.onclick = async () => { await post('/api/download/cancel', {id:b.dataset.c}); setTimeout(loadUpdates, 800) });
+}
+$('#updCheck').onclick = async () => { await post('/api/updates/check'); $('#updInfo').textContent = t('loading'); setTimeout(loadUpdates, 4000); loadCatalog(true) };
+$('#rescan').onclick = async () => { await post('/api/rescan'); await loadStatus(); toast(t('saved')) };
+
+/* ───────── instellingen ───────── */
+function renderSettings(){
+  const seg = (id, v) => $$('#' + id + ' button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  seg('sLang', SET.lang); seg('sAccent', SET.accent); seg('sTheme', SET.theme);
+  $('#sFont').value = SET.font_scale; $('#sFontV').textContent = Math.round(SET.font_scale * 100) + '%';
+  $('#sCheck').classList.toggle('on', !!SET.update_check);
+  $('#sInterval').value = SET.update_check_minutes;
+  $('#sAuto').classList.toggle('on', !!SET.autostart); $('#sAuto').classList.toggle('dis', !SET.autostart_supported);
+  $('#sAutoNote').textContent = SET.autostart_supported ? '' : t('s_autostart_na');
+}
+$$('#sLang button').forEach(b => b.onclick = () => saveSet({lang:b.dataset.v}));
+$$('#sAccent button').forEach(b => b.onclick = () => saveSet({accent:b.dataset.v}));
+$$('#sTheme button').forEach(b => b.onclick = () => saveSet({theme:b.dataset.v}));
+$('#sFont').addEventListener('input', e => { $('#sFontV').textContent = Math.round(e.target.value * 100) + '%' });
+$('#sFont').addEventListener('change', e => saveSet({font_scale:+e.target.value}));
+$('#sCheck').onclick = () => saveSet({update_check:!SET.update_check});
+$('#sInterval').addEventListener('change', e => saveSet({update_check_minutes:+e.target.value}));
+$('#sAuto').onclick = () => SET.autostart_supported && saveSet({autostart:!SET.autostart});
+let CLEAN = [];
+async function loadCleanup(){
+  CLEAN = await api('/api/cleanup').catch(() => []);
+  $('#cleanList').innerHTML = CLEAN.length ? CLEAN.map((c, i) => `<label class="cl"><input type="checkbox" data-i="${i}" ${c.kind !== 'partial' ? 'checked' : ''}>
+    <span>${esc(c.path)}<small>${t('k_' + c.kind)}</small></span><b>${fmtB(c.size)}</b></label>`).join('') : `<div class="empty">${t('s_nothing_clean')}</div>`;
+  $('#cleanBtn').style.display = CLEAN.length ? '' : 'none';
+}
+$('#cleanBtn').onclick = async () => {
+  const sel = $$('#cleanList input:checked').map(x => CLEAN[+x.dataset.i]);
+  if(!sel.length) return;
+  const size = sel.reduce((a, c) => a + c.size, 0);
+  if(!confirm(t('s_confirm', {n:sel.length, s:fmtB(size)}))) return;
+  const r = await post('/api/cleanup', {paths:sel.map(c => c.path)});
+  toast(t('s_freed', {s:fmtB(r.freed)})); loadCleanup(); loadStatus();
+};
 
 /* ───────── command palette ───────── */
-let items = [], sel = 0, sT = null, lastQ = '';
+let items = [], sel = 0, lastQ = '';
 function openPal(){ $('#palette').classList.add('on'); const q = $('#q'); q.value = ''; renderSugg([]); q.focus() }
 function closePal(){ $('#palette').classList.remove('on') }
 $('#palette').addEventListener('mousedown', e => { if(e.target.id === 'palette') closePal() });
 $('#omni').onclick = openPal; $('#omni2').onclick = openPal;
-$('#q').addEventListener('input', e => {
-  clearTimeout(sT); const q = e.target.value; lastQ = q;
-  sT = setTimeout(async () => {
-    if(!q.trim()){ renderSugg([]); return }
-    const [lib, geo] = await Promise.all([
-      api('/api/suggest?q=' + encodeURIComponent(q)).catch(() => []),
-      STATUS.geo === 'aan' ? api('/api/geocode?q=' + encodeURIComponent(q)).catch(() => ({})) : Promise.resolve({}),
-    ]);
-    if(q !== lastQ) return;
-    const out = lib.map(x => ({kind:'lib', label:x.title, tag:x.bookTitle, x}));
-    (geo.features || []).slice(0, 4).forEach(f => out.push({kind:'geo', label:placeName(f), tag:'PLAATS', x:f}));
-    renderSugg(out);
-  }, 90);
-});
+$('#q').addEventListener('input', debounce(async e => {
+  const q = e.target.value; lastQ = q;
+  if(!q.trim()){ renderSugg([]); return }
+  const [lib, geo] = await Promise.all([
+    api('/api/suggest?q=' + encodeURIComponent(q)).catch(() => []),
+    STATUS.geo === 'aan' ? api('/api/geocode?q=' + encodeURIComponent(q)).catch(() => ({})) : Promise.resolve({}),
+  ]);
+  if(q !== lastQ) return;
+  const out = lib.map(x => ({kind:'lib', label:x.title, tag:x.bookTitle, x}));
+  (geo.features || []).slice(0, 4).forEach(f => out.push({kind:'geo', label:placeName(f), tag:'📍', x:f}));
+  USER.pins.filter(p => p.name.toLowerCase().includes(q.toLowerCase())).slice(0, 3).forEach(p => out.push({kind:'pin', label:p.name, tag:'PIN', x:p}));
+  renderSugg(out);
+}, 90));
 function renderSugg(list){
   items = list; sel = 0;
   const q = $('#q').value.trim();
-  if(q) items.push({kind:'ft', label:`Zoek “${q}” in alle tekst`, tag:'ALLES'});
-  if(q) items.push({kind:'ai', label:`Vraag de AI: “${q}”`, tag:'AI'});
+  if(q) items.push({kind:'ft', label:'“' + q + '” — full text', tag:'ALL'});
+  if(q) items.push({kind:'ai', label:'“' + q + '”', tag:'AI'});
   $('#sugg').innerHTML = items.map((it, i) => `<div class="s${i ? '' : ' sel'}" data-i="${i}"><i>${esc(it.tag || '')}</i>${esc(it.label)}</div>`).join('');
   $$('#sugg .s').forEach(s => { s.onclick = () => pick(+s.dataset.i); s.onmousemove = () => { sel = +s.dataset.i; mark() } });
 }
@@ -388,12 +590,13 @@ function pick(i, ft){
   if(ft || !it || it.kind === 'ft'){ if(q) location.hash = 'search/' + encodeURIComponent(q); return }
   if(it.kind === 'lib') location.hash = 'lib/' + it.x.book + '/' + it.x.path;
   else if(it.kind === 'geo') flyToFeature(it.x);
+  else if(it.kind === 'pin'){ location.hash = 'map'; whenMap(m => m.flyTo({center:[it.x.lon, it.x.lat], zoom:14})) }
   else if(it.kind === 'ai'){ location.hash = 'ai'; $('#prompt').value = q; send() }
 }
 $('#q').addEventListener('keydown', e => {
   if(e.key === 'ArrowDown'){ sel = Math.min(sel+1, items.length-1); mark(); e.preventDefault() }
   else if(e.key === 'ArrowUp'){ sel = Math.max(sel-1, 0); mark(); e.preventDefault() }
-  else if(e.key === 'Enter'){ pick(sel, e.shiftKey) }
+  else if(e.key === 'Enter') pick(sel, e.shiftKey);
   else if(e.key === 'Escape') closePal();
 });
 
@@ -402,6 +605,7 @@ function handleKey(e){
   const k = (e.key || '').toLowerCase();
   if((e.ctrlKey || e.metaKey) && k === 'k'){ openPal(); return true }
   if(e.inInput) return false;
+  if(k === 'escape' && flashing){ stopFlash(); return true }
   if(k === '/'){ openPal(); return true }
   if(k === 'r' && !e.ctrlKey && !e.metaKey){ random(); return true }
   if(e.altKey && k === 'arrowleft'){ history.back(); return true }
@@ -416,7 +620,10 @@ document.addEventListener('keydown', e => {
 $('#bRand').onclick = random;
 
 /* ───────── start ───────── */
-setInterval(() => { $('#clock').textContent = new Date().toLocaleString('nl-NL', {weekday:'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', second:'2-digit'}).toUpperCase() }, 1000);
+setInterval(() => { $('#clock').textContent = new Date().toLocaleString(LANG === 'nl' ? 'nl-NL' : 'en-GB', {weekday:'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', second:'2-digit'}).toUpperCase() }, 1000);
 setInterval(loadStatus, 30000);
-renderHist(); renderChat();
-loadStatus().then(route);
+(async () => {
+  [SET, USER] = await Promise.all([api('/api/settings').catch(() => ({lang:'en'})), api('/api/user').catch(() => USER)]);
+  applyLook(); renderChat();
+  await loadStatus(); route();
+})();

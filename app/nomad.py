@@ -28,7 +28,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.2.0"
+VERSION = "0.4.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -44,6 +44,11 @@ CONFIG_FILE = os.path.join(APP, "config.json")
 
 DEFAULT_CONFIG = {
     "port": 8090,
+    "lang": "en",
+    "accent": "green",
+    "theme": "dark",
+    "font_scale": 1.0,
+    "update_check": True,
     "ai_model": "llama3.2:3b",
     "ollama_port": 11434,
     "photon_port": 2322,
@@ -75,6 +80,9 @@ def save_json(path, obj):
 
 
 CFG = load_config()
+
+sys.path.insert(0, APP)
+import features  # noqa: E402
 
 try:
     from libzim.reader import Archive
@@ -459,7 +467,10 @@ def check_updates():
 def update_loop():
     while True:
         try:
-            check_updates()
+            if CFG.get("update_check", True):
+                check_updates()
+            else:
+                STATE["online"] = is_online()
         except Exception as e:
             print("update-check fout:", e)
         time.sleep(max(5, CFG["update_check_minutes"]) * 60)
@@ -606,6 +617,14 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_random(q("book"))
             if p == "/api/geocode":
                 return self.api_geocode(q("q"), q("lat"), q("lon"))
+            if p == "/api/settings":
+                return self.json(features.get_settings())
+            if p == "/api/user":
+                return self.json(features.load_user())
+            if p == "/api/cleanup":
+                return self.json(features.cleanup_items())
+            if p == "/api/catalog":
+                return self.json(features.catalog(q("force") == "1"))
             if p == "/api/updates":
                 return self.json({"online": STATE["online"], "last_check": STATE["last_check"],
                                   "updates": STATE["updates"], "jobs": STATE["jobs"]})
@@ -632,6 +651,16 @@ class Handler(BaseHTTPRequestHandler):
             if p == "/api/updates/run":
                 run_update(self.body_json().get("id"))
                 return self.json({"ok": True})
+            if p == "/api/settings":
+                return self.json(features.set_settings(self.body_json()))
+            if p == "/api/user":
+                return self.json(features.save_user(self.body_json()))
+            if p == "/api/cleanup":
+                return self.json(features.cleanup(self.body_json().get("paths", [])))
+            if p == "/api/download":
+                return self.json(features.start_download(self.body_json().get("id")))
+            if p == "/api/download/cancel":
+                return self.json(features.cancel_download(self.body_json().get("id")))
             if p == "/api/rescan":
                 scan_library()
                 return self.json({"ok": True, "books": len(BOOKS)})
@@ -869,6 +898,7 @@ def lan_ip():
 
 
 def main():
+    features.init(sys.modules[__name__])
     ap = argparse.ArgumentParser(description="PROJECT NOMAD")
     ap.add_argument("--port", type=int, default=CFG["port"])
     ap.add_argument("--local", action="store_true", help="alleen op deze pc (niet op je netwerk)")

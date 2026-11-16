@@ -8,7 +8,7 @@ html.nexus{
 html.nexus body{
   background:transparent !important; color:var(--txt) !important;
   font-family:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif !important;
-  font-size:17px !important; line-height:1.72 !important;
+  font-size:calc(17px * var(--fs,1)) !important; line-height:1.72 !important;
   max-width:980px !important; margin:0 auto !important; padding:56px 44px 160px !important;
 }
 html.nexus ::selection{background:rgba(61,255,160,.3)}
@@ -124,3 +124,12 @@ html.nexus footer, html.nexus .mw-footer, html.nexus #footer{color:var(--dim) !i
   html.nexus body{padding:32px 18px 120px !important;font-size:16px !important}
   html.nexus table.infobox{float:none;width:100% !important;margin:0 0 24px !important}
 }
+
+/* licht thema */
+html.nexus.light{--txt:#13241b;--dim:#56705f;--panel:rgba(255,255,255,.75);--line:rgba(30,140,90,.25);color-scheme:light}
+html.nexus.light h1{background:linear-gradient(90deg,#0b3b24,#138a55 60%,#5a9a10)!important;-webkit-background-clip:text!important;background-clip:text!important}
+html.nexus.light h3,html.nexus.light h4,html.nexus.light b,html.nexus.light strong,html.nexus.light th{color:#0b1f15!important}
+html.nexus.light a,html.nexus.light a:visited{color:#0c7a4a!important}
+html.nexus.light h2{color:#0c7a4a!important;text-shadow:none}
+html.nexus.light code,html.nexus.light pre{color:#0b3b24!important}
+html.nexus.light .mwe-math-fallback-image-inline,html.nexus.light .mwe-math-fallback-image-display,html.nexus.light img[src*="math"]{filter:none}
