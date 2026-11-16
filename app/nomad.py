@@ -28,7 +28,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.4.1"
+VERSION = "0.4.2"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -550,8 +550,8 @@ def run_update(uid):
 
 # ───────────────────────────── HTTP ─────────────────────────────
 
-INJECT = (b'<link rel="stylesheet" href="/web/article.css">'
-          b'<script src="/web/article.js" defer></script>')
+INJECT = (f'<link rel="stylesheet" href="/web/article.css?v={VERSION}">'
+          f'<script src="/web/article.js?v={VERSION}" defer></script>').encode()
 
 MIME = {".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
         ".html": "text/html; charset=utf-8", ".json": "application/json", ".png": "image/png",
@@ -595,7 +595,11 @@ class Handler(BaseHTTPRequestHandler):
         q = lambda k, d="": qs.get(k, [d])[0]
         try:
             if p in ("/", "/index.html"):
-                return self.static(os.path.join(WEB, "index.html"))
+                with open(os.path.join(WEB, "index.html"), encoding="utf-8") as f:
+                    html = f.read()
+                # versie achter eigen js/css: na een update nooit meer oude bestanden uit de browsercache
+                html = re.sub(r'(/web/(?!vendor/)[\w./-]+\.(?:js|css))"', r'\1?v=' + VERSION + '"', html)
+                return self.send(200, html)
             if p == "/manifest.webmanifest":
                 return self.static(os.path.join(WEB, "manifest.webmanifest"))
             if p.startswith("/web/"):
