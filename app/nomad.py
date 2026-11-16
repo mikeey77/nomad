@@ -28,7 +28,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -436,17 +436,18 @@ def check_updates():
             found.append({"id": "zim:" + b.id, "type": "bibliotheek", "title": b.title,
                           "current": b.date, "latest": date, "file": name,
                           "url": CFG["kiwix_base"] + kiwix_dir(b.prefix) + "/" + name})
-    # app (alleen als NOMAD een git-clone is)
-    if os.path.isdir(os.path.join(ROOT, ".git")) and shutil.which("git"):
-        try:
-            subprocess.run(["git", "fetch", "--quiet"], cwd=ROOT, timeout=60, capture_output=True)
-            behind = subprocess.run(["git", "rev-list", "--count", "HEAD..@{u}"], cwd=ROOT,
-                                    capture_output=True, text=True, timeout=20).stdout.strip()
-            if behind and behind != "0":
-                found.append({"id": "app", "type": "app", "title": "NOMAD-app",
-                              "current": VERSION, "latest": f"{behind} nieuwe wijziging(en)"})
-        except Exception:
-            pass
+    # app (via GitHub)
+    try:
+        sha = json.loads(urllib.request.urlopen(urllib.request.Request(
+            "https://api.github.com/repos/mikeey77/nomad/commits/main",
+            headers={"User-Agent": "NOMAD/" + VERSION}), timeout=10).read())["sha"]
+        stamp = os.path.join(APP, ".commit")
+        cur = open(stamp).read().strip() if os.path.exists(stamp) else ""
+        if sha != cur:
+            found.append({"id": "app", "type": "app", "title": "NOMAD-app",
+                          "current": VERSION + (" (" + cur[:7] + ")" if cur else ""), "latest": "nieuwe versie " + sha[:7]})
+    except Exception:
+        pass
     # AI-model
     if STATE["ai"] == "aan" and ai_models():
         found.append({"id": "ai", "type": "ai", "title": "AI-model " + CFG["ai_model"],
@@ -510,8 +511,10 @@ def run_update(uid):
                     except Exception:
                         job["msg"] = "Oude versie staat nog in de bibliotheek; je kunt hem verwijderen."
             elif upd["type"] == "app":
-                out = subprocess.run(["git", "pull", "--ff-only"], cwd=ROOT, capture_output=True, text=True, timeout=300)
-                job["msg"] = (out.stdout + out.stderr).strip()[-300:] + "  — herstart NOMAD."
+                sys.path.insert(0, APP)
+                import update
+                update.main()
+                job["msg"] = "Bijgewerkt — sluit NOMAD en start opnieuw."
             elif upd["type"] == "ai":
                 req = urllib.request.Request(f"http://127.0.0.1:{CFG['ollama_port']}/api/pull",
                                              data=json.dumps({"model": CFG["ai_model"]}).encode(),
@@ -541,7 +544,7 @@ INJECT = (b'<link rel="stylesheet" href="/web/article.css">'
 
 MIME = {".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
         ".html": "text/html; charset=utf-8", ".json": "application/json", ".png": "image/png",
-        ".pbf": "application/x-protobuf", ".svg": "image/svg+xml", ".woff2": "font/woff2"}
+        ".pbf": "application/x-protobuf", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".webmanifest": "application/manifest+json"}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -582,6 +585,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if p in ("/", "/index.html"):
                 return self.static(os.path.join(WEB, "index.html"))
+            if p == "/manifest.webmanifest":
+                return self.static(os.path.join(WEB, "manifest.webmanifest"))
             if p.startswith("/web/"):
                 return self.static(os.path.join(WEB, p[5:]), cache=True)
             if p.startswith("/kaart/"):
@@ -724,7 +729,7 @@ class Handler(BaseHTTPRequestHandler):
             maps[layer] = {"present": bool(f), "size": os.path.getsize(f) if f else 0}
         lib_size = sum(b.size for b in BOOKS.values())
         self.json({
-            "version": VERSION, "online": STATE["online"], "disk": disk,
+            "version": VERSION, "online": STATE["online"], "disk": disk, "lan_url": STATE.get("lan_url"),
             "library": {"books": len(BOOKS), "size": lib_size,
                         "articles": sum(b.archive.article_count for b in BOOKS.values()),
                         "zim": HAVE_ZIM},
@@ -866,7 +871,7 @@ def lan_ip():
 def main():
     ap = argparse.ArgumentParser(description="PROJECT NOMAD")
     ap.add_argument("--port", type=int, default=CFG["port"])
-    ap.add_argument("--lan", action="store_true")
+    ap.add_argument("--local", action="store_true", help="alleen op deze pc (niet op je netwerk)")
     ap.add_argument("--no-browser", action="store_true")
     ap.add_argument("--no-services", action="store_true", help="AI en adres zoeken niet starten")
     a = ap.parse_args()
@@ -880,12 +885,14 @@ def main():
         threading.Thread(target=start_photon, daemon=True).start()
     threading.Thread(target=update_loop, daemon=True).start()
 
-    srv = ThreadingHTTPServer(("0.0.0.0" if a.lan else "127.0.0.1", a.port), Handler)
+    srv = ThreadingHTTPServer(("127.0.0.1" if a.local else "0.0.0.0", a.port), Handler)
     srv.daemon_threads = True
     url = f"http://localhost:{a.port}/"
     print(f"  NOMAD draait op {url}")
-    if a.lan and lan_ip():
-        print(f"  Op je netwerk:  http://{lan_ip()}:{a.port}/")
+    STATE["lan_url"] = None
+    if not a.local and lan_ip():
+        STATE["lan_url"] = f"http://{lan_ip()}:{a.port}/"
+        print(f"  Op je telefoon/iPad (zelfde wifi):  {STATE['lan_url']}")
     print("  Stoppen: sluit dit venster of Ctrl+C\n")
     if not a.no_browser:
         threading.Timer(1.0, lambda: webbrowser.open(url)).start()

@@ -1,0 +1,12 @@
+{
+  "name": "PROJECT NOMAD",
+  "short_name": "NOMAD",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030806",
+  "theme_color": "#030806",
+  "icons": [
+    {"src": "/web/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/web/icon-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}

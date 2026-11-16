@@ -199,7 +199,10 @@ footer .r{margin-left:auto}
 @media (max-width:820px){
   #app{grid-template-columns:1fr;grid-template-rows:52px 1fr 60px;grid-template-areas:"top" "main" "rail"}
   nav#rail{flex-direction:row;justify-content:space-around;border-right:0;border-top:1px solid var(--line);padding:0}
-  .brand,.rail-sp,footer,.title small{display:none}
+  .brand,.rail-sp,footer,.title small,.omni .kbd{display:none}
+  .omni{font-size:13px;white-space:nowrap;overflow:hidden}
+  .title{font-size:11px;letter-spacing:.2em}
+  .dash{padding:26px 18px 40px}
   #v-lib.on{grid-template-columns:1fr} #lib-side{display:none}
   #maplayers{top:auto;bottom:60px}
 }

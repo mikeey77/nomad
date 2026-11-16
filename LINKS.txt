@@ -1,32 +1,31 @@
-PROJECT NOMAD - downloadlinks (zet elk bestand in de juiste map)
-=================================================================
+PROJECT NOMAD - downloadlinks (stand: 16 nov 2026)
+===================================================
+Directe links. "(torrent)" = open met qBittorrent (gratis), dan kun je pauzeren/hervatten.
+Bij Kiwix kun je ook ".torrent" achter de link plakken voor de torrent-versie.
 
-TIP: download grote bestanden via de .torrent-link (staat naast elk bestand)
-     met bv. qBittorrent. Dan kun je pauzeren/hervatten en is het sneller.
+BIBLIOTHEEK  ->  NOMAD\data\bibliotheek\
+  Wikipedia maxi (119 GB)    https://download.kiwix.org/zim/wikipedia/wikipedia_en_all_maxi_2026-08.zim
+  Gutenberg boeken (206 GB!) https://download.kiwix.org/zim/gutenberg/gutenberg_en_all_2025-11.zim
+  iFixit reparaties (3.3 GB) https://download.kiwix.org/zim/ifixit/ifixit_en_all_2025-12.zim
+  Wikibooks (4.4 GB)         https://download.kiwix.org/zim/wikibooks/wikibooks_en_all_maxi_2026-10.zim
+  Wikiversity (2.0 GB)       https://download.kiwix.org/zim/wikiversity/wikiversity_en_all_maxi_2026-11.zim
+  Medisch mdwiki (2.1 GB)    https://download.kiwix.org/zim/other/mdwiki_en_all_maxi_2025-11.zim
+  Wikivoyage reizen (1.0 GB) https://download.kiwix.org/zim/wikivoyage/wikivoyage_en_all_maxi_2026-09.zim
+  Electronics SE (4.0 GB)    https://download.kiwix.org/zim/stack_exchange/electronics.stackexchange.com_en_all_2026-10.zim
+  DIY SE (1.9 GB)            https://download.kiwix.org/zim/stack_exchange/diy.stackexchange.com_en_all_2026-10.zim
+  Cooking SE (0.2 GB)        https://download.kiwix.org/zim/stack_exchange/cooking.stackexchange.com_en_all_2026-10.zim
+  Leerboeken LibreTexts      https://download.kiwix.org/zim/libretexts/   (per vak, kies de _2026-01 versies)
 
-1) WIKIPEDIA (Engels, maxi, ~111 GB)  ->  NOMAD\data\bibliotheek\
-   https://download.kiwix.org/zim/wikipedia/
-   Kies de NIEUWSTE: wikipedia_en_all_maxi_JJJJ-MM.zim  (of de .torrent ernaast)
-   Snellere NL-mirror: https://ftp.nluug.nl/pub/kiwix/zim/wikipedia/
+WERELDKAART  ->  NOMAD\data\kaart\basis\world.pmtiles   (~120 GB)
+  https://maps.protomaps.com/builds/   -> nieuwste .pmtiles, hernoemen naar world.pmtiles
 
-2) BIBLIOTHEEK-EXTRA'S (telkens de nieuwste versie)  ->  NOMAD\data\bibliotheek\
-   Boeken (Gutenberg):   https://download.kiwix.org/zim/gutenberg/     gutenberg_en_all_...
-   Reparatie (iFixit):   https://download.kiwix.org/zim/ifixit/        ifixit_en_all_...
-   Leerboeken:           https://download.kiwix.org/zim/libretexts/    (kies vakken)
-   Wikibooks:            https://download.kiwix.org/zim/wikibooks/     wikibooks_en_all_maxi_...
-   Wikiversity:          https://download.kiwix.org/zim/wikiversity/   wikiversity_en_all_maxi_...
-   Medisch (mdwiki):     https://download.kiwix.org/zim/other/         mdwiki_en_all_maxi_...
-   Reisgids (Wikivoyage):https://download.kiwix.org/zim/wikivoyage/    wikivoyage_en_all_maxi_...
-   StackExchange:        https://download.kiwix.org/zim/stack_exchange/ (bv. electronics, diy)
+HOOGTEKAART  ->  NOMAD\data\kaart\hoogte\terrain.pmtiles   (~91 GB, alleen torrent)
+  https://techidiots.net/downloads/open-base-map-torrents/pmtiles/jaxa_terrarium0-11/JAXA_AW3D30_2025_Terrarium_z0-Z11_cubic_webp_pmtiles.torrent
+  -> open in qBittorrent, kies als map data\kaart\hoogte, hernoem het .pmtiles-bestand daarna naar terrain.pmtiles
 
-3) WERELDKAART (Protomaps, ~115-120 GB)  ->  NOMAD\data\kaart\basis\world.pmtiles
-   https://maps.protomaps.com/builds/   (nieuwste .pmtiles)
+ADRES ZOEKEN  ->  NOMAD\downloads\   (~66 GB download, ~95 GB uitgepakt)
+  https://download1.graphhopper.com/public/photon-db-planet-1.0-latest.tar.bz2
+  -> daarna "Setup NOMAD.bat" draaien, die pakt hem uit naar data\zoeken
 
-4) HOOGTEKAART (JAXA Terrarium z0-11, ~91 GB, torrent)  ->  NOMAD\data\kaart\hoogte\terrain.pmtiles
-   https://techidiots.net/downloads/open-base-map-torrents/pmtiles/jaxa_terrarium0-11/JAXA_AW3D30_2025_Terrarium_z0-Z11_cubic_webp_pmtiles.torrent
-
-5) ADRES ZOEKEN (Photon planet, ~95 GB uitgepakt)  ->  NOMAD\data\zoeken\
-   https://download1.graphhopper.com/public/
-   Bestand: photon-db-planet-1.0-latest.tar.bz2  (uitpakken in data\zoeken)
-
-6) SATELLIET, AI, TOOLS: worden door het NOMAD-setupscript geregeld.
+SATELLIET: nog geen gratis wereldbron gevonden (volgt).
+AI, PYTHON, JAVA, PHOTON-PROGRAMMA: regelt "Setup NOMAD.bat" zelf.

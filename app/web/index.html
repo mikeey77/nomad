@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NOMAD">
+<meta name="theme-color" content="#030806">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/web/apple-touch-icon.png">
+<link rel="icon" href="/web/icon-192.png">
 <title>PROJECT NOMAD</title>
 <link rel="stylesheet" href="/web/style.css">
 <link rel="stylesheet" href="/web/vendor/maplibre-gl.css">
@@ -37,6 +44,8 @@
         </div>
         <div class="bigsearch" id="omni2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Wat wil je weten of vinden?<span class="kbd">Ctrl K</span></div>
         <div class="grid" id="mods"></div>
+        <div class="sec-t" id="phoneT">OP JE TELEFOON</div>
+        <div class="card" style="cursor:default;display:flex;gap:22px;align-items:center;flex-wrap:wrap" id="phone"></div>
         <div class="sec-t">OPSLAG</div>
         <div class="card" style="cursor:default" id="disk"></div>
       </div>
@@ -123,6 +132,7 @@
 <script src="/web/vendor/maplibre-gl.js"></script>
 <script src="/web/vendor/pmtiles.js"></script>
 <script src="/web/vendor/basemaps.js"></script>
+<script src="/web/vendor/qrcode.js"></script>
 <script src="/web/app.js"></script>
 </body>
 </html>

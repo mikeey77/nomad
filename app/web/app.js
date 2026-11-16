@@ -79,6 +79,14 @@ function renderDash(){
       <div class="big">${A.state==='aan'?(A.models?.length||0)+' model':'—'}</div><div class="sub">${esc(A.model||'')} · lokaal via Ollama</div>
       <div class="status"><span class="dot ${stateDot(A.state)}"></span>${esc((A.state||'').toUpperCase())}</div></div>`;
   $$('#mods .card').forEach(c => c.onclick = () => location.hash = c.dataset.h);
+  const lan = S.lan_url, mobile = /iphone|ipad|android/i.test(navigator.userAgent);
+  $('#phoneT').style.display = $('#phone').style.display = (lan && !mobile) ? '' : 'none';
+  if(lan && !mobile && window.qrcode){
+    const qr = qrcode(0, 'M'); qr.addData(lan); qr.make();
+    $('#phone').innerHTML = `<div style="flex:none;background:#d6efe2;padding:10px;border-radius:10px;line-height:0">${qr.createSvgTag({cellSize:4, margin:0})}</div>
+      <div><div class="k">SCAN MET JE CAMERA</div><div class="big" style="font-size:20px">${esc(lan)}</div>
+      <div class="sub">Telefoon of iPad op dezelfde wifi. Daarna: <b>Deel → Zet op beginscherm</b> (iPhone) of <b>⋮ → App installeren</b> (Android).</div></div>`;
+  }
   const d = S.disk || {}, pct = d.total ? d.used / d.total * 100 : 0;
   $('#disk').innerHTML = `<div class="k">SSD</div><div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div>
     <div class="sub">${fmtB(d.used)} gebruikt van ${fmtB(d.total)} · <b style="color:var(--acc)">${fmtB(d.free)} vrij</b></div>`;
