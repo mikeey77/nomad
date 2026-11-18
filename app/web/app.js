@@ -113,7 +113,7 @@ function renderAll(){
   $('#netTxt').textContent = (on ? t('online') : t('offline')).toUpperCase();
   $('#fLib').innerHTML = t('articles').toUpperCase() + ' <b>' + fmtN(STATUS.library?.articles) + '</b>';
   const b = $('#updBadge'); b.textContent = STATUS.updates || ''; b.classList.toggle('on', !!STATUS.updates);
-  $('#aiModel').textContent = t('model').toUpperCase() + ': ' + (STATUS.ai?.model || '—');
+  if(typeof renderModelPick === 'function') renderModelPick(); else $('#aiModel').textContent = t('model').toUpperCase() + ': ' + (STATUS.ai?.model || '—');
   renderDash(); renderBooks(); renderFavs(); renderHist();
   if(VIEW === 'lib' && $('#shelf').style.display !== 'none' && !location.hash.startsWith('#search')) showShelf();
 }

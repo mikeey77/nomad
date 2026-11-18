@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.17.0"
+VERSION = "0.18.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -390,6 +390,16 @@ de het een en of in op aan voor met van te is zijn was waren wordt worden hoe wa
 er hier daar ik je jij u hij zij we wij ze mijn jouw ons onze hun kan kun kunt moet mag wil zou zal ook nog maar dan als niet geen wel
 heel veel meer meest over naar bij uit om door tot""".split())
 _RAG_CACHE = {}
+
+
+def auto_model(think=False):
+    """Auto: thinking model when Think is on, otherwise the chosen default (photos are handled separately)."""
+    have = ai_models()
+    if think:
+        for pref in ("qwen3:8b", "qwen3:4b", "deepseek-r1:7b", "qwen3:1.7b"):
+            if pref in have or pref + ":latest" in have:
+                return pref
+    return CFG["ai_model"]
 
 
 def supports_think(model):
@@ -1337,6 +1347,8 @@ class Handler(BaseHTTPRequestHandler):
         msgs = body.get("messages", [])[-12:]
         model = body.get("model") or CFG["ai_model"]
         think = bool(body.get("think"))
+        if model == "auto":
+            model = auto_model(think)
         images = [i.split(",", 1)[-1] for i in (body.get("images") or [])][:3]
         if images:
             import fast

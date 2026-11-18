@@ -58,7 +58,7 @@ send = async function(){
   const t0 = performance.now(); let tFirst = 0, found = '';
   try{
     const res = await fetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({wiki, think:THINK, images:photo ? [photo.full] : [], messages:CHAT.filter(m => m !== msg && !m.err).map(m => ({role:m.role, content:m.content}))})});
+      body:JSON.stringify({wiki, think:THINK, model:store.get('nomad.aimodel', 'auto'), images:photo ? [photo.full] : [], messages:CHAT.filter(m => m !== msg && !m.err).map(m => ({role:m.role, content:m.content}))})});
     if(!res.ok){ throw new Error((await res.json().catch(() => ({}))).error || res.status) }
     const reader = res.body.getReader(), dec = new TextDecoder(); let buf = '';
     for(;;){

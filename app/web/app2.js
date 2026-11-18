@@ -25,8 +25,7 @@ renderChat = function(){
   $('#chat').innerHTML = CHAT.length ? CHAT.map((m, i) => `<div class="msg ${m.role === 'user' ? 'u' : 'a'}" style="--i:${Math.min(i, 8)}">
       <div class="av">${m.role === 'user' ? t('you') : 'AI'}</div>
       <div class="bub${m.err ? ' err' : ''}${m.live && m.content ? ' cursor' : ''}">${window.aiExtras ? aiExtras(m) : ''}${esc(m.content)}${m.sources?.length ? '<div class="src">' +
-        m.sources.map(s => `<span class="chip" data-b="${esc(s.book)}" data-p="${esc(s.path)}">↗ ${esc(s.title)}${s.bookTitle ? ' · ' + esc(s.bookTitle) : ''}</span>`).join('') + '</div>' : ''}
-        ${m.meta ? `<div class="ameta">${esc(m.meta)}</div>` : ''}${m.role !== 'user' && !m.live && !m.err ? `<div class="macts"><button data-copy="${i}" title="${t('copy')}">⧉</button><button data-save="${i}" title="${t('save_ans')}">☆</button></div>` : ''}</div></div>`).join('')
+        m.sources.map(s => `<span class="chip" data-b="${esc(s.book)}" data-p="${esc(s.path)}">↗ ${esc(s.title)}${s.bookTitle ? ' · ' + esc(s.bookTitle) : ''}</span>`).join('') + '</div>' : ''}${m.meta ? `<div class="ameta">${esc(m.meta)}</div>` : ''}${m.role !== 'user' && !m.live && !m.err ? `<div class="macts"><button data-copy="${i}" title="${t('copy')}">⧉</button><button data-save="${i}" title="${t('save_ans')}">☆</button></div>` : ''}</div></div>`).join('')
     : `<div class="msg"><div class="av">AI</div><div class="bub" style="color:var(--dim)">${t('ai_hello')}</div></div>`;
   $$('#chat .chip').forEach(c => c.onclick = () => location.hash = 'lib/' + c.dataset.b + '/' + c.dataset.p);
   $$('#chat [data-copy]').forEach(b => b.onclick = () => { navigator.clipboard?.writeText(CHAT[+b.dataset.copy].content); toast(t('copied')) });
