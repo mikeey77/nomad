@@ -303,7 +303,11 @@ def apply_phone(data):
     for k in removed.get("notes") or []:
         if cur["notes"].pop(k, None) is not None:
             out["removed"] += 1
-    features.save_user({k: cur[k] for k in ("favorites", "readlater", "pins", "notes")})
+    inv_ops = data.get("inv_ops") or []
+    if inv_ops:
+        cur["inventory"] = apply_inv_ops(cur.get("inventory"), inv_ops)
+        out["added"] += len(inv_ops)
+    features.save_user({k: cur[k] for k in ("favorites", "readlater", "pins", "notes", "inventory")})
     for t in data.get("tracks") or []:
         try:
             track_save(t.get("name", "phone-track"), t.get("gpx", ""))
@@ -311,6 +315,75 @@ def apply_phone(data):
         except Exception:
             pass
     return out
+
+
+def apply_inv_ops(inv, ops):
+    """Inventory changes made on the phone: add / change amount / set / delete, applied in order."""
+    import uuid
+    inv = inv or {"people": {"a": 1, "c": 0, "p": 0}, "custom": [], "favs": [], "stacks": [],
+                  "boxes": [{"id": "home", "type": "home", "icon": "🏠", "name": "", "limit": 0},
+                            {"id": "bag", "type": "backpack", "icon": "🎒", "name": "", "limit": 15},
+                            {"id": "car", "type": "car", "icon": "🚗", "name": "", "limit": 0}]}
+    st = inv.setdefault("stacks", [])
+    for op in ops:
+        k = op.get("op")
+        if k == "add":
+            box, item, exp = op.get("box") or "home", op.get("item"), op.get("exp") or ""
+            same = next((x for x in st if x.get("item") == item and x.get("box") == box and (x.get("exp") or "") == exp), None)
+            if same:
+                same["qty"] = same.get("qty", 0) + int(op.get("qty", 1))
+            else:
+                st.append({"uid": op.get("uid") or uuid.uuid4().hex[:8], "item": item, "qty": int(op.get("qty", 1)), "box": box,
+                           "exp": exp, "note": "", "added": op.get("t") or int(time.time() * 1000)})
+        elif k in ("qty", "set", "del"):
+            s = next((x for x in st if x.get("uid") == op.get("uid")), None)
+            if not s:
+                continue
+            if k == "qty":
+                s["qty"] = s.get("qty", 0) + int(op.get("d", 0))
+            elif k == "set":
+                s["qty"] = int(op.get("n", 0))
+            if k == "del" or s["qty"] <= 0:
+                st.remove(s)
+        elif k == "people" and isinstance(op.get("v"), dict):
+            inv["people"] = op["v"]
+    return inv
+
+
+def sync(data):
+    """Live sync with NOMAD Mobile over Wi-Fi: apply the phone's changes, return the merged profile."""
+    res = apply_phone(data) if data.get("nomad_phone") else {"added": 0, "removed": 0}
+    if res.get("added") or res.get("removed"):
+        N.STATE["sync_msg"] = [{"file": "wifi", **res}]
+        N.STATE["data_version"] = N.STATE.get("data_version", 0) + 1
+    return {"ok": True, "result": res, "user": features.load_user(), "pc": pc_info()}
+
+
+def pc_info():
+    port = N.CFG.get("port", 8090)
+    urls = []
+    if N.STATE.get("lan_url"):
+        urls.append(N.STATE["lan_url"].rstrip("/"))
+    try:
+        import socket
+        for ip in socket.gethostbyname_ex(socket.gethostname())[2]:
+            u = f"http://{ip}:{port}"
+            if not ip.startswith("127.") and u not in urls:
+                urls.append(u)
+    except Exception:
+        pass
+    return {"urls": urls, "name": os.environ.get("COMPUTERNAME", "")}
+
+
+def write_pc_info():
+    """Remember where this PC can be reached, inside nomad-user.json on the SSD, so the phone can find it."""
+    try:
+        with features.USER_LOCK:
+            u = features.load_user()
+            u["_pc"] = pc_info()
+            N.save_json(features.user_file(), u)
+    except Exception:
+        pass
 
 
 def inbox_dir():

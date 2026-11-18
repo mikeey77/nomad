@@ -68,6 +68,21 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke
 #poibar{position:absolute;left:0;right:0;top:8px;z-index:3;display:flex;gap:6px;overflow-x:auto;padding:2px 10px 6px;scrollbar-width:none}
 #poibar::-webkit-scrollbar{display:none}
 .nlogo{display:none}
+#syncDot{margin-left:auto;width:10px;height:10px;border-radius:50%;background:#3a4a42;flex:none}
+#syncDot.on{background:var(--acc);box-shadow:0 0 10px var(--acc)}#syncDot.wait{background:#ffb63a}
+#syncDot+.hbtn{margin-left:10px}
+.live{font:600 12px var(--mono);color:var(--dim)}.live.on{color:var(--acc)}
+.big.ghost{background:transparent;border-color:var(--line2);color:var(--dim);box-shadow:none}
+.mslot{cursor:pointer}.mslot.add{border-style:dashed;--rc:var(--acc)}.mslot.add .e{color:var(--acc)}
+.msheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
+.msh{width:100%;max-width:640px;max-height:80vh;overflow:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:20px 20px 0 0;padding:8px 14px calc(var(--sab) + 18px);animation:up .25s both}
+.mpk{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.mpi{display:flex;align-items:center;gap:8px;padding:10px;border-radius:12px;border:1px solid color-mix(in srgb,var(--rc) 45%,transparent);background:rgba(0,0,0,.3);color:var(--txt);font-size:13px;text-align:left}
+.mpi span{font-size:22px}.mpi i{color:#ffd23a;font-style:normal}.mpi.got{transform:scale(.95);border-color:var(--acc)}
+.mqty{display:flex;align-items:center;justify-content:center;gap:24px;margin:14px 0}
+.mqty button{width:56px;height:56px;border-radius:16px;border:1px solid var(--line2);background:var(--card);color:var(--hi);font-size:26px}
+.mqty b{font:700 34px var(--mono);color:var(--hi);min-width:60px;text-align:center}
+.mact{display:flex;gap:8px}.mact .big{flex:1;margin-top:6px}
 .pc{flex:none;display:flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 5px;border-radius:20px;border:1px solid var(--line2);background:rgba(10,25,18,.92);color:var(--dim);font-size:12.5px;white-space:nowrap}
 .pc i{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#1a2a22;color:var(--dim)}
 .pc i svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
@@ -141,6 +156,7 @@ nav button{min-width:0}
 <header>
   <div class="logo">N</div>
   <div class="brand">PROJECT NOMAD<small>MOBILE · OFFLINE</small></div>
+  <span id="syncDot" title=""></span>
   <button class="hbtn" id="openBtn" data-t="open"></button>
 </header>
 <input type="file" id="files" multiple hidden>
@@ -176,7 +192,9 @@ nav button{min-width:0}
   <div class="seg" id="lookSeg"><button data-v="orig" data-t="look_orig"></button><button data-v="dark" data-t="look_dark"></button></div>
   <div class="k" data-t="sync"></div>
   <div class="tip" id="syncInfo"></div>
-  <button class="big" id="syncOut" style="margin-top:10px"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span data-t="sync_save"></span></button>
+  <button class="big" id="syncLive" style="margin-top:10px">⟳ <span data-t="sync_now"></span></button>
+  <div class="search" style="margin-top:8px;height:40px"><input id="pcAddr" data-p="sync_pc" autocomplete="off" inputmode="url"></div>
+  <button class="big ghost" id="syncOut" style="margin-top:10px"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span data-t="sync_save"></span></button>
   <div class="tip" data-t="sync_help"></div>
   <div class="k" data-t="howto"></div>
   <div class="tip" data-t="howto_body"></div>
@@ -538,11 +556,12 @@ const T = {
       nomap_t:'NO MAP OPEN', nomap:'Open <code>world.pmtiles</code> (NOMAD/data/maps/world) with <b>OPEN FILES</b>.',
       articles:'articles', opened:'Opened {n} file(s)', xz:'This .zim uses old xz compression — download a newer version.', notzim:'Not a .zim or .pmtiles file: {f}',
       notfound:'Page not found in this file.',
-      inventory:'STASH', inv_ro:'Your inventory comes from <code>nomad-user.json</code> on the SSD. Add and change items in NOMAD on the PC; open the file again here to update.', inv_none:'No inventory yet. Open <code>NOMAD/data/nomad-user.json</code> (OPEN FILES) to see your supplies.', days:'days', food:'FOOD', water:'WATER', use_first:'USE FIRST', expired:'expired', left:'days left',
+      inventory:'STASH', inv_ro:'Tap an item to use or change it, or ＋ to add. Changes sync to the PC by themselves when it is on the same Wi-Fi.', inv_add:'Add item', inv_find:'Search items…', inv_use:'Use 1', inv_del:'Delete',
+      sync_live:'Live sync with {pc}', sync_off:'PC not found — changes are kept and sent later', sync_ok:'{n} change(s) synced with your PC', sync_nopc:'PC not found. Start NOMAD on your PC (same Wi-Fi), or use the button below.', sync_now:'SYNC NOW', sync_pc:'PC address (optional)', inv_none:'No inventory yet. Open <code>NOMAD/data/nomad-user.json</code> (OPEN FILES) to see your supplies.', days:'days', food:'FOOD', water:'WATER', use_first:'USE FIRST', expired:'expired', left:'days left',
       readlater:'READING LIST', favorites:'FAVORITES', not_open:'open {f} first', nearby:'NEARBY', near_zoom:'Zoom in to street level to see places.', near_none:'No places of this type in view.', route_none:'Route planning needs the NOMAD PC app.',
-      sync:'SYNC WITH YOUR PC (VIA THE SSD)', sync_save:'SAVE CHANGES FOR PC', sync_none:'No file from your PC opened yet. Tap OPEN FILES and pick <code>NOMAD/data/nomad-user.json</code> to see your favorites, reading list and pins.',
+      sync:'SYNC WITH YOUR PC', sync_save:'SAVE CHANGES FOR PC', sync_none:'No file from your PC opened yet. Tap OPEN FILES and pick <code>NOMAD/data/nomad-user.json</code> to see your favorites, reading list and pins.',
       sync_loaded:'From PC: {f} favorites · {r} on reading list · {p} pins ({date}).', sync_pending:'<b>{n} change(s)</b> on this phone not yet on the PC.', sync_clean:'No changes on this phone.',
-      sync_help:'Phone → PC: tap the button, then move the downloaded <code>nomad-phone-….json</code> to <code>NOMAD/data/inbox</code> on the SSD (Files app). NOMAD on the PC merges it within seconds. PC → phone: open <code>NOMAD/data/nomad-user.json</code> again.',
+      sync_help:'No Wi-Fi? Tap the button, then move the downloaded <code>nomad-phone-….json</code> to <code>NOMAD/data/inbox</code> on the SSD (Files app). NOMAD on the PC merges it within seconds. PC → phone: open <code>NOMAD/data/nomad-user.json</code> again.',
       sync_saved:'Saved to your Downloads — move it to NOMAD/data/inbox', pin_name:'Name for this pin', user_loaded:'Your favorites, reading list and pins are loaded',
       c_fuel:'Fuel', c_charge:'EV charging', c_hospital:'Hospital & doctor', c_pharmacy:'Pharmacy', c_shop:'Supermarket', c_food:'Food & drink', c_parking:'Parking', c_water:'Water & toilets', c_police:'Police & fire', c_camp:'Camping', c_money:'ATM & bank', nothing:'Nothing found', loc_err:'Location not available here', search_in:'Search in {b}…', external:'Online link (not available offline)'},
   nl:{open:'BESTANDEN OPENEN', search_all:'Zoek in alle collecties…', collections:'COLLECTIES', library:'BIBLIOTHEEK', map:'KAART', settings:'INSTELLINGEN',
@@ -552,11 +571,12 @@ const T = {
       nomap_t:'GEEN KAART OPEN', nomap:'Open <code>world.pmtiles</code> (NOMAD/data/maps/world) via <b>BESTANDEN OPENEN</b>.',
       articles:'artikelen', opened:'{n} bestand(en) geopend', xz:'Deze .zim gebruikt oude xz-compressie — download een nieuwere versie.', notzim:'Geen .zim of .pmtiles: {f}',
       notfound:'Pagina niet gevonden in dit bestand.',
-      inventory:'VOORRAAD', inv_ro:'Je inventaris komt uit <code>nomad-user.json</code> op de SSD. Items toevoegen en aanpassen doe je in NOMAD op de pc; open het bestand hier opnieuw om bij te werken.', inv_none:'Nog geen inventaris. Open <code>NOMAD/data/nomad-user.json</code> (BESTANDEN OPENEN) om je voorraad te zien.', days:'dagen', food:'ETEN', water:'WATER', use_first:'EERST OPMAKEN', expired:'verlopen', left:'dagen over',
+      inventory:'VOORRAAD', inv_ro:'Tik op een item om het te gebruiken of aan te passen, of op ＋ om iets toe te voegen. Wijzigingen gaan vanzelf naar de pc als die op hetzelfde wifi zit.', inv_add:'Item toevoegen', inv_find:'Zoek items…', inv_use:'Gebruik 1', inv_del:'Verwijder',
+      sync_live:'Live gesynchroniseerd met {pc}', sync_off:'Pc niet gevonden — wijzigingen worden bewaard en later verstuurd', sync_ok:'{n} wijziging(en) gesynchroniseerd met je pc', sync_nopc:'Pc niet gevonden. Start NOMAD op je pc (zelfde wifi), of gebruik de knop hieronder.', sync_now:'NU SYNCHRONISEREN', sync_pc:'Pc-adres (optioneel)', inv_none:'Nog geen inventaris. Open <code>NOMAD/data/nomad-user.json</code> (BESTANDEN OPENEN) om je voorraad te zien.', days:'dagen', food:'ETEN', water:'WATER', use_first:'EERST OPMAKEN', expired:'verlopen', left:'dagen over',
       readlater:'LEESLIJST', favorites:'FAVORIETEN', not_open:'open eerst {f}', nearby:'IN DE BUURT', near_zoom:'Zoom in tot straatniveau om plekken te zien.', near_none:'Geen plekken van dit type in beeld.', route_none:'Route plannen kan alleen in de NOMAD-pc-app.',
-      sync:'SYNCHRONISEREN MET JE PC (VIA DE SSD)', sync_save:'WIJZIGINGEN OPSLAAN VOOR PC', sync_none:'Nog geen bestand van je pc geopend. Tik op BESTANDEN OPENEN en kies <code>NOMAD/data/nomad-user.json</code> om je favorieten, leeslijst en pins te zien.',
+      sync:'SYNCHRONISEREN MET JE PC', sync_save:'WIJZIGINGEN OPSLAAN VOOR PC', sync_none:'Nog geen bestand van je pc geopend. Tik op BESTANDEN OPENEN en kies <code>NOMAD/data/nomad-user.json</code> om je favorieten, leeslijst en pins te zien.',
       sync_loaded:'Van pc: {f} favorieten · {r} op leeslijst · {p} pins ({date}).', sync_pending:'<b>{n} wijziging(en)</b> op deze telefoon die nog niet op de pc staan.', sync_clean:'Geen wijzigingen op deze telefoon.',
-      sync_help:'Telefoon → pc: tik op de knop en verplaats het gedownloade <code>nomad-phone-….json</code> met de Bestanden-app naar <code>NOMAD/data/inbox</code> op de SSD. NOMAD op de pc voegt het binnen een paar seconden samen. Pc → telefoon: open <code>NOMAD/data/nomad-user.json</code> opnieuw.',
+      sync_help:'Geen wifi? Tik op de knop en verplaats het gedownloade <code>nomad-phone-….json</code> met de Bestanden-app naar <code>NOMAD/data/inbox</code> op de SSD. NOMAD op de pc voegt het binnen een paar seconden samen. Pc → telefoon: open <code>NOMAD/data/nomad-user.json</code> opnieuw.',
       sync_saved:'Opgeslagen in Downloads — zet het in NOMAD/data/inbox', pin_name:'Naam voor deze pin', user_loaded:'Je favorieten, leeslijst en pins zijn geladen',
       c_fuel:'Tankstation', c_charge:'Laadpaal', c_hospital:'Ziekenhuis & dokter', c_pharmacy:'Apotheek', c_shop:'Supermarkt', c_food:'Eten & drinken', c_parking:'Parkeren', c_water:'Water & wc', c_police:'Politie & brandweer', c_camp:'Camping', c_money:'Geldautomaat', nothing:'Niets gevonden', loc_err:'Locatie is hier niet beschikbaar', search_in:'Zoek in {b}…', external:'Online link (offline niet beschikbaar)'}
 };
@@ -940,12 +960,14 @@ function drawGpx(){
 /* ───────── your own data: favorites, reading list, pins, notes (synced via the SSD) ───────── */
 const UD = ls.get('nm.user', {favorites:[], readlater:[], pins:[], notes:{}});
 const PEND = ls.get('nm.pending', {add:{favorites:[], readlater:[], pins:[]}, removed:{favorites:[], readlater:[], pins:[]}, notes:{}});
+PEND.inv = PEND.inv || [];
 let SYNCINFO = ls.get('nm.syncinfo', null);
 const kFav = x => x.book + '/' + x.path;
 const kPin = x => String(Math.round(x.lat * 1e5) / 1e5) + ',' + String(Math.round(x.lon * 1e5) / 1e5);
 const KEY = {favorites:kFav, readlater:kFav, pins:kPin};
-function saveUD(){ ls.set('nm.user', UD); ls.set('nm.pending', PEND); renderLists(); renderSync(); drawPins(); renderMInv() }
-function pendingCount(){ return ['favorites', 'readlater', 'pins'].reduce((n, k) => n + PEND.add[k].length + PEND.removed[k].length, 0) + Object.keys(PEND.notes).length }
+function saveUD(){ ls.set('nm.user', UD); ls.set('nm.pending', PEND); renderLists(); renderSync(); drawPins(); renderMInv(); syncSoon() }
+function pendingCount(){ return ['favorites', 'readlater', 'pins'].reduce((n, k) => n + PEND.add[k].length + PEND.removed[k].length, 0) + Object.keys(PEND.notes).length + PEND.inv.length }
+function clearPending(){ for(const k of ['favorites', 'readlater', 'pins']){ PEND.add[k] = []; PEND.removed[k] = [] } PEND.notes = {}; PEND.inv = [] }
 function loadUserFile(data, f){
   const u = data.user && data.nomad_backup ? data.user : data;
   if(!u || !Array.isArray(u.favorites)) throw new Error('not nomad-user.json');
@@ -956,9 +978,11 @@ function loadUserFile(data, f){
     UD[k] = list;
   }
   UD.notes = {...(u.notes || {}), ...PEND.notes};
-  UD.inventory = u.inventory || null;
+  UD.inventory = u.inventory ? JSON.parse(JSON.stringify(u.inventory)) : null;
+  PEND.inv.forEach(op => applyInvOp(UD, op));
+  if(u._pc && u._pc.urls){ const known = ls.get('nm.pcs', []); ls.set('nm.pcs', [...new Set([...u._pc.urls, ...known])].slice(0, 6)) }
   SYNCINFO = {date:new Date(f.lastModified || Date.now()).toLocaleString(), f:UD.favorites.length, r:UD.readlater.length, p:UD.pins.length};
-  ls.set('nm.syncinfo', SYNCINFO); saveUD(); toast(t('user_loaded'));
+  ls.set('nm.syncinfo', SYNCINFO); saveUD(); if(f.name) toast(t('user_loaded'));
 }
 function toggleItem(kind, item){
   const key = KEY[kind](item), i = UD[kind].findIndex(x => KEY[kind](x) === key);
@@ -997,15 +1021,17 @@ $('#aLater').onclick = () => { toggleItem('readlater', {book:CUR.id, path:CUR.pa
 function renderSync(){
   const el = $('#syncInfo'); if(!el) return;
   const n = pendingCount();
-  el.innerHTML = (SYNCINFO ? t('sync_loaded', SYNCINFO) : t('sync_none')) + '<br>' + (n ? t('sync_pending', {n}) : t('sync_clean'));
+  const live = LIVE.url ? `<span class="live on">● ${t('sync_live', {pc:esc(LIVE.name || LIVE.url.replace(/^https?:\/\//, ''))})}</span>` : `<span class="live">○ ${t('sync_off')}</span>`;
+  el.innerHTML = live + '<br>' + (SYNCINFO ? t('sync_loaded', SYNCINFO) : t('sync_none')) + '<br>' + (n ? t('sync_pending', {n}) : t('sync_clean'));
+  const top = $('#syncDot'); if(top){ top.className = LIVE.url ? 'on' : n ? 'wait' : ''; top.title = LIVE.url ? t('sync_live', {pc:LIVE.name || ''}) : n ? t('sync_pending', {n}).replace(/<[^>]+>/g, '') : t('sync_off') }
 }
+const syncPayload = () => JSON.parse(JSON.stringify({nomad_phone:1, date:new Date().toISOString(), user:{...PEND.add, notes:PEND.notes}, removed:PEND.removed, inv_ops:PEND.inv,
+    tracks:GPX.filter(g => g.mine).map(g => ({name:g.name, gpx:g.text}))}));
 $('#syncOut').onclick = () => {
-  const out = {nomad_phone:1, date:new Date().toISOString(), user:{...PEND.add, notes:PEND.notes}, removed:PEND.removed,
-    tracks:GPX.filter(g => g.mine).map(g => ({name:g.name, gpx:g.text}))};
+  const out = syncPayload();
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 1)], {type:'application/json'}));
   a.download = 'nomad-phone-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.json'; document.body.appendChild(a); a.click(); a.remove();
-  for(const k of ['favorites', 'readlater', 'pins']){ PEND.add[k] = []; PEND.removed[k] = [] }
-  PEND.notes = {}; saveUD(); toast(t('sync_saved'));
+  clearPending(); saveUD(); toast(t('sync_saved'));
 };
 let PINM = [];
 function drawPins(){
@@ -1089,6 +1115,91 @@ $('#sheetX').onclick = () => $('#sheet').classList.remove('on');
 const MITEM = {}; INV_ITEMS.forEach(r => MITEM[r[0]] = {e:r[1], en:r[2], nl:r[3], cat:r[4], rar:r[5], kcal:r[7], l:r[8]});
 const RARC = {c:'#9aa7b0', u:'#3ddc84', r:'#3a9bff', e:'#b26bff', l:'#ffb020'};
 let MBOX = ls.get('nm.invbox', null);
+/* ───────── inventory editing on the phone ───────── */
+const uidm = () => 'm' + Math.random().toString(36).slice(2, 9);
+function applyInvOp(U, op){
+  const I = U.inventory; if(!I) return;
+  const st = I.stacks;
+  if(op.op === 'add'){
+    const same = st.find(x => x.item === op.item && x.box === op.box && (x.exp || '') === (op.exp || ''));
+    if(same) same.qty += op.qty; else st.push({uid:op.uid, item:op.item, qty:op.qty, box:op.box, exp:op.exp || '', note:'', added:op.t});
+  } else {
+    const x = st.find(y => y.uid === op.uid); if(!x) return;
+    if(op.op === 'qty') x.qty += op.d; if(op.op === 'set') x.qty = op.n;
+    if(op.op === 'del' || x.qty <= 0) st.splice(st.indexOf(x), 1);
+  }
+}
+function invOp(op){ op.t = Date.now(); applyInvOp(UD, op); PEND.inv.push(op); saveUD() }
+function invAddPicker(){
+  const ov = document.createElement('div'); ov.className = 'msheet';
+  ov.innerHTML = `<div class="msh"><div class="sh-h"><b>＋ ${t('inv_add')}</b><button data-x>✕</button></div>
+    <div class="search" style="margin-bottom:10px"><input id="maq" placeholder="${t('inv_find')}" autocomplete="off"></div><div class="mpk" id="mpk"></div></div>`;
+  document.body.appendChild(ov);
+  const nm = i => LANG === 'nl' ? i.nl : i.en;
+  const draw = () => {
+    const q = $('#maq').value.trim().toLowerCase(), favs = UD.inventory.favs || [];
+    const list = Object.entries(MITEM).filter(([id, i]) => !q || nm(i).toLowerCase().includes(q) || (i.en || '').toLowerCase().includes(q))
+      .sort((a, b) => favs.includes(b[0]) - favs.includes(a[0])).slice(0, 80);
+    $('#mpk').innerHTML = list.map(([id, i]) => `<button class="mpi" data-id="${id}" style="--rc:${RARC[i.rar] || RARC.c}"><span>${i.e}</span>${esc(nm(i))}${favs.includes(id) ? ' <i>★</i>' : ''}</button>`).join('');
+    $('#mpk').querySelectorAll('.mpi').forEach(b => b.onclick = () => {
+      const id = b.dataset.id, row = INV_ITEMS.find(r => r[0] === id), shelf = row ? row[9] : (MITEM[id].shelf || 0);
+      invOp({op:'add', uid:uidm(), item:id, qty:1, box:MBOX, exp:shelf ? new Date(Date.now() + shelf * 864e5).toISOString().slice(0, 10) : ''});
+      b.classList.add('got'); setTimeout(() => b.classList.remove('got'), 300); toast('+1 ' + MITEM[id].e + ' ' + nm(MITEM[id]));
+    });
+  };
+  $('#maq').oninput = draw; draw();
+  ov.onclick = e => { if(e.target === ov || e.target.closest('[data-x]')) ov.remove() };
+}
+function invStackSheet(uid){
+  const s = UD.inventory.stacks.find(x => x.uid === uid); if(!s) return;
+  const i = MITEM[s.item] || {e:'📦', en:s.item, nl:s.item}, nm = LANG === 'nl' ? i.nl : i.en;
+  const ov = document.createElement('div'); ov.className = 'msheet';
+  ov.innerHTML = `<div class="msh"><div class="sh-h"><b>${i.e} ${esc(nm)}</b><button data-x>✕</button></div>
+    <div class="mqty"><button data-d="-1">−</button><b id="mqn">${s.qty}</b><button data-d="1">+</button></div>
+    ${s.exp ? `<div class="tip" style="text-align:center">⏳ ${esc(s.exp)}</div>` : ''}
+    <div class="mact"><button class="big" data-use="1">✋ ${t('inv_use')}</button><button class="big ghost" data-del="1">🗑 ${t('inv_del')}</button></div></div>`;
+  document.body.appendChild(ov);
+  ov.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { invOp({op:'qty', uid, d:+b.dataset.d}); const x = UD.inventory.stacks.find(y => y.uid === uid); if(!x) return ov.remove(); $('#mqn').textContent = x.qty });
+  ov.querySelector('[data-use]').onclick = () => { invOp({op:'qty', uid, d:-1}); ov.remove() };
+  ov.querySelector('[data-del]').onclick = () => { invOp({op:'del', uid}); ov.remove() };
+  ov.onclick = e => { if(e.target === ov || e.target.closest('[data-x]')) ov.remove() };
+}
+
+/* ───────── automatic sync with NOMAD on the PC (same Wi-Fi) ───────── */
+const LIVE = {url:null, name:'', busy:false};
+async function tryUrl(base, payload){
+  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 3500);
+  try{
+    const r = await fetch(base.replace(/\/$/, '') + '/api/sync', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload), signal:ctl.signal});
+    clearTimeout(tm); if(!r.ok) return null; return await r.json();
+  }catch(e){ clearTimeout(tm); return null }
+}
+async function syncNow(manual){
+  if(LIVE.busy) return; LIVE.busy = true;
+  const cands = [...new Set([LIVE.url, ...(location.protocol.startsWith('http') && location.port ? [location.origin] : []), ...ls.get('nm.pcs', []), ls.get('nm.pcmanual', '')].filter(Boolean))];
+  const payload = syncPayload(), sent = pendingCount();
+  let res = null, used = null;
+  for(const u of cands){ res = await tryUrl(u, payload); if(res && res.ok){ used = u; break } }
+  LIVE.busy = false;
+  if(!res || !res.ok){ LIVE.url = null; renderSync(); if(manual) toast(t('sync_nopc')); return }
+  LIVE.url = used; LIVE.name = res.pc?.name || '';
+  ls.set('nm.pcs', [...new Set([used, ...(res.pc?.urls || []), ...ls.get('nm.pcs', [])])].slice(0, 6));
+  // remove exactly what was sent; changes made while syncing stay pending
+  PEND.inv.splice(0, payload.inv_ops.length);
+  for(const k of ['favorites', 'readlater', 'pins']){
+    const ka = new Set(payload.user[k].map(KEY[k])), kr = new Set(payload.removed[k]);
+    PEND.add[k] = PEND.add[k].filter(x => !ka.has(KEY[k](x))); PEND.removed[k] = PEND.removed[k].filter(x => !kr.has(x));
+  }
+  for(const n of Object.keys(payload.user.notes)) if(PEND.notes[n] === payload.user.notes[n]) delete PEND.notes[n];
+  loadUserFile(res.user, {lastModified:Date.now()});
+  if(sent && (manual || true)) toast('✓ ' + t('sync_ok', {n:sent}));
+}
+let _syncT = 0;
+function syncSoon(){ clearTimeout(_syncT); if(pendingCount()) _syncT = setTimeout(() => syncNow(false), 1200) }
+setInterval(() => syncNow(false), 20000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) syncNow(false) });
+setTimeout(() => syncNow(false), 1500);
+
 function renderMInv(){
   const I = UD.inventory, el = $('#minvGrid'); if(!el) return;
   if(!I || !I.boxes){ $('#minvHud').innerHTML = ''; $('#minvBoxes').innerHTML = ''; $('#minvExp').innerHTML = ''; el.innerHTML = `<div class="empty"><h3>🎒</h3><div>${t('inv_none')}</div></div>`; return }
@@ -1106,9 +1217,11 @@ function renderMInv(){
   const favs = I.favs || [];
   el.innerHTML = I.stacks.filter(s => s.box === MBOX).sort((a, b) => favs.includes(b.item) - favs.includes(a.item) || nm(it(a.item)).localeCompare(nm(it(b.item)))).map(s => {
     const i = it(s.item), d = dl(s);
-    return `<div class="mslot" style="--rc:${RARC[i.rar] || RARC.c}"><span class="e">${i.e}</span>${s.qty > 1 ? `<b>${s.qty}</b>` : ''}${favs.includes(s.item) ? '<i class="f">★</i>' : ''}
+    return `<div class="mslot" data-u="${s.uid}" style="--rc:${RARC[i.rar] || RARC.c}"><span class="e">${i.e}</span>${s.qty > 1 ? `<b>${s.qty}</b>` : ''}${favs.includes(s.item) ? '<i class="f">★</i>' : ''}
       ${d !== null ? `<i class="d" style="color:${d < 0 ? '#ff5470' : d <= 30 ? '#ffb63a' : 'var(--dim)'}">${d < 0 ? '☠' : d > 999 ? Math.round(d / 365) + 'y' : d + 'd'}</i>` : ''}<small>${esc(nm(i))}</small></div>`;
-  }).join('') || `<div class="tip">—</div>`;
+  }).join('') + `<div class="mslot add" id="minvAdd"><span class="e">＋</span><small>${t('inv_add')}</small></div>`;
+  el.querySelectorAll('.mslot[data-u]').forEach(x => x.onclick = () => invStackSheet(x.dataset.u));
+  $('#minvAdd').onclick = invAddPicker;
   const exp = I.stacks.filter(s => dl(s) !== null && dl(s) <= 30).sort((a, b) => dl(a) - dl(b));
   $('#minvExp').innerHTML = exp.length ? `<div class="k">⏳ ${t('use_first')}</div>` + exp.map(s => { const i = it(s.item), d = dl(s), b = I.boxes.find(x => x.id === s.box);
     return `<div class="li"><span><b>${i.e} ${esc(nm(i))} ×${s.qty}</b><small style="color:${d < 0 ? '#ff5470' : '#ffb63a'}">${d < 0 ? t('expired') : d + ' ' + t('left')} · ${b ? b.icon : ''}</small></span></div>` }).join('') : '';
@@ -1124,6 +1237,9 @@ $$('nav button').forEach(b => b.onclick = () => setView(b.dataset.v));
 $$('#langSeg button').forEach(b => b.onclick = () => { LANG = b.dataset.v; ls.set('nm.lang', LANG); i18n(); if(MAP){ MAP.remove(); MAP = null; initMap() } });
 $$('#lookSeg button').forEach(b => b.onclick = () => { LOOK = b.dataset.v; ls.set('nm.look', LOOK); i18n(); if($('#reader').classList.contains('on') && CUR?.page) show(CUR.page, '', false) });
 i18n(); renderLists(); renderSync(); renderPoiBar();
+$('#syncLive').onclick = () => syncNow(true);
+$('#pcAddr').value = ls.get('nm.pcmanual', '');
+$('#pcAddr').onchange = e => { let v = e.target.value.trim(); if(v && !/^https?:/.test(v)) v = 'http://' + v; if(v && !/:\d+/.test(v.replace(/^https?:\/\//, ''))) v += ':8090'; ls.set('nm.pcmanual', v); e.target.value = v; syncNow(true) };
 if('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>

@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.18.1"
+VERSION = "0.19.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -960,6 +960,14 @@ class Handler(BaseHTTPRequestHandler):
     def json(self, obj, code=200):
         self.send(code, json.dumps(obj, ensure_ascii=False), "application/json; charset=utf-8")
 
+    CORS = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Allow-Private-Network": "true",
+            "Access-Control-Max-Age": "600"}
+
+    def do_OPTIONS(self):
+        # NOMAD Mobile (opened from the phone/SSD) talks to this PC for live sync
+        self.send(204, b"", "text/plain", extra=self.CORS)
+
     def body_json(self):
         n = int(self.headers.get("Content-Length") or 0)
         return json.loads(self.rfile.read(n) or b"{}")
@@ -1090,6 +1098,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         p = urlparse(self.path).path
         try:
+            if p == "/api/sync":
+                import more
+                body = json.dumps(more.sync(self.body_json()), ensure_ascii=False)
+                return self.send(200, body, "application/json; charset=utf-8", extra=self.CORS)
             if p == "/api/chat":
                 return self.api_chat(self.body_json())
             if p == "/api/updates/check":
@@ -1514,6 +1526,8 @@ def main():
     if not a.local and lan_ip():
         STATE["lan_url"] = f"http://{lan_ip()}:{a.port}/"
         print(f"  Op je telefoon/iPad (zelfde wifi):  {STATE['lan_url']}")
+    import more
+    threading.Thread(target=more.write_pc_info, daemon=True).start()
     print("  Stoppen: sluit dit venster of Ctrl+C\n")
     if not a.no_browser:
         threading.Timer(1.0, lambda: webbrowser.open(url)).start()

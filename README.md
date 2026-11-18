@@ -73,6 +73,7 @@ Files you copy in by hand are detected automatically.</td>
 - 🛰️ **Satellite layer** — NASA Blue Marble (public domain), built into map tiles on your PC. Missing map layers link straight to their download.
 - 💽 **One profile per SSD** — inventory, favorites, notes, settings and app preferences all live on the SSD, so any computer you plug it into shows *your* NOMAD. The file manager shows the whole SSD.
 - 🔌 **Plug & go (Windows)** — the SSD shows up with the NOMAD icon, and an optional helper asks to open NOMAD (or opens it) as soon as you plug the SSD in.
+- 🔄 **Live phone sync** — NOMAD Mobile finds NOMAD on your PC over the same Wi-Fi and syncs inventory, favorites, reading list, pins and notes both ways by itself. No Wi-Fi? Changes wait on the phone, or go via a file in `data/inbox`.
 - 📱 **Phones & tablets** — NOMAD Mobile adapts to iPad/tablet screens (side rail, two-column library, side panel on the map) and shows your inventory read-only.
 - 📍 **Places on the map** — fuel, EV charging, hospitals, pharmacies, supermarkets, parking, water, camping… as toggles, with a *Nearby* list sorted by distance. Straight from the map data, no extra download.
 - 🔖 **Reading list & favorites**, also on your phone. **Sync through the SSD** — no Wi-Fi, no cloud: the phone reads `data/nomad-user.json`, and phone changes go back via `data/inbox`.
