@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.19.2"
+VERSION = "0.20.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -849,6 +849,50 @@ def _probe(url):
         return r.geturl(), total, r.status == 206
 
 
+SPEED_URLS = ["https://download1.graphhopper.com/public/europe/netherlands/photon-db-netherlands-1.0-latest.tar.bz2",
+              "https://download.kiwix.org/zim/wikipedia/wikipedia_en_all_maxi_2024-01.zim"]
+
+
+def speedtest(seconds=8, conns=4):
+    """Rough internet speed: pull a big public file over 4 connections for ~8 s (data is thrown away)."""
+    if not is_online():
+        return {"ok": False, "error": "offline"}
+    t0 = time.time()
+    try:
+        socket.create_connection(("download.kiwix.org", 443), timeout=3).close()
+        ping = (time.time() - t0) * 1000
+    except OSError:
+        ping = None
+    got = [0]
+    lock = threading.Lock()
+
+    def pull(i):
+        for url in SPEED_URLS:
+            try:
+                start = i * (64 << 20)
+                req = urllib.request.Request(url, headers={"User-Agent": "NOMAD/" + VERSION, "Range": f"bytes={start}-{start + (64 << 20) - 1}"})
+                with urllib.request.urlopen(req, timeout=8) as r:
+                    while time.time() - t1 < seconds:
+                        c = r.read(256 << 10)
+                        if not c:
+                            break
+                        with lock:
+                            got[0] += len(c)
+                return
+            except Exception:
+                continue
+    t1 = time.time()
+    th = [threading.Thread(target=pull, args=(i,), daemon=True) for i in range(conns)]
+    for x in th:
+        x.start()
+    for x in th:
+        x.join(seconds + 10)
+    dt = max(0.5, min(time.time() - t1, seconds))
+    if not got[0]:
+        return {"ok": False, "error": "no response from test server"}
+    return {"ok": True, "bps": got[0] / dt, "ping": round(ping) if ping else None}
+
+
 def download(job, url, target, retries=50):
     """Download with resume; big files use several connections at once. Survives network loss and restarts."""
     os.makedirs(DL_DIR, exist_ok=True)
@@ -1207,6 +1251,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_search(q("q"), q("book"), int(q("start", "0")))
             if p == "/api/random":
                 return self.api_random(q("book"))
+            if p == "/api/speedtest":
+                return self.json(speedtest())
             if p == "/api/geocode":
                 return self.api_geocode(q("q"), q("lat"), q("lon"))
             if p == "/api/settings":

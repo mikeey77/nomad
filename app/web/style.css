@@ -956,3 +956,16 @@ h1,h2,h3{letter-spacing:-.005em}
 .geo-off{padding:8px 14px 10px;font-size:12px;color:var(--dim);border-top:1px solid rgba(var(--a),.12);white-space:normal}
 .geo-off a{color:var(--acc);cursor:pointer;white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.plane,.sat b{animation:none}}
+
+/* v0.20 — internet speed meter */
+.netspeed{display:flex;align-items:center;gap:12px;padding:7px 14px;border:1px solid rgba(var(--a),.18);border-radius:12px;background:rgba(var(--a),.04);min-height:44px}
+.ns-dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.ns-dot.on{background:var(--acc);box-shadow:0 0 10px var(--acc);animation:nsp 1.4s ease-in-out infinite}
+.ns-dot.off{background:#e5a03a}
+@keyframes nsp{50%{opacity:.35}}
+.ns-main{display:flex;align-items:baseline;gap:5px}
+.ns-main b{font:600 20px var(--mono);color:var(--acc);letter-spacing:-.02em}
+.ns-main small{font:10px var(--mono);color:var(--dim);letter-spacing:.1em}
+.ns-sub{font-size:10.5px;color:var(--dim);line-height:1.45}
+.ns-line{fill:none;stroke:var(--acc);stroke-width:1.5}
+.ns-fill{fill:rgba(var(--a),.12);stroke:none}
