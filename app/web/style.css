@@ -989,3 +989,31 @@ h1,h2,h3{letter-spacing:-.005em}
 .langsel{width:100%;height:36px}
 .lseg{display:flex}.lseg button{flex:1;font-size:10.5px;padding:7px 6px}
 .langcard .bic{background:linear-gradient(135deg,rgba(var(--a),.25),rgba(58,215,255,.2))}
+
+/* v0.22 — sun & moon, water, inventory AI */
+#sunchip{position:absolute;left:16px;bottom:58px;z-index:6;border-radius:14px;padding:8px 12px;cursor:pointer;max-width:340px;font-size:12px}
+.sc-top{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.sc-top>span:first-child{color:#ffd23a}
+.sc-top b{font-weight:600}
+.sc-top em{font:11px var(--mono);font-style:normal;color:var(--dim)}
+.sc-m{margin-left:auto;font-size:15px}
+.sm-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;cursor:default}
+.sm-grid>div{border:1px solid rgba(var(--a),.14);border-radius:10px;padding:6px 9px;background:rgba(var(--a),.04)}
+.sm-grid small{display:block;font:600 9px var(--mono);letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+.sm-grid b{font:600 14px var(--mono)}
+.sm-grid .w{grid-column:1/-1}
+.moonrow{display:flex;align-items:center;gap:10px}
+.moonrow .mi{font-size:28px}
+.moonrow b{font:600 13px system-ui}
+.moonrow small{text-transform:none;letter-spacing:0;font-size:10.5px;margin-top:2px}
+.sunhome{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;margin-top:12px}
+.sunhome .sh-l{display:flex;flex-direction:column;gap:2px}
+.sunhome .sh-l b{font-size:16px}
+.sunhome .sh-l span{font:11px var(--mono);color:var(--dim)}
+.sunhome .sh-r{display:flex;align-items:center;gap:8px;text-align:right}
+.sunhome .sh-r span{font-size:30px}
+.sunhome .sh-r small{font:10.5px var(--mono);color:var(--dim)}
+.nrow.ow b{color:#7cc8ff}
+.owtip{font:10px var(--mono);color:var(--dim);padding:4px 10px 8px;border-bottom:1px solid rgba(var(--a),.1);margin-bottom:4px}
+.aiasks{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.aiasks .btn{height:auto;padding:9px 10px;text-align:left;white-space:normal;font-size:12px}

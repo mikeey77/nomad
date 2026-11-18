@@ -1,7 +1,7 @@
 <p align="center"><img src="docs/img/banner.png" alt="PROJECT NOMAD" width="100%"></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.9-3dffa0?style=for-the-badge&labelColor=030806">
+  <img src="https://img.shields.io/badge/version-0.22-3dffa0?style=for-the-badge&labelColor=030806">
   <img src="https://img.shields.io/badge/platform-Windows-3dffa0?style=for-the-badge&labelColor=030806">
   <img src="https://img.shields.io/badge/works-100%25%20offline-b6ff4a?style=for-the-badge&labelColor=030806">
   <img src="https://img.shields.io/badge/storage-2%20TB%20SSD-3dffa0?style=for-the-badge&labelColor=030806">
@@ -78,8 +78,17 @@ Files you copy in by hand are detected automatically.</td>
 - 📍 **Places on the map** — fuel, EV charging, hospitals, pharmacies, supermarkets, parking, water, camping… as toggles, with a *Nearby* list sorted by distance. Straight from the map data, no extra download.
 - 🔖 **Reading list & favorites**, also on your phone. **Sync through the SSD** — no Wi-Fi, no cloud: the phone reads `data/nomad-user.json`, and phone changes go back via `data/inbox`.
 - ⚡ **Fast AI** — searches all collections in parallel with live progress, keeps the model warm, and has a **Think** mode for harder questions.
+- 🧭 **GPS on your phone** — compass with an arrow to your target, position in decimal & DMS, altitude and speed, *park here* → find your car back, a GPS **tracker** that saves GPX to your PC, and **turn-by-turn** along routes you send from the PC map.
+- 🛣️ **Navigation** — pick start/destination straight from search (A/B), *my location*, swap; works without the routing download as a straight line with direction and walking/cycling/driving estimates. **Send to phone** in one click.
+- 📄 **My documents for the AI** — drop your own PDFs, Word files, manuals, notes and e-books in `data/documents`; the AI searches them first and shows the page it used.
+- 🌍 **Language packs** — Wikipedia, Wiktionary, Wikivoyage, Wikibooks, quotes and Gutenberg for 300+ languages, full or light.
+- ☀️ **Sun & moon** — sunrise, sunset, first/last light, golden hour, daylight left and moon phase for any place, fully offline (map, home screen and phone).
+- 💧 **Drinking water** — taps, springs, wells and water points on the map, plus the nearest lakes and rivers in *Nearby*.
+- 🤖 **Inventory ↔ AI** — "what can I cook?", "what am I missing for 72 hours?", "how long can we last?" — the AI gets your full inventory as context.
+- 🔎 **Address search per region** — Netherlands (2.6 GB), Germany, Europe or worldwide; quick search of places, pins and coordinates works without it.
+- 🚀 **Faster downloads** — 4 connections per big file, automatic retries with back-off, a queue that survives restarts, live speed meter and speed test, and leftover installers cleaned up automatically.
 - 🔄 **Self-updating** — the app and NOMAD.exe update themselves from GitHub; a banner offers a one-click restart.
-- 🌍 **English & Nederlands**, four accent colors, dark & light theme, adjustable text size.
+- 🗣️ **English & Nederlands**, four accent colors, dark & light theme, adjustable text size.
 - ✨ Boot sequence, rotating globe, a campfire in the survival kit, the occasional shooting star… and maybe something hidden if you know the right code.
 
 ## 🗺️ The map

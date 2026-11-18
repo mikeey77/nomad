@@ -226,6 +226,8 @@ nav button{min-width:0}
   </div>
   <div id="navBox"></div>
   <div class="gstats" id="gstats"></div>
+  <div class="k" data-t="sun"></div>
+  <div class="gstats" id="sunBox"></div>
   <div class="k" data-t="target"></div>
   <div id="tgtInfo" class="tip" style="margin-top:0"></div>
   <div class="mact"><button class="big ghost" id="parkBtn">🚗 <span data-t="park"></span></button><button class="big ghost" id="tgtPick">🎯 <span data-t="pick_tgt"></span></button></div>
@@ -620,7 +622,7 @@ const T = {
       navigate:'NAVIGATE', stop_nav:'STOP', off_route:'Off route — head back to the line', arrived:'You have arrived 🎉', gps_wait:'Waiting for GPS…', gps_tip:'Keep the screen on while recording — phones pause GPS for web pages when the screen is off. Compass works best away from metal and magnets.',
       parked:'Car position saved', cmp_na:'No compass on this device — the arrow uses your walking direction instead.', togo:'to go', pins:'PINS',
       sync_saved:'Saved to your Downloads — move it to NOMAD/data/inbox', pin_name:'Name for this pin', user_loaded:'Your favorites, reading list and pins are loaded',
-      c_fuel:'Fuel', c_charge:'EV charging', c_hospital:'Hospital & doctor', c_pharmacy:'Pharmacy', c_shop:'Supermarket', c_food:'Food & drink', c_parking:'Parking', c_water:'Water & toilets', c_police:'Police & fire', c_camp:'Camping', c_money:'ATM & bank', nothing:'Nothing found', loc_err:'Location not available here', search_in:'Search in {b}…', external:'Online link (not available offline)'},
+      c_fuel:'Fuel', c_charge:'EV charging', c_hospital:'Hospital & doctor', c_pharmacy:'Pharmacy', c_shop:'Supermarket', c_food:'Food & drink', c_parking:'Parking', c_water:'Drinking water', c_toilets:'Toilets', sun:'SUN & MOON', sm_rises:'Sun rises', sm_sets:'Sun sets', sm_until:'until sunrise', sm_light:'of daylight left', sm_dark:'Dark', sm_dusk:'until dark', sm_dawn:'FIRST LIGHT', sm_rise:'SUNRISE', sm_set:'SUNSET', sm_duskl:'LAST LIGHT', sm_full:'Full', sm_new:'New', c_police:'Police & fire', c_camp:'Camping', c_money:'ATM & bank', nothing:'Nothing found', loc_err:'Location not available here', search_in:'Search in {b}…', external:'Online link (not available offline)'},
   nl:{open:'BESTANDEN OPENEN', search_all:'Zoek in alle collecties…', collections:'COLLECTIES', library:'BIBLIOTHEEK', map:'KAART', settings:'INSTELLINGEN',
       language:'TAAL', pages:'WEERGAVE PAGINA’S', look_orig:'ORIGINEEL', look_dark:'DONKER', howto:'ZO WERKT HET',
       howto_body:'1. Tik op <b>BESTANDEN OPENEN</b>.<br>2. Kies je <code>.zim</code>-bestanden (uit <code>NOMAD/data/library</code>) en/of <code>world.pmtiles</code> (uit <code>NOMAD/data/maps/world</code>), en <code>nomad-user.json</code> (uit <code>NOMAD/data</code>) voor je favorieten, leeslijst en pins. GPX-tracks (<code>NOMAD/data/tracks</code>) werken ook. Je kunt er meerdere tegelijk kiezen.<br>3. Lees en zoek offline. Bestanden worden niet gekopieerd maar direct gelezen, dus ook enorme bestanden werken.<br><br>Je telefoon vergeet de bestanden als je de pagina sluit; open ze dan gewoon opnieuw.',
@@ -640,7 +642,7 @@ const T = {
       navigate:'NAVIGEREN', stop_nav:'STOP', off_route:'Van de route af — ga terug naar de lijn', arrived:'Je bent er 🎉', gps_wait:'Wachten op GPS…', gps_tip:'Houd het scherm aan tijdens opnemen — telefoons pauzeren GPS voor webpagina\'s als het scherm uit is. Het kompas werkt het best uit de buurt van metaal en magneten.',
       parked:'Autopositie opgeslagen', cmp_na:'Geen kompas op dit apparaat — de pijl gebruikt je looprichting.', togo:'te gaan', pins:'PINS',
       sync_saved:'Opgeslagen in Downloads — zet het in NOMAD/data/inbox', pin_name:'Naam voor deze pin', user_loaded:'Je favorieten, leeslijst en pins zijn geladen',
-      c_fuel:'Tankstation', c_charge:'Laadpaal', c_hospital:'Ziekenhuis & dokter', c_pharmacy:'Apotheek', c_shop:'Supermarkt', c_food:'Eten & drinken', c_parking:'Parkeren', c_water:'Water & wc', c_police:'Politie & brandweer', c_camp:'Camping', c_money:'Geldautomaat', nothing:'Niets gevonden', loc_err:'Locatie is hier niet beschikbaar', search_in:'Zoek in {b}…', external:'Online link (offline niet beschikbaar)'}
+      c_fuel:'Tankstation', c_charge:'Laadpaal', c_hospital:'Ziekenhuis & dokter', c_pharmacy:'Apotheek', c_shop:'Supermarkt', c_food:'Eten & drinken', c_parking:'Parkeren', c_water:'Drinkwater', c_toilets:'Toiletten', sun:'ZON & MAAN', sm_rises:'Zon komt op', sm_sets:'Zon gaat onder', sm_until:'tot zonsopkomst', sm_light:'daglicht over', sm_dark:'Donker', sm_dusk:'tot het donker is', sm_dawn:'EERSTE LICHT', sm_rise:'ZONSOPKOMST', sm_set:'ZONSONDERGANG', sm_duskl:'LAATSTE LICHT', sm_full:'Vol', sm_new:'Nieuw', c_police:'Politie & brandweer', c_camp:'Camping', c_money:'Geldautomaat', nothing:'Niets gevonden', loc_err:'Locatie is hier niet beschikbaar', search_in:'Zoek in {b}…', external:'Online link (offline niet beschikbaar)'}
 };
 const ls = {get(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v) }catch{ return d } }, set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch{} }};
 let LANG = ls.get('nm.lang', (navigator.language || 'en').startsWith('nl') ? 'nl' : 'en'), LOOK = ls.get('nm.look', 'orig');
@@ -1118,7 +1120,8 @@ const POI_CATS = [
   ['shop', '#4d8bff', ['supermarket', 'convenience', 'greengrocer', 'grocery', 'bakery', 'butcher'], 'M3 4h2l2.5 11h10L20 7H6.5'],
   ['food', '#ffb63a', ['restaurant', 'fast_food', 'cafe', 'bar', 'pub'], 'M7 3v8a2 2 0 002 2v8M11 3v8M9 3v6M16 21V3c2.5 1.5 3 5 3 8h-3'],
   ['parking', '#7f8cff', ['parking'], 'P'],
-  ['water', '#3fb8f0', ['drinking_water', 'toilets', 'water_point'], 'M12 2.7l5.7 5.7a8 8 0 11-11.4 0z'],
+  ['water', '#3fb8f0', ['drinking_water', 'water_point', 'water_tap', 'water_well', 'spring', 'fountain', 'watering_place'], 'M12 2.7l5.7 5.7a8 8 0 11-11.4 0z'],
+  ['toilets', '#8aa3b8', ['toilets'], 'WC'],
   ['police', '#5b6bff', ['police', 'fire_station'], 'M12 2l8 3v7c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V5z'],
   ['camp', '#8bc34a', ['camp_site', 'caravan_site', 'alpine_hut', 'shelter', 'wilderness_hut'], 'M12 3L2 21h20zM12 3v18M9 21l3-6 3 6'],
   ['money', '#c9a24a', ['atm', 'bank', 'bureau_de_change'], '€'],
@@ -1431,7 +1434,38 @@ function navUpdate(){
   $('#navBox').innerHTML = `<div class="nav-card${off ? ' off' : ''}">${done ? `<div class="ni">${t('arrived')}</div>` :
     `<div class="nd">${ins ? fmtD(toNext) : fmtD(left)}</div><div class="ni">${off ? t('off_route') : esc(ins ? ins[0] : N_.r.name)}</div><div class="ns">${fmtD(left)} ${t('togo')} · ${esc(N_.r.name)}</div>`}</div>`;
 }
-window.renderGps = renderGps;
+/* sun & moon (offline astronomy) */
+const ASTRO = (() => {
+  const D = Math.PI / 180, J1970 = 2440587.5, J2000 = 2451545, SYN = 29.530588853;
+  const toJ = d => d / 86400000 + J1970, fromJ = j => new Date((j - J1970) * 86400000);
+  function sun(date, lat, lon){
+    const n = Math.round(toJ(date.getTime()) - J2000 + 0.0008 - lon / 360), Js = n - lon / 360, M = (357.5291 + 0.98560028 * Js) % 360;
+    const C = 1.9148 * Math.sin(M * D) + 0.02 * Math.sin(2 * M * D) + 0.0003 * Math.sin(3 * M * D), L = (M + C + 180 + 102.9372) % 360;
+    const Jt = J2000 + Js + 0.0053 * Math.sin(M * D) - 0.0069 * Math.sin(2 * L * D), dec = Math.asin(Math.sin(L * D) * Math.sin(23.4397 * D));
+    const pair = h => { const c = (Math.sin(h * D) - Math.sin(lat * D) * Math.sin(dec)) / (Math.cos(lat * D) * Math.cos(dec)); if(c > 1 || c < -1) return {}; const w = Math.acos(c) / D; return {rise:fromJ(Jt - w / 360), set:fromJ(Jt + w / 360)} };
+    return {sun:pair(-0.833), civil:pair(-6)};
+  }
+  function moon(date){ const age = (((toJ(date.getTime()) - 2451550.1) % SYN) + SYN) % SYN, idx = Math.round(age / SYN * 8) % 8;
+    return {illum:(1 - Math.cos(2 * Math.PI * age / SYN)) / 2, idx, icon:['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'][idx], full:new Date(date.getTime() + (age < SYN / 2 ? SYN / 2 - age : SYN * 1.5 - age) * 864e5), nw:new Date(date.getTime() + (SYN - age) * 864e5)} }
+  return {sun, moon};
+})();
+const MOONN = {en:['New moon', 'Waxing crescent', 'First quarter', 'Waxing gibbous', 'Full moon', 'Waning gibbous', 'Last quarter', 'Waning crescent'], nl:['Nieuwe maan', 'Wassende sikkel', 'Eerste kwartier', 'Wassende maan', 'Volle maan', 'Afnemende maan', 'Laatste kwartier', 'Afnemende sikkel']};
+function renderSun(){
+  const p = G.pos || (MAP ? MAP.getCenter().toArray() : UD.pins[0] ? [UD.pins[0].lon, UD.pins[0].lat] : [4.9, 52.37]);
+  const now = new Date(), s = ASTRO.sun(now, p[1], p[0]), m = ASTRO.moon(now), hm = d => d ? d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
+  const du = ms => { const x = Math.max(0, Math.round(ms / 6e4)); return Math.floor(x / 60) + 'h ' + String(x % 60).padStart(2, '0') + 'm' };
+  let st = '—', left = '';
+  if(s.sun.rise){ if(now < s.sun.rise){ st = t('sm_rises') + ' ' + hm(s.sun.rise); left = du(s.sun.rise - now) + ' ' + t('sm_until') }
+    else if(now < s.sun.set){ st = t('sm_sets') + ' ' + hm(s.sun.set); left = du(s.sun.set - now) + ' ' + t('sm_light') }
+    else { st = t('sm_dark'); left = s.civil.set && now < s.civil.set ? du(s.civil.set - now) + ' ' + t('sm_dusk') : '' } }
+  const dd = d => d.toLocaleDateString([], {day:'numeric', month:'short'});
+  $('#sunBox').innerHTML = `<div class="w"><small>☀</small><b>${esc(st)}</b><br><span style="font:11px var(--mono);color:var(--dim)">${esc(left)}</span></div>
+    <div><small>${t('sm_rise')}</small><b>${hm(s.sun.rise)}</b></div><div><small>${t('sm_set')}</small><b>${hm(s.sun.set)}</b></div>
+    <div><small>${t('sm_dawn')}</small><b>${hm(s.civil.rise)}</b></div><div><small>${t('sm_duskl')}</small><b>${hm(s.civil.set)}</b></div>
+    <div class="w"><small>${m.icon} ${MOONN[LANG === 'nl' ? 'nl' : 'en'][m.idx]}</small><b>${Math.round(m.illum * 100)}%</b><br><span style="font:11px var(--mono);color:var(--dim)">${t('sm_full')} ${dd(m.full)} · ${t('sm_new')} ${dd(m.nw)}</span></div>`;
+}
+const _rg = renderGps;
+window.renderGps = renderGps = function(){ _rg(); if($('#v-gps').classList.contains('on')) renderSun() };
 
 function setView(v){
   $$('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
