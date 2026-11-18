@@ -5,6 +5,7 @@ import os
 import re
 import subprocess
 import sys
+import shutil
 import threading
 import time
 import urllib.request
@@ -325,6 +326,38 @@ def extras():
     return v
 
 
+GEO_REGIONS = [  # (id, title, url path, size GB) — Photon 1.x database dumps from GraphHopper
+    ("netherlands", "Netherlands", "europe/netherlands/photon-db-netherlands-1.0-latest.tar.bz2", 2.6),
+    ("germany", "Germany", "europe/germany/photon-db-germany-1.0-latest.tar.bz2", 7.5),
+    ("europe", "Europe", "europe/photon-db-europe-1.0-latest.tar.bz2", 32.2),
+    ("planet", "Worldwide", "photon-db-planet-1.0-latest.tar.bz2", 66),
+]
+
+
+def geo_region():
+    try:
+        with open(os.path.join(N.GEO_DIR, "region.txt"), encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return "planet" if os.path.isdir(os.path.join(N.GEO_DIR, "photon_data")) else ""
+
+
+def geo_items():
+    have = geo_region() if os.path.isdir(os.path.join(N.GEO_DIR, "photon_data")) else ""
+    out = []
+    for rid, title, path, gb in GEO_REGIONS:
+        fn = path.rsplit("/", 1)[-1]
+        out.append({"id": "geo:" + ("photon" if rid == "planet" else rid), "kind": "geo", "cat": "search", "region": rid,
+                    "title": "Address search · " + title,
+                    "summary": ("Search every street, address and place in " + title + " on the map. " if rid != "planet" else
+                                "Search any address or place on Earth. ") +
+                               "Unpacks and starts automatically" + (" (replaces the current address search)." if have and have != rid else "."),
+                    "file": fn, "date": "weekly", "size": int(gb * (1 << 30)),
+                    "url": "https://download1.graphhopper.com/public/" + path,
+                    "installed": have == rid, "target": os.path.join(N.DL_DIR, fn)})
+    return out
+
+
 def _extras():
     out = []
     online = N.is_online()
@@ -338,12 +371,7 @@ def _extras():
                 "file": "terrain.pmtiles", "date": "2025", "size": int(90.9 * (1 << 30)),
                 "url": "https://techidiots.net/downloads/open-base-map-torrents/pmtiles/jaxa_terrarium0-11/JAXA_AW3D30_2025_Terrarium_z0-Z11_cubic_webp_pmtiles.torrent",
                 "installed": bool(N.map_file("terrain"))})
-    out.append({"id": "geo:photon", "kind": "geo", "cat": "search", "title": "Address search (worldwide)",
-                "summary": "Photon geocoder database: search any address or place on Earth. Unpacks and starts automatically.",
-                "file": "photon-db-planet-1.0-latest.tar.bz2", "date": "weekly", "size": 66 << 30,
-                "url": "https://download1.graphhopper.com/public/photon-db-planet-1.0-latest.tar.bz2",
-                "installed": os.path.isdir(os.path.join(N.GEO_DIR, "photon_data")),
-                "target": os.path.join(N.DL_DIR, "photon-db-planet-1.0-latest.tar.bz2")})
+    out += geo_items()
     import extra
     out += extra.route_items()
     have = set(N.ai_models()) if N.STATE.get("ai") == "aan" else set()
@@ -457,8 +485,22 @@ def _worker():
                         time.sleep(3)
                     threading.Thread(target=extra.start_route, daemon=True).start()
                 elif kind == "geo":
-                    job["msg"] = "unpacking… (can take an hour)"
+                    job["msg"] = "unpacking… (a few minutes to an hour)"
+                    p_ = N.PROCS.pop("photon", None)
+                    if p_:
+                        p_.terminate()
+                        time.sleep(3)
+                    old = os.path.join(N.GEO_DIR, "photon_data")
+                    if os.path.isdir(old):
+                        shutil.rmtree(old, ignore_errors=True)
+                    os.makedirs(N.GEO_DIR, exist_ok=True)
                     subprocess.run(["tar", "-xjf", item["target"], "-C", N.GEO_DIR], check=True)
+                    with open(os.path.join(N.GEO_DIR, "region.txt"), "w", encoding="utf-8") as f:
+                        f.write(item.get("region", "planet"))
+                    try:
+                        os.remove(item["target"])           # the archive is not needed once unpacked
+                    except OSError:
+                        pass
                     job["msg"] = "starting address search…"
                     threading.Thread(target=N.start_photon, daemon=True).start()
             job["status"] = "klaar"
@@ -467,7 +509,7 @@ def _worker():
         except Exception as e:
             tries = job.get("tries", 0) + 1
             job["tries"] = tries
-            if not job.get("cancel") and tries <= 8 and kind not in ("torrent",):
+            if not job.get("cancel") and tries <= 8 and item.get("kind") not in ("torrent",):
                 wait = min(1800, 30 * 2 ** (tries - 1))       # 30 s, 1, 2, 4, 8 … max 30 min
                 job["status"] = "wachtrij"
                 job["msg"] = f"failed ({str(e)[:60]}) — retry {tries}/8 in {wait // 60 or wait} {'min' if wait >= 60 else 's'}"
@@ -663,7 +705,7 @@ BUNDLES = [
      "items": ["wikivoyage_en_all_maxi", "wikivoyage_nl_all_maxi", "wikivoyage_de_all_maxi"]},
     {"id": "navigation", "icon": "map", "title": "World Navigation",
      "desc": "World map, worldwide address search and 3D elevation.",
-     "items": ["map:world", "geo:photon", "torrent:terrain"]},
+     "items": ["map:world", "geo:netherlands", "torrent:terrain"]},
     {"id": "routes_nl", "icon": "compass", "title": "Route Planning Benelux",
      "desc": "Turn-by-turn car, bike and walking directions for the Netherlands, Belgium and Luxembourg.",
      "items": ["route:netherlands"]},

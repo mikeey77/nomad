@@ -935,3 +935,24 @@ h1,h2,h3{letter-spacing:-.005em}
 .flavs.flavs2 button{flex-direction:row!important;justify-content:flex-start!important}
 .flavs.flavs2 button.on{border-color:var(--acc)!important;background:rgba(var(--a),.1)!important}
 .msg.u .bub{padding-top:12px!important}
+
+/* v0.19.2 — labelled (simulated) satellites + a plane on the home globe */
+.orbit::after{display:none}
+.sat{position:absolute;top:50%;left:-4px;width:8px;height:8px;border-radius:50%;background:var(--acc2);box-shadow:0 0 12px var(--acc2)}
+.sat b{position:absolute;left:12px;top:-5px;white-space:nowrap;font:600 9px var(--mono);letter-spacing:.12em;color:rgba(var(--a),.85);
+  text-shadow:0 0 6px #000;animation:spin 40s linear infinite reverse;transform-origin:-8px 9px}
+.sat.s2{background:var(--acc);box-shadow:0 0 12px var(--acc);top:auto;bottom:10%;left:12%}
+.orbit.o2 .sat b{animation-duration:24s;animation-direction:normal}
+.orbit.o3{inset:-14%;border:1px dotted rgba(var(--a),.14);animation-duration:70s}
+.sat.s3{width:6px;height:6px;top:12%;left:14%;background:#fff;box-shadow:0 0 10px #fff}
+.orbit.o3 .sat b{animation-duration:70s;color:rgba(255,255,255,.6)}
+.plane{position:absolute;left:10%;top:20%;display:flex;align-items:center;gap:6px;pointer-events:none;
+  animation:fly 26s linear infinite;opacity:0}
+.plane i{font-style:normal;font-size:13px;color:#fff;text-shadow:0 0 8px rgba(var(--a),.9);transform:rotate(20deg)}
+.plane b{font:600 9px var(--mono);letter-spacing:.12em;color:rgba(255,255,255,.65);text-shadow:0 0 6px #000}
+@keyframes fly{0%{left:8%;top:22%;opacity:0}8%{opacity:1}85%{opacity:1}100%{left:62%;top:74%;opacity:0}}
+.simtag{position:absolute;right:2%;bottom:2%;font:9px var(--mono);letter-spacing:.2em;color:rgba(var(--a),.35);border:1px solid rgba(var(--a),.2);
+  border-radius:4px;padding:1px 5px}
+.geo-off{padding:8px 14px 10px;font-size:12px;color:var(--dim);border-top:1px solid rgba(var(--a),.12);white-space:normal}
+.geo-off a{color:var(--acc);cursor:pointer;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.plane,.sat b{animation:none}}

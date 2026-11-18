@@ -405,6 +405,29 @@ function renderPins(){
   });
 }
 let marker = null;
+/* Offline search without the address database: coordinates, your pins and every place/POI name in the loaded map tiles */
+function localSearch(q){
+  const out = [], ql = q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const m = q.match(/^\s*(-?\d+(?:[.,]\d+)?)\s*[,; ]\s*(-?\d+(?:[.,]\d+)?)\s*$/);
+  if(m){ const la = +m[1].replace(',', '.'), lo = +m[2].replace(',', '.'); if(Math.abs(la) <= 90 && Math.abs(lo) <= 180) out.push({geometry:{coordinates:[lo, la]}, properties:{name:`${la}, ${lo}`, osm_value:'coordinates'}}) }
+  const norm = v => String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  (USER.pins || []).forEach(p => norm(p.name).includes(ql) && out.push({geometry:{coordinates:[p.lon, p.lat]}, properties:{name:p.name, osm_value:'📍 pin'}}));
+  if(MAP && MAP.getSource('protomaps')){
+    const c = MAP.getCenter(), seen = new Set(), found = [];
+    for(const layer of ['places', 'pois']){
+      let fs = []; try { fs = MAP.querySourceFeatures('protomaps', {sourceLayer:layer}) } catch(e){}
+      for(const f of fs){
+        const p = f.properties, nm = p['name:' + (SET.lang || 'en')] || p.name;
+        if(!nm || !(norm(nm).includes(ql) || norm(p.name).includes(ql)) || f.geometry.type !== 'Point') continue;
+        const k = nm + '|' + p.kind; if(seen.has(k)) continue; seen.add(k);
+        const [lo, la] = f.geometry.coordinates, d = (lo - c.lng) ** 2 + (la - c.lat) ** 2;
+        found.push({d: d - (norm(nm).startsWith(ql) ? 1e3 : 0) - (layer === 'places' ? (+p.population_rank || 0) : 0), f:{geometry:{coordinates:[lo, la]}, properties:{name:nm, osm_value:(p.kind_detail || p.kind || '').replace(/_/g, ' ')}}});
+      }
+    }
+    found.sort((a, b) => a.d - b.d).slice(0, 10).forEach(x => out.push(x.f));
+  }
+  return out.slice(0, 12);
+}
 function placeName(f){
   if(!f) return '';
   const p = f.properties || {};
@@ -426,9 +449,9 @@ $('#mapq').addEventListener('input', debounce(async e => {
   if(!q){ $('#maphits').innerHTML = ''; return }
   const c = MAP ? MAP.getCenter() : null;
   const r = await api('/api/geocode?q=' + encodeURIComponent(q) + (c ? `&lat=${c.lat}&lon=${c.lng}` : '')).catch(() => ({features:[]}));
-  window.__hits = r.features || [];
-  $('#maphits').innerHTML = r.error ? `<div class="empty" style="padding:10px 14px">${t('geo_off')}</div>` :
-    __hits.map((f, i) => `<a class="lnk" data-i="${i}">${esc(placeName(f))}<small>${esc(f.properties?.osm_value || '')}</small></a>`).join('') || `<div class="empty" style="padding:10px 14px">${t('nothing')}</div>`;
+  window.__hits = r.error ? localSearch(q) : (r.features || []);
+  const hint = r.error ? `<div class="geo-off">${t('geo_lite')} <a onclick="gotoDownload('geo:netherlands')">${t('geo_get')}</a></div>` : '';
+  $('#maphits').innerHTML = (__hits.map((f, i) => `<a class="lnk" data-i="${i}">${esc(placeName(f))}<small>${esc(f.properties?.osm_value || '')}</small></a>`).join('') || `<div class="empty" style="padding:10px 14px">${t('nothing')}</div>`) + hint;
   $$('#maphits .lnk').forEach(a => a.onclick = () => { flyToFeature(__hits[+a.dataset.i]); $('#maphits').innerHTML = '' });
 }, 180));
 $('#mapq').addEventListener('keydown', e => { if(e.key === 'Enter' && window.__hits?.length){ flyToFeature(__hits[0]); $('#maphits').innerHTML = '' } });
