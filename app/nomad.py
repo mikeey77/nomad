@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.18.0"
+VERSION = "0.18.1"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -482,6 +482,33 @@ def rag_search(question, emit, deep=False):
         pass
     emit({"status": "found", "n": len(sources), "ms": int((time.time() - t0) * 1000)})
     return sources, ctx
+
+
+RESCUE_BAT = r"""@echo off
+rem PROJECT NOMAD - backup starter. Use this if NOMAD.exe is missing.
+cd /d "%~dp0"
+if exist "NOMAD.exe" ( start "" "NOMAD.exe" & exit /b )
+if exist "NOMAD.old.exe" ( ren "NOMAD.old.exe" "NOMAD.exe" & start "" "NOMAD.exe" & exit /b )
+if exist "NOMAD.exe.new" ( ren "NOMAD.exe.new" "NOMAD.exe" & start "" "NOMAD.exe" & exit /b )
+echo NOMAD.exe is missing - downloading it again...
+powershell -NoProfile -Command "Invoke-WebRequest 'https://github.com/mikeey77/nomad/releases/download/exe-latest/NOMAD.exe' -OutFile 'NOMAD.exe'" && start "" "NOMAD.exe" && exit /b
+echo No internet - starting NOMAD without the exe...
+if exist "tools\python\pythonw.exe" ( start "" "tools\python\pythonw.exe" "app\nomad.py" & timeout /t 4 >nul & start "" http://localhost:8090 & exit /b )
+echo Could not start NOMAD. Download NOMAD.exe from github.com/mikeey77/nomad/releases
+pause
+"""
+
+
+def write_rescue():
+    if os.name != "nt":
+        return
+    f = os.path.join(ROOT, "Start NOMAD (backup).bat")
+    try:
+        if not os.path.isfile(f) or open(f, encoding="utf-8", errors="replace").read() != RESCUE_BAT.replace("\n", "\r\n"):
+            with open(f, "w", encoding="utf-8", newline="\r\n") as h:
+                h.write(RESCUE_BAT)
+    except OSError:
+        pass
 
 
 def copy_mobile():
@@ -1458,6 +1485,7 @@ def main():
             os.makedirs(d, exist_ok=True)
     migrate_folders()  # README.txt in fresh folders
     copy_mobile()
+    write_rescue()
     STATE["scanning"] = True
 
     def _scan():

@@ -131,7 +131,7 @@ def self_update():
     stamp = os.path.join(ROOT, "app", ".exe_asset")
     try:
         old = exe[:-4] + ".old.exe"
-        if os.path.exists(old):
+        if os.path.exists(old) and os.path.exists(exe):
             os.remove(old)
         rel = json.loads(urllib.request.urlopen(urllib.request.Request(
             f"https://api.github.com/repos/{EXE_REPO}/releases/tags/exe-latest", headers={"User-Agent": "NOMAD"}), timeout=10).read())
@@ -146,8 +146,15 @@ def self_update():
         new = exe + ".new"
         with urllib.request.urlopen(asset["browser_download_url"], timeout=300) as r, open(new, "wb") as f:
             shutil.copyfileobj(r, f)
+        if os.path.getsize(new) < 5 << 20:   # incomplete download: keep the current exe
+            os.remove(new)
+            return
         os.replace(exe, old)      # een draaiende exe mag hernoemd worden
-        os.replace(new, exe)
+        try:
+            os.replace(new, exe)
+        except Exception:
+            os.replace(old, exe)  # roll back: never leave the folder without NOMAD.exe
+            raise
         open(stamp, "w").write(key)
     except Exception:
         pass
