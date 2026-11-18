@@ -217,9 +217,25 @@ def _cache_file():
 
 
 def kiwix_entries(force=False):
-    """Alle Kiwix-collecties (±3600). Online opgehaald, offline uit cache."""
-    if CAT_CACHE["items"] is not None and not force and time.time() - CAT_CACHE["t"] < 6 * 3600:
+    """All Kiwix collections (±3600). Answers instantly from the cache; refreshes in the background."""
+    fresh = time.time() - CAT_CACHE["t"] < 6 * 3600
+    if CAT_CACHE["items"] is None and not force:
+        try:
+            with open(_cache_file(), encoding="utf-8") as f:
+                CAT_CACHE["items"] = json.load(f)
+            CAT_CACHE["t"] = os.path.getmtime(_cache_file())
+            fresh = time.time() - CAT_CACHE["t"] < 6 * 3600
+        except Exception:
+            pass
+    if CAT_CACHE["items"] is not None and not force:
+        if not fresh and not CAT_CACHE.get("busy"):
+            CAT_CACHE["busy"] = True
+            threading.Thread(target=lambda: (_fetch_catalog(), CAT_CACHE.update(busy=False)), daemon=True).start()
         return CAT_CACHE["items"]
+    return _fetch_catalog()
+
+
+def _fetch_catalog():
     items = None
     if N.is_online():
         try:
@@ -274,7 +290,20 @@ def icon(uuid):
         return None
 
 
+PM_CACHE = {"t": 0, "v": (None, 0, None)}
+EXTRA_CACHE = {"t": 0, "v": None}
+
+
 def _latest_protomaps():
+    if time.time() - PM_CACHE["t"] < 6 * 3600 and PM_CACHE["v"][0]:
+        return PM_CACHE["v"]
+    v = _probe_protomaps()
+    if v[0]:
+        PM_CACHE.update(t=time.time(), v=v)
+    return v
+
+
+def _probe_protomaps():
     for i in range(0, 21):
         d = (date.today() - timedelta(days=i)).strftime("%Y%m%d")
         url = f"https://build.protomaps.com/{d}.pmtiles"
@@ -288,7 +317,15 @@ def _latest_protomaps():
 
 
 def extras():
-    """Kaarten, adres zoeken en AI-modellen."""
+    """Maps, address search and AI models (cached for 30 s — the catalog and bundles ask for it a lot)."""
+    if EXTRA_CACHE["v"] is not None and time.time() - EXTRA_CACHE["t"] < 30:
+        return EXTRA_CACHE["v"]
+    v = _extras()
+    EXTRA_CACHE.update(t=time.time(), v=v)
+    return v
+
+
+def _extras():
     out = []
     online = N.is_online()
     url, size, d = _latest_protomaps() if online else (None, 125 << 30, None)
@@ -346,12 +383,13 @@ def enqueue(item_id, item=None):
     free = N.shutil.disk_usage(N.ROOT).free
     if item.get("size") and item["size"] > free and item.get("kind") not in ("ai", "stt", "mt", "sat", "video"):
         return {"error": "not enough free space"}
-    jobs[item_id] = {"status": "wachtrij", "title": item["title"], "done": 0, "total": item.get("size", 0), "msg": "", "target": item.get("target", "")}
+    jobs[item_id] = {"status": "wachtrij", "title": item["title"], "done": 0, "total": item.get("size", 0), "msg": "", "target": item.get("target", ""), "item": item}
     with QUEUE_LOCK:
         QUEUE.append((item_id, item))
         if not WORKER["running"]:
             WORKER["running"] = True
             threading.Thread(target=_worker, daemon=True).start()
+    save_queue()
     return {"ok": True}
 
 
@@ -425,10 +463,66 @@ def _worker():
                     threading.Thread(target=N.start_photon, daemon=True).start()
             job["status"] = "klaar"
             job["msg"] = ""
-            CAT_CACHE["t"] = 0 if kind != "zim" else CAT_CACHE["t"]
+            EXTRA_CACHE["t"] = 0
         except Exception as e:
-            job["status"] = "fout"
-            job["msg"] = str(e)
+            tries = job.get("tries", 0) + 1
+            job["tries"] = tries
+            if not job.get("cancel") and tries <= 8 and kind not in ("torrent",):
+                wait = min(1800, 30 * 2 ** (tries - 1))       # 30 s, 1, 2, 4, 8 … max 30 min
+                job["status"] = "wachtrij"
+                job["msg"] = f"failed ({str(e)[:60]}) — retry {tries}/8 in {wait // 60 or wait} {'min' if wait >= 60 else 's'}"
+                threading.Timer(wait, _requeue, args=(item_id, item)).start()
+            else:
+                job["status"] = "fout"
+                job["msg"] = str(e)
+        finally:
+            save_queue()
+
+
+def _requeue(item_id, item):
+    job = N.STATE["jobs"].get(item_id)
+    if not job or job.get("cancel") or job["status"] != "wachtrij":
+        return
+    with QUEUE_LOCK:
+        QUEUE.append((item_id, item))
+        if not WORKER["running"]:
+            WORKER["running"] = True
+            threading.Thread(target=_worker, daemon=True).start()
+
+
+def _queue_file():
+    return os.path.join(N.DL_DIR, "queue.json")
+
+
+def save_queue():
+    """Unfinished downloads survive a restart of NOMAD."""
+    try:
+        todo = [{"id": i, "item": it} for i, it in _pending_items()]
+        N.save_json(_queue_file(), todo)
+    except Exception:
+        pass
+
+
+def _pending_items():
+    out, seen = [], set()
+    with QUEUE_LOCK:
+        for i, it in QUEUE:
+            out.append((i, it))
+            seen.add(i)
+    for i, j in N.STATE["jobs"].items():
+        if j.get("status") in ("bezig", "wachtrij") and i not in seen and j.get("item"):
+            out.append((i, j["item"]))
+    return out
+
+
+def resume_queue():
+    try:
+        with open(_queue_file(), encoding="utf-8") as f:
+            todo = json.load(f)
+    except Exception:
+        return
+    for t in todo:
+        enqueue(t["id"], t["item"])
 
 
 def _pull_model(job, model):

@@ -529,3 +529,44 @@ def drive_branding():
         ctypes.windll.kernel32.SetFileAttributesW(inf, 0x02 | 0x04)  # hidden + system
     except Exception:
         pass
+
+
+# ───────── automatic tidy-up of temporary download files ─────────
+def auto_clean():
+    """Remove installers that setup already unpacked, leftover temp files and oversized logs."""
+    dl, tools = N.DL_DIR, os.path.join(N.ROOT, "tools")
+    done = {"cpython-*.tar.gz": "python", "jre*.zip": "java", "OpenJDK*.zip": "java", "ollama-windows-*.zip": "ollama",
+            "photon-*.jar": "photon", "graphhopper-*.jar": "graphhopper"}
+    freed = 0
+    for pat, tool in done.items():
+        if not os.path.isdir(os.path.join(tools, tool)):
+            continue
+        for f in glob.glob(os.path.join(dl, pat)):
+            try:
+                freed += os.path.getsize(f)
+                os.remove(f)
+            except OSError:
+                pass
+    active = {os.path.basename(j.get("target", "")) for j in N.STATE.get("jobs", {}).values() if j.get("status") in ("bezig", "wachtrij")}
+    for f in glob.glob(os.path.join(dl, "*.part.seg")) + glob.glob(os.path.join(dl, "*.tmp")) + glob.glob(os.path.join(dl, "*.part.seg.tmp")):
+        base = os.path.basename(f).split(".part")[0]
+        if base in active or os.path.exists(f.split(".part")[0] + ".part") and f.endswith(".seg"):
+            continue
+        try:
+            freed += os.path.getsize(f)
+            os.remove(f)
+        except OSError:
+            pass
+    for f in glob.glob(os.path.join(dl, "*.log")):
+        try:
+            if os.path.getsize(f) > 5 << 20:          # keep the last ~1 MB
+                with open(f, "rb") as h:
+                    h.seek(-(1 << 20), 2)
+                    tail = h.read()
+                with open(f, "wb") as h:
+                    h.write(tail)
+        except OSError:
+            pass
+    if freed:
+        print(f"  Opgeruimd: {freed / (1 << 20):.0f} MB aan tijdelijke bestanden")
+    return freed

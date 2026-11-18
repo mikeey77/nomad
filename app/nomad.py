@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.19.0"
+VERSION = "0.19.1"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -698,12 +698,19 @@ def kiwix_dir(prefix):
     return "other"
 
 
+_ONLINE = {"t": 0, "v": False}
+
+
 def is_online():
+    if time.time() - _ONLINE["t"] < 60:
+        return _ONLINE["v"]
     try:
         socket.create_connection(("download.kiwix.org", 443), timeout=3).close()
-        return True
+        v = True
     except OSError:
-        return False
+        v = False
+    _ONLINE.update(t=time.time(), v=v)
+    return v
 
 
 LISTING_CACHE = {}
@@ -829,10 +836,45 @@ def update_loop():
         time.sleep(max(5, CFG["update_check_minutes"]) * 60)
 
 
+SEG_MIN = 256 << 20     # files bigger than this download over several connections
+SEG_CONNS = 4
+
+
+def _probe(url):
+    """Final URL (after mirror redirects), total size and range support."""
+    req = urllib.request.Request(url, headers={"User-Agent": "NOMAD/" + VERSION, "Range": "bytes=0-0"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        cr = r.headers.get("Content-Range") or ""
+        total = int(cr.rsplit("/", 1)[-1]) if r.status == 206 and "/" in cr and cr.rsplit("/", 1)[-1].isdigit() else 0
+        return r.geturl(), total, r.status == 206
+
+
 def download(job, url, target, retries=50):
-    """Download met hervatten: overleeft netwerkstoringen en herstarts (.part blijft staan)."""
+    """Download with resume; big files use several connections at once. Survives network loss and restarts."""
     os.makedirs(DL_DIR, exist_ok=True)
     part = os.path.join(DL_DIR, os.path.basename(target) + ".part")
+    seg = part + ".seg"
+    job["msg"] = "connecting…"
+    try:
+        final, total, ranges = _probe(url)
+    except Exception:
+        final, total, ranges = url, 0, False
+    legacy = os.path.exists(part) and not os.path.exists(seg) and os.path.getsize(part) > 0
+    if ranges and total >= SEG_MIN and not legacy:
+        _download_segmented(job, url, part, seg, total, retries)
+    else:
+        _download_single(job, url, part, retries)
+    job["msg"] = ""
+    try:
+        import more
+        more.close_handles()
+    except Exception:
+        pass
+    os.makedirs(os.path.dirname(target) or ".", exist_ok=True)
+    os.replace(part, target)
+
+
+def _download_single(job, url, part, retries):
     for attempt in range(retries):
         have = os.path.getsize(part) if os.path.exists(part) else 0
         req = urllib.request.Request(url, headers={"User-Agent": "NOMAD/" + VERSION, "Range": f"bytes={have}-"})
@@ -842,6 +884,7 @@ def download(job, url, target, retries=50):
                     have = 0
                 job.update(total=have + int(r.headers.get("Content-Length") or 0), done=have)
                 t0, d0 = time.time(), have
+                job["msg"] = ""
                 with open(part, "ab" if have else "wb") as f:
                     while True:
                         if job.get("cancel"):
@@ -855,12 +898,13 @@ def download(job, url, target, retries=50):
                         if dt > 2:
                             job["speed"] = (job["done"] - d0) / dt
                             t0, d0 = time.time(), job["done"]
-            break
+            return
         except urllib.error.HTTPError as e:
-            if e.code == 416:  # al compleet
-                break
+            if e.code == 416:  # already complete
+                return
             if attempt == retries - 1:
                 raise
+            time.sleep(min(60, 5 * (attempt + 1)))
         except InterruptedError:
             raise
         except Exception:
@@ -868,13 +912,111 @@ def download(job, url, target, retries=50):
                 raise
             job["msg"] = f"connection lost, retrying ({attempt + 1})…"
             time.sleep(min(60, 5 * (attempt + 1)))
-    job["msg"] = ""
-    try:
-        import more
-        more.close_handles()
-    except Exception:
-        pass
-    os.replace(part, target)
+
+
+def _download_segmented(job, url, part, seg, total, retries):
+    """Split the file in parts and fetch them in parallel (each through the mirror redirect, so the
+    load spreads over mirrors). Progress is saved in a .seg file so it resumes after a restart."""
+    state = None
+    if os.path.exists(seg) and os.path.exists(part):
+        try:
+            with open(seg, encoding="utf-8") as f:
+                state = json.load(f)
+            if state.get("total") != total:
+                state = None
+            else:
+                for s_ in state["segs"]:
+                    del s_[3:]
+        except Exception:
+            state = None
+    if state is None:
+        n = SEG_CONNS * 4                       # small pieces: fast connections take over the slow ones' work
+        size = -(-total // n)
+        state = {"total": total, "segs": [[i * size, min(total, (i + 1) * size) - 1, 0] for i in range(n) if i * size < total]}
+        with open(part, "wb") as f:
+            f.truncate(total)                     # reserve the space up front
+    job.update(total=total, done=sum(s[2] for s in state["segs"]), msg="")
+    lock = threading.Lock()
+    errors = []
+
+    def save_state():
+        tmp = seg + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(state, f)
+        os.replace(tmp, seg)
+
+    def next_seg():
+        with lock:
+            for s in state["segs"]:
+                if s[2] < s[1] - s[0] + 1 and not s[3:]:
+                    s.append("busy")
+                    return s
+        return None
+
+    def worker():
+        while not job.get("cancel"):
+            s = next_seg()
+            if not s:
+                return
+            ok = False
+            for attempt in range(retries):
+                if job.get("cancel"):
+                    break
+                start = s[0] + s[2]
+                if start > s[1]:
+                    ok = True
+                    break
+                req = urllib.request.Request(url, headers={"User-Agent": "NOMAD/" + VERSION, "Range": f"bytes={start}-{s[1]}"})
+                try:
+                    with urllib.request.urlopen(req, timeout=60) as r:
+                        if r.status != 206:
+                            raise IOError("server ignored range request")
+                        with open(part, "r+b") as f:
+                            f.seek(start)
+                            while not job.get("cancel"):
+                                chunk = r.read(1 << 20)
+                                if not chunk:
+                                    break
+                                f.write(chunk)
+                                with lock:
+                                    s[2] += len(chunk)
+                                    job["done"] += len(chunk)
+                    if s[0] + s[2] > s[1]:
+                        ok = True
+                        break
+                except Exception:
+                    job["msg"] = "connection lost, retrying…"
+                    time.sleep(min(60, 3 * (attempt + 1)))
+            with lock:
+                if len(s) > 3:
+                    s.pop()
+            if not ok and not job.get("cancel"):
+                errors.append("part failed")
+                return
+
+    threads = [threading.Thread(target=worker, daemon=True) for _ in range(SEG_CONNS)]
+    for t in threads:
+        t.start()
+    t0, d0 = time.time(), job["done"]
+    while any(t.is_alive() for t in threads):
+        time.sleep(1)
+        with lock:
+            save_state()
+        dt = time.time() - t0
+        if dt >= 2:
+            job["speed"] = (job["done"] - d0) / dt
+            t0, d0 = time.time(), job["done"]
+            if job.get("msg", "").startswith("connection lost") and job["speed"] > 0:
+                job["msg"] = ""
+    with lock:
+        for s in state["segs"]:
+            del s[3:]
+        save_state()
+    if job.get("cancel"):
+        raise InterruptedError("cancelled")
+    if errors or any(s[2] < s[1] - s[0] + 1 for s in state["segs"]):
+        raise IOError("download incomplete — will retry")
+    os.remove(seg)
 
 
 def run_update(uid):
@@ -1509,6 +1651,8 @@ def main():
     import more
     threading.Thread(target=more.backup_loop, daemon=True).start()
     threading.Thread(target=more.inbox_loop, daemon=True).start()
+    threading.Timer(15, features.resume_queue).start()
+    threading.Timer(60, more.auto_clean).start()
     threading.Thread(target=more.drive_branding, daemon=True).start()
     if not a.no_services:
         threading.Thread(target=lambda: (start_ollama(), warm_model()), daemon=True).start()
