@@ -969,3 +969,23 @@ h1,h2,h3{letter-spacing:-.005em}
 .ns-sub{font-size:10.5px;color:var(--dim);line-height:1.45}
 .ns-line{fill:none;stroke:var(--acc);stroke-width:1.5}
 .ns-fill{fill:rgba(var(--a),.12);stroke:none}
+
+/* v0.21 — route tools, send to phone, my documents, language packs */
+.rtools{display:flex;gap:6px;margin:8px 0 4px}
+.rtools .btn{height:28px;padding:0 10px;font-size:11px}
+.rtools .btn:first-child{flex:1}
+.rab{margin-left:auto;display:inline-flex;gap:4px;padding-left:8px}
+.rab b{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:700 10px var(--mono);background:rgba(var(--a),.14);color:var(--acc);cursor:pointer}
+.rab b:hover{background:var(--acc);color:var(--bg)}
+#maphits .lnk{display:flex;align-items:center;gap:6px}
+.doclist{display:flex;flex-direction:column;gap:4px;max-height:46vh;overflow:auto}
+.docrow{display:grid;grid-template-columns:22px 1fr;gap:2px 8px;padding:8px 10px;border:1px solid rgba(var(--a),.12);border-radius:10px;background:rgba(var(--a),.03)}
+.docrow a{color:var(--hi,#eafff3);text-decoration:none;font-weight:600;word-break:break-all}
+.docrow a:hover{color:var(--acc)}
+.docrow em{grid-column:2;font:10.5px var(--mono);font-style:normal;color:var(--dim)}
+.docrow.bad em{color:#ffb63a}
+.chip.doc{border-color:rgba(255,210,58,.4);color:#ffd23a}
+.langrow{display:flex;flex-direction:column;gap:6px;margin:6px 0 8px}
+.langsel{width:100%;height:36px}
+.lseg{display:flex}.lseg button{flex:1;font-size:10.5px;padding:7px 6px}
+.langcard .bic{background:linear-gradient(135deg,rgba(var(--a),.25),rgba(58,215,255,.2))}

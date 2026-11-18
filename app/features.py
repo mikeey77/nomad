@@ -90,7 +90,7 @@ def set_autostart(on):
 
 USER_FILE = None
 USER_LOCK = threading.Lock()
-DEFAULT_USER = {"inventory": None, "videos": {}, "ui": {}, "favorites": [], "readlater": [], "notes": {}, "pins": [], "chats": [], "saved": [], "checklist": [
+DEFAULT_USER = {"inventory": None, "routes": [], "videos": {}, "ui": {}, "favorites": [], "readlater": [], "notes": {}, "pins": [], "chats": [], "saved": [], "checklist": [
     {"t": t, "done": False} for t in [
         "Water (3 L per person per day, 3 days)", "Non-perishable food for 3 days", "First aid kit",
         "Flashlight + spare batteries", "Power bank (charged)", "Battery / crank radio", "Cash",
@@ -115,7 +115,7 @@ def load_user():
 def save_user(patch):
     with USER_LOCK:
         u = load_user()
-        for k in ("favorites", "readlater", "notes", "pins", "checklist", "chats", "saved", "inventory", "videos", "ui"):
+        for k in ("favorites", "readlater", "notes", "pins", "checklist", "chats", "saved", "inventory", "videos", "ui", "routes"):
             if k in patch:
                 u[k] = patch[k]
         N.save_json(user_file(), u)
@@ -715,6 +715,46 @@ BUNDLES = [
 ]
 
 
+LANG_NAMES = {"en": "English", "nl": "Nederlands", "de": "Deutsch", "fr": "Français", "es": "Español", "it": "Italiano", "pt": "Português",
+              "pl": "Polski", "fy": "Frysk", "li": "Limburgs", "af": "Afrikaans", "da": "Dansk", "sv": "Svenska", "no": "Norsk", "nb": "Norsk bokmål",
+              "fi": "Suomi", "is": "Íslenska", "cs": "Čeština", "sk": "Slovenčina", "hu": "Magyar", "ro": "Română", "bg": "Български",
+              "el": "Ελληνικά", "tr": "Türkçe", "ru": "Русский", "uk": "Українська", "ar": "العربية", "fa": "فارسی", "he": "עברית",
+              "hi": "हिन्दी", "bn": "বাংলা", "ur": "اردو", "zh": "中文", "ja": "日本語", "ko": "한국어", "vi": "Tiếng Việt", "th": "ไทย",
+              "id": "Bahasa Indonesia", "ms": "Bahasa Melayu", "tl": "Tagalog", "sw": "Kiswahili", "hr": "Hrvatski", "sr": "Српски",
+              "sl": "Slovenščina", "lt": "Lietuvių", "lv": "Latviešu", "et": "Eesti", "ca": "Català", "eu": "Euskara", "gl": "Galego",
+              "ga": "Gaeilge", "cy": "Cymraeg", "eo": "Esperanto", "la": "Latina"}
+LANG_SETS = [  # per language: first available flavour of each
+    ("wikipedia", ["maxi", "nopic", "mini"]), ("wiktionary", ["maxi", "nopic"]), ("wikivoyage", ["maxi", "nopic"]),
+    ("wikibooks", ["maxi", "nopic"]), ("wikiquote", ["maxi", "nopic"]), ("wikisource", ["maxi", "nopic"]), ("vikidia", ["maxi", "nopic"]),
+]
+
+
+def lang_bundles(zims):
+    """One 'language pack' per language that has a Wikipedia in the catalog."""
+    langs = sorted({m.group(1) for p in zims for m in [re.match(r"wikipedia_([a-z]{2,3})_all_(?:maxi|nopic|mini)$", p)] if m})
+    out = []
+    for lg in langs:
+        if lg == "en":
+            continue
+        name = LANG_NAMES.get(lg, lg.upper())
+        for light in (False, True):
+            items = []
+            for proj, flav in LANG_SETS:
+                for f in (["mini", "nopic", "maxi"] if light and proj == "wikipedia" else ["nopic", "maxi"] if light else flav):
+                    p = f"{proj}_{lg}_all_{f}"
+                    if p in zims:
+                        items.append(p)
+                        break
+            if f"gutenberg_{lg}_all" in zims and not light:
+                items.append(f"gutenberg_{lg}_all")
+            out.append({"id": "lang:" + lg + (":light" if light else ""), "group": "lang", "lang": lg, "light": light, "langName": name,
+                        "icon": "globe", "title": "Language pack · " + name,
+                        "desc": (f"Wikipedia, dictionary, travel guide, books and quotes in {name} — whatever exists in that language."
+                                 if not light else f"Light version for {name}: short Wikipedia articles and no pictures — a fraction of the size."),
+                        "items": items})
+    return out
+
+
 def bundles():
     zims = {i["prefix"]: i for i in kiwix_entries()}
     inst = {b.prefix: b.date for b in N.BOOKS.values()}
@@ -736,6 +776,15 @@ def bundles():
             total = sum(i["size"] for i in items)
             need = sum(i["size"] for i in items if not i["installed"])
             out.append(dict(b, items=items, total=total, need=need, complete=need == 0))
+    for b in lang_bundles(zims):
+        items = []
+        for p in b["items"]:
+            z = zims[p]
+            items.append({"id": "zim:" + z["id"], "title": z["title"] + (" (" + z["flavour"] + ")" if z.get("flavour") else ""),
+                          "size": z["size"], "installed": bool(inst.get(p)), "kind": "zim", "summary": z["summary"]})
+        total = sum(i["size"] for i in items)
+        need = sum(i["size"] for i in items if not i["installed"])
+        out.append(dict(b, items=items, total=total, need=need, complete=need == 0))
     du = N.shutil.disk_usage(N.ROOT)
     nomad = sum(b.size for b in N.BOOKS.values()) + sum(os.path.getsize(f) for f in [N.map_file(l) for l in N.MAP_LAYERS] if f)
     return {"bundles": out, "disk": {"total": du.total, "used": du.used, "free": du.free, "nomad": nomad},

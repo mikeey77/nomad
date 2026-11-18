@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.20.0"
+VERSION = "0.21.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -460,6 +460,17 @@ def rag_search(question, emit, deep=False):
     order = {bk.id: i for i, bk in enumerate(books)}
     hits.sort(key=lambda h: order.get(h["book"], 99))
     sources, ctx = [], []
+    try:  # your own documents first — they are the most personal answer
+        import docs
+        for d in docs.search(kw, 3 if deep else 2):
+            name = os.path.basename(d["rel"])
+            src = {"book": "__doc", "path": docs.fs_rel(d["rel"]), "title": name + (f" · p.{d['page']}" if d["page"] else ""),
+                   "bookTitle": "My documents"}
+            sources.append(src)
+            ctx.append(f"### {name}{' (page ' + str(d['page']) + ')' if d['page'] else ''} — from my own documents\n{d['text'][:chars]}")
+            emit({"source": src})
+    except Exception:
+        pass
     for h in hits[:limit]:
         bk = BOOKS.get(h["book"])
         if not bk:
@@ -1251,6 +1262,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_search(q("q"), q("book"), int(q("start", "0")))
             if p == "/api/random":
                 return self.api_random(q("book"))
+            if p == "/api/docs":
+                import docs
+                return self.json(docs.listing())
             if p == "/api/speedtest":
                 return self.json(speedtest())
             if p == "/api/geocode":
@@ -1367,6 +1381,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json(extra.fs_rename(b["path"], b["name"]))
             if p == "/api/fs/delete":
                 return self.json(extra.fs_delete(self.body_json()["path"]))
+            if p == "/api/docs/scan":
+                import docs
+                threading.Thread(target=docs.scan, daemon=True).start()
+                return self.json({"ok": True})
             if p == "/api/fs/upload":
                 qs = parse_qs(urlparse(self.path).query)
                 return self.json(extra.fs_upload(qs.get("path", [""])[0], qs.get("name", [""])[0], self.rfile, int(self.headers.get("Content-Length") or 0)))
@@ -1699,6 +1717,8 @@ def main():
     threading.Thread(target=more.inbox_loop, daemon=True).start()
     threading.Timer(15, features.resume_queue).start()
     threading.Timer(60, more.auto_clean).start()
+    import docs
+    docs.init()
     threading.Thread(target=more.drive_branding, daemon=True).start()
     if not a.no_services:
         threading.Thread(target=lambda: (start_ollama(), warm_model()), daemon=True).start()
