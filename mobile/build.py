@@ -20,6 +20,7 @@ for n in ("dark", "dark@2x"):
 src = rd(R, "mobile", "src.html")
 parts = {
     "/*MAPLIBRE_CSS*/": rd(W, "vendor", "maplibre-gl.css"),
+    "/*INVITEMS*/": js(rd(W, "inv-items.js")),
     "/*FZSTD*/": js(rd(R, "mobile", "vendor", "fzstd.js")),
     "/*PMTILES*/": js(rd(W, "vendor", "pmtiles.js")),
     "/*BASEMAPS*/": js(rd(W, "vendor", "basemaps.js")),

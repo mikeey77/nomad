@@ -135,7 +135,7 @@
         <div class="inv-side"><div class="hud" style="margin:0 4px 8px" data-t="inv_boxes"></div><div id="invBoxes"></div></div>
         <div class="inv-main glass">
           <div class="inv-top"><div><h2 id="invTitle"></h2><div class="sub mono" id="invSub"></div></div>
-            <div class="inv-tools"><input class="inp" id="invQ" data-tp="inv_search" autocomplete="off" style="width:220px;height:38px"><button class="btn pri" id="invAddBtn">＋ <span data-t="inv_add"></span></button></div></div>
+            <div class="inv-tools"><input class="inp" id="invQ" data-tp="inv_search" autocomplete="off" style="width:200px;height:38px"><select class="inp" id="invSort" style="height:38px;width:auto"><option value="cat" data-t="so_cat"></option><option value="exp" data-t="so_exp"></option><option value="name" data-t="so_name"></option><option value="rar" data-t="so_rar"></option><option value="qty" data-t="so_qty"></option></select><button class="btn pri" id="invAddBtn">＋ <span data-t="inv_add"></span></button></div></div>
           <div class="inv-cats" id="invCats"></div>
           <div class="inv-grid" id="invGrid"></div>
         </div>
@@ -162,8 +162,7 @@
         <div class="card tool"><div class="k" data-t="compass"></div><div class="dial"><div class="needle" id="needle"></div><b id="heading">—</b></div>
           <div class="sub" id="compassNote" style="text-align:center"></div><button class="btn" id="compassBtn" data-t="compass_start" style="margin:10px auto 0;display:flex"></button></div>
         <div class="card tool"><div class="k" data-t="sun"></div><div id="sunbox"></div></div>
-        <div class="card tool chkcard"><div class="k"><span data-t="checklist"></span> <b id="chkProg" class="mono"></b></div><div class="bar"><i id="chkBar"></i></div><div id="check"></div>
-          <div style="display:flex;gap:8px;margin-top:10px"><input id="checkIn" class="inp" style="flex:1" data-tp="add_item"><button class="btn" id="checkAdd">+</button></div></div>
+        <div class="card tool invlink" id="invSos"></div>
       </div>
     </div></section>
 
@@ -239,6 +238,7 @@
         <div class="row"><span data-t="s_interval"></span><input type="number" min="5" step="5" id="sInterval" class="inp" style="width:90px"></div>
       </div>
       <div class="sec-t" data-t="s_start"></div>
+      <div class="card setc"><div class="row"><span data-t="s_plug"></span><div class="seg" id="sPlug"><button data-v="off" data-t="pl_off"></button><button data-v="ask" data-t="pl_ask"></button><button data-v="open" data-t="pl_open"></button></div></div><div class="sub" data-t="s_plug_help"></div></div>
       <div class="card setc"><div class="row"><span data-t="s_autostart"></span><div class="tog" id="sAuto"><i></i></div></div><div class="sub" id="sAutoNote"></div></div>
       <div class="sec-t" data-t="s_backup"></div>
       <div class="card setc"><div class="sub" data-t="s_backup_help"></div>
@@ -293,6 +293,7 @@
 <script src="/web/v14.js"></script>
 <script src="/web/inv-items.js"></script>
 <script src="/web/inv.js"></script>
+<script src="/web/v15.js"></script>
 <script src="/web/fx.js"></script>
 </body>
 </html>

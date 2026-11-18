@@ -7,7 +7,7 @@ const BOX_ICONS = ['🏠', '🎒', '🚗', '🏕️', '🏚️', '🚐', '⛵', 
 const ITEM = {}; INV_ITEMS.forEach(r => ITEM[r[0]] = {id:r[0], e:r[1], en:r[2], nl:r[3], cat:r[4], rar:r[5], kg:r[6], kcal:r[7], l:r[8], shelf:r[9], find:r[10]});
 const L = (en, nl) => LANG === 'nl' ? nl : en;
 
-let INV = null, INV_BOX = store.get('nomad.invbox', 'home'), INV_CAT = '', INV_Q = '';
+let INV = null, INV_BOX = store.get('nomad.invbox', 'home'), INV_CAT = '', INV_Q = '', INV_SORT = store.get('nomad.invsort', 'cat');
 function invDefault(){
   return {people:{a:1, c:0, p:0}, custom:[],
     boxes:[{id:'home', type:'home', icon:'🏠', name:'', limit:0}, {id:'bag', type:'backpack', icon:'🎒', name:'', limit:15}, {id:'car', type:'car', icon:'🚗', name:'', limit:0}],
@@ -15,7 +15,7 @@ function invDefault(){
 }
 function invLoad(){
   INV = USER.inventory && USER.inventory.boxes ? USER.inventory : invDefault();
-  INV.custom = INV.custom || []; INV.people = INV.people || {a:1, c:0, p:0};
+  INV.custom = INV.custom || []; INV.people = INV.people || {a:1, c:0, p:0}; INV.favs = INV.favs || [];
   INV.custom.forEach(c => ITEM[c.id] = c);
   if(!INV.boxes.some(b => b.id === INV_BOX)) INV_BOX = INV.boxes[0]?.id;
 }
@@ -27,6 +27,8 @@ const daysLeft = s => s.exp ? Math.ceil((new Date(s.exp) - Date.now()) / 864e5) 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 /* ───────── numbers ───────── */
+const invIsFav = id => INV.favs.includes(id);
+function invToggleFav(id){ INV.favs = invIsFav(id) ? INV.favs.filter(x => x !== id) : [...INV.favs, id]; invSave(); renderInv() }
 function needPerDay(){ const p = INV.people; return [p.a * NEED.a[0] + p.c * NEED.c[0] + p.p * NEED.p[0], p.a * NEED.a[1] + p.c * NEED.c[1] + p.p * NEED.p[1]] }
 function totals(stacks){
   let kcal = 0, l = 0, kg = 0, soon = 0, bad = 0, filter = false;
@@ -78,29 +80,41 @@ function renderInv(){
   $('#boxEdit').onclick = () => editBox(box);
   $('#invSub').textContent = `${bt.kg.toFixed(1)} kg${box.limit ? ' / ' + box.limit + ' kg' : ''} · 🍽️ ${fmtDays(bt.food)} ${L('d', 'd')} · 💧 ${fmtDays(bt.water)} ${L('d', 'd')}`;
 
+  const nFav = inBox.filter(s => invIsFav(s.item)).length;
   $('#invCats').innerHTML = `<button class="icat${!INV_CAT ? ' on' : ''}" data-c="">✦ ${L('All', 'Alles')}</button>` +
+    (nFav ? `<button class="icat fav${INV_CAT === 'fav' ? ' on' : ''}" data-c="fav">★ ${L('Favorites', 'Favorieten')} <em>${nFav}</em></button>` : '') +
     INV_CATS.map(([c, e, en, nl]) => { const n = inBox.filter(s => it(s.item).cat === c).length; return n ? `<button class="icat${INV_CAT === c ? ' on' : ''}" data-c="${c}">${e} ${L(en, nl)} <em>${n}</em></button>` : '' }).join('');
   $$('#invCats .icat').forEach(b => b.onclick = () => { INV_CAT = b.dataset.c; renderInv() });
 
   const q = INV_Q.toLowerCase();
-  const shown = inBox.filter(s => (!INV_CAT || it(s.item).cat === INV_CAT) && (!q || iname(it(s.item)).toLowerCase().includes(q)))
-    .sort((a, b) => INV_CATS.findIndex(c => c[0] === it(a.item).cat) - INV_CATS.findIndex(c => c[0] === it(b.item).cat) || iname(it(a.item)).localeCompare(iname(it(b.item))));
+  const RO = {l:0, e:1, r:2, u:3, c:4}, catIx = s => INV_CATS.findIndex(c => c[0] === it(s.item).cat), nm = (a, b) => iname(it(a.item)).localeCompare(iname(it(b.item)));
+  const SORTS = {cat:(a, b) => catIx(a) - catIx(b) || nm(a, b), exp:(a, b) => (daysLeft(a) ?? 1e9) - (daysLeft(b) ?? 1e9) || nm(a, b), name:nm,
+    rar:(a, b) => RO[it(a.item).rar] - RO[it(b.item).rar] || nm(a, b), qty:(a, b) => b.qty - a.qty || nm(a, b)};
+  const shown = inBox.filter(s => (!INV_CAT || (INV_CAT === 'fav' ? invIsFav(s.item) : it(s.item).cat === INV_CAT)) && (!q || iname(it(s.item)).toLowerCase().includes(q)))
+    .sort((a, b) => (invIsFav(b.item) - invIsFav(a.item)) || SORTS[INV_SORT](a, b));
+  $('#invSort').value = INV_SORT;
   const pad = Math.max(0, Math.ceil((shown.length + 1) / 8) * 8 - shown.length - 1, 15 - shown.length);
   $('#invGrid').innerHTML = shown.map(s => {
     const i = it(s.item), d = daysLeft(s), pct = d === null ? null : Math.max(0, Math.min(100, d / Math.max(30, i.shelf || 365) * 100));
     return `<div class="slot r-${i.rar}${d !== null && d < 0 ? ' bad' : d !== null && d <= 30 ? ' soon' : ''}" draggable="true" data-u="${s.uid}" title="${esc(iname(i))}">
       <span class="se">${i.e}</span>${s.qty > 1 ? `<b class="sq">${s.qty}</b>` : ''}
       ${d !== null ? `<span class="sd" title="${d} ${L('days', 'dagen')}">${d < 0 ? '☠' : d > 999 ? Math.round(d / 365) + 'y' : d + 'd'}</span><span class="sx"><i style="width:${pct}%"></i></span>` : ''}
-      <span class="sn">${esc(iname(i))}</span></div>`;
+      ${invIsFav(s.item) ? '<span class="sf">★</span>' : ''}<span class="sn">${esc(iname(i))}</span>
+      <span class="sqk"><button data-qk="-1" title="−1">−</button><button data-qk="1" title="+1">+</button></span></div>`;
   }).join('') + `<div class="slot addslot" id="slotAdd" title="${L('Add / loot items', 'Items toevoegen')}"><span class="se">＋</span><span class="sn">${L('Add item', 'Item toevoegen')}</span></div>` +
     '<div class="slot empty"></div>'.repeat(pad);
   $$('#invGrid .slot[data-u]').forEach(el => {
-    el.onclick = () => openStack(INV.stacks.find(s => s.uid === el.dataset.u));
+    el.onclick = e => {
+      const s = INV.stacks.find(x => x.uid === el.dataset.u), qk = e.target.dataset?.qk;
+      if(qk){ e.stopPropagation(); s.qty += +qk; if(s.qty <= 0) INV.stacks = INV.stacks.filter(x => x !== s); invSave(); renderInv(); return }
+      openStack(s);
+    };
     el.ondragstart = e => { e.dataTransfer.setData('text/nomad-stack', el.dataset.u); el.classList.add('drag') };
     el.ondragend = () => el.classList.remove('drag');
   });
   $('#slotAdd').onclick = () => openPicker();
   renderKits(box);
+  renderInvHome();
 }
 
 function renderKits(box){
@@ -118,7 +132,15 @@ function renderKits(box){
         <button data-find="${x.id}" title="${L('Where to find', 'Waar te vinden')}">⌖</button><button data-add="${x.id}" data-n="${x.n - x.h}" title="${L('Add', 'Toevoegen')}">＋</button></div>` }).join('')
         : `<div class="kit-ok">✓ ${L('Kit complete — nice!', 'Pakket compleet — top!')}</div>`}</div></div>`;
   }).join('');
-  $('#invKits').innerHTML = html;
+  const exp = INV.stacks.filter(s => { const d = daysLeft(s); return d !== null && d <= 30 }).sort((a, b) => daysLeft(a) - daysLeft(b));
+  const expHtml = exp.length ? `<div class="kit expk"><div class="kit-h"><span>⏳</span><b>${L('Use first', 'Eerst opmaken')}</b><em style="color:${exp.some(s => daysLeft(s) < 0) ? '#ff5470' : '#ffb63a'}">${exp.length}</em></div>
+    <div class="kit-l" style="max-height:200px">${exp.map(s => { const i = it(s.item), d = daysLeft(s), b = INV.boxes.find(x => x.id === s.box);
+      return `<div class="kit-i r-${i.rar}" data-u="${s.uid}"><span>${i.e}</span><span class="kn">${esc(iname(i))} ×${s.qty}<small style="color:${d < 0 ? '#ff5470' : '#ffb63a'}">${d < 0 ? L('expired', 'verlopen') + ' · ' + -d + ' d' : d + ' ' + L('days left', 'dagen over')} · ${b ? b.icon : ''}</small></span>
+        <button data-use="${s.uid}" title="${L('Use 1', 'Gebruik 1')}">✋</button><button data-open="${s.uid}" title="${L('Details', 'Details')}">⋯</button></div>` }).join('')}</div></div>` : '';
+  $('#invKits').innerHTML = expHtml + html + `<button class="btn" id="shopList" style="width:100%">🧾 ${L('Shopping list (all kits)', 'Boodschappenlijst (alle pakketten)')}</button>`;
+  $$('#invKits [data-use]').forEach(b => b.onclick = () => { const s = INV.stacks.find(x => x.uid === b.dataset.use); s.qty--; if(s.qty <= 0) INV.stacks = INV.stacks.filter(x => x !== s); invSave(); renderInv() });
+  $$('#invKits [data-open]').forEach(b => b.onclick = () => openStack(INV.stacks.find(x => x.uid === b.dataset.open)));
+  $('#shopList').onclick = shoppingList;
   $$('#invKits [data-add]').forEach(b => b.onclick = () => addItem(b.dataset.add, +b.dataset.n, b));
   $$('#invKits [data-find]').forEach(b => b.onclick = () => findItem(b.dataset.find));
 }
@@ -153,12 +175,15 @@ function openPicker(){
   let cat = '';
   const draw = () => {
     const q = $('#pkQ').value.trim().toLowerCase();
-    $('#pkCats').innerHTML = `<button class="icat${!cat ? ' on' : ''}" data-c="">✦ ${L('All', 'Alles')}</button>` + INV_CATS.map(([c, e, en, nl]) => `<button class="icat${cat === c ? ' on' : ''}" data-c="${c}">${e} ${L(en, nl)}</button>`).join('');
+    $('#pkCats').innerHTML = `<button class="icat${!cat ? ' on' : ''}" data-c="">✦ ${L('All', 'Alles')}</button>` +
+      (INV.favs.length ? `<button class="icat fav${cat === 'fav' ? ' on' : ''}" data-c="fav">★ ${L('Favorites', 'Favorieten')}</button>` : '') + INV_CATS.map(([c, e, en, nl]) => `<button class="icat${cat === c ? ' on' : ''}" data-c="${c}">${e} ${L(en, nl)}</button>`).join('');
     $$('#pkCats .icat').forEach(b => b.onclick = () => { cat = b.dataset.c; draw() });
-    const list = Object.values(ITEM).filter(i => (!cat || i.cat === cat) && (!q || i.en.toLowerCase().includes(q) || i.nl.toLowerCase().includes(q) || i.id.includes(q)));
-    $('#pkGrid').innerHTML = list.map(i => `<button class="pk r-${i.rar}" data-id="${i.id}"><span class="se">${i.e}</span><span class="pn">${esc(iname(i))}</span>
+    const list = Object.values(ITEM).filter(i => (!cat || (cat === 'fav' ? invIsFav(i.id) : i.cat === cat)) && (!q || i.en.toLowerCase().includes(q) || i.nl.toLowerCase().includes(q) || i.id.includes(q)));
+    list.sort((a, b) => invIsFav(b.id) - invIsFav(a.id));
+    $('#pkGrid').innerHTML = list.map(i => `<button class="pk r-${i.rar}" data-id="${i.id}"><i class="pkf${invIsFav(i.id) ? ' on' : ''}" data-fav="${i.id}" title="${L('Favorite', 'Favoriet')}">${invIsFav(i.id) ? '★' : '☆'}</i><span class="se">${i.e}</span><span class="pn">${esc(iname(i))}</span>
         <small>${[i.kcal ? i.kcal + ' kcal' : '', i.l ? i.l + ' L' : '', i.kg ? (i.kg < 1 ? Math.round(i.kg * 1000) + ' g' : i.kg + ' kg') : ''].filter(Boolean).join(' · ')}</small></button>`).join('') +
       (q ? `<button class="pk custom" id="pkCustom"><span class="se">📦</span><span class="pn">${L('Add', 'Voeg')} “${esc($('#pkQ').value.trim())}” ${L('as your own item', 'toe als eigen item')}</span></button>` : '');
+    $$('#pkGrid .pkf').forEach(f => f.onclick = e => { e.stopPropagation(); invToggleFav(f.dataset.fav); draw() });
     $$('#pkGrid .pk[data-id]').forEach(b => b.onclick = () => { addItem(b.dataset.id, 1, b); b.classList.add('got'); setTimeout(() => b.classList.remove('got'), 400) });
     $('#pkCustom') && ($('#pkCustom').onclick = () => { ov.remove(); customItem($('#pkQ')?.value || '') });
   };
@@ -191,7 +216,7 @@ function openStack(s){
       <div class="det-row"><span>${L('Best before', 'Houdbaar tot')}</span><input class="inp" id="dExp" type="date" value="${s.exp || ''}">${d !== null ? `<em class="${d < 0 ? 'bad' : d <= 30 ? 'soon' : ''}">${d < 0 ? L('expired', 'verlopen') : d + ' ' + L('days left', 'dagen over')}</em>` : ''}</div>
       <div class="det-row"><span>${L('Stored in', 'Opgeslagen in')}</span><select class="inp" id="dBox">${INV.boxes.map(b => `<option value="${b.id}"${b.id === s.box ? ' selected' : ''}>${b.icon} ${esc(boxName(b))}</option>`).join('')}</select></div>
       <div class="det-row"><span>${L('Note', 'Notitie')}</span><input class="inp" id="dNote" value="${esc(s.note || '')}" placeholder="${L('e.g. top shelf in basement', 'bijv. bovenste plank kelder')}"></div>
-      <div class="det-act"><button class="btn" id="dUse">✋ ${L('Use 1', 'Gebruik 1')}</button><button class="btn" id="dFind">⌖ ${L('Where to find', 'Waar te vinden')}</button>
+      <div class="det-act"><button class="btn${invIsFav(s.item) ? ' pri' : ''}" id="dFav">${invIsFav(s.item) ? '★' : '☆'} ${L('Favorite', 'Favoriet')}</button><button class="btn" id="dUse">✋ ${L('Use 1', 'Gebruik 1')}</button><button class="btn" id="dFind">⌖ ${L('Where to find', 'Waar te vinden')}</button>
         <button class="btn" id="dRead">📖 ${L('Read about it', 'Lees erover')}</button><button class="btn ghost" id="dDel" style="color:#ff5470">${L('Delete', 'Verwijder')}</button></div></div>`, 'small');
   const commit = () => {
     s.qty = Math.max(0, parseInt($('#dQ').value) || 0); s.exp = $('#dExp').value; s.note = $('#dNote').value.trim();
@@ -203,6 +228,7 @@ function openStack(s){
   $('#dUse').onclick = () => { $('#dQ').value = Math.max(0, s.qty - 1); commit(); if(!s.qty) ov.remove() };
   $('#dDel').onclick = () => { INV.stacks = INV.stacks.filter(x => x !== s); invSave(); renderInv(); ov.remove() };
   $('#dFind').onclick = () => { ov.remove(); findItem(s.item) };
+  $('#dFav').onclick = () => { invToggleFav(s.item); $('#dFav').classList.toggle('pri', invIsFav(s.item)); $('#dFav').textContent = (invIsFav(s.item) ? '★ ' : '☆ ') + L('Favorite', 'Favoriet') };
   $('#dRead').onclick = () => { ov.remove(); location.hash = 'search/' + encodeURIComponent(i.en.replace(/\(.*?\)|\d.*$/g, '').trim()) };
 }
 
@@ -251,6 +277,41 @@ function invOverlay(html, cls){
 /* ───────── wiring ───────── */
 $('#invQ').oninput = debounce(e => { INV_Q = e.target.value; renderInv() }, 120);
 $('#invAddBtn').onclick = () => openPicker();
+$('#invSort').onchange = e => { INV_SORT = e.target.value; store.set('nomad.invsort', INV_SORT); renderInv() };
 VIEWS.push('inv');
 setView = (function(orig){ return function(v){ orig(v); if(v === 'inv'){ invLoad(); renderInv() } } })(setView);
 if(location.hash.startsWith('#inv')) setTimeout(() => setView('inv'), 300);
+
+/* shopping list: everything missing from all recommended kits, grouped by where to buy it */
+function shoppingList(){
+  const ppl = INV.people.a + INV.people.c, groups = {};
+  for(const k of INV_KITS){
+    const box = INV.boxes.find(b => b.type === k.type); if(!box) continue;
+    for(const [id, n, pp] of k.items){
+      const need = n * (pp ? ppl : 1), have = INV.stacks.filter(s => s.box === box.id && s.item === id && (daysLeft(s) === null || daysLeft(s) >= 0)).reduce((a, s) => a + s.qty, 0);
+      if(have >= need) continue;
+      const g = it(id).find || 'super'; (groups[g] = groups[g] || {})[id] = (groups[g][id] || 0) + need - have;
+    }
+  }
+  const order = Object.keys(groups).sort((a, b) => Object.keys(groups[b]).length - Object.keys(groups[a]).length);
+  const txt = order.map(g => '■ ' + L(INV_FIND[g][1], INV_FIND[g][2]) + '\n' + Object.entries(groups[g]).map(([id, n]) => `  [ ] ${n}× ${iname(it(id))}`).join('\n')).join('\n\n');
+  const ov = invOverlay(`<div class="pk-h"><b>🧾 ${L('SHOPPING LIST', 'BOODSCHAPPENLIJST')}</b><span class="dim">${L('what your kits still miss', 'wat je pakketten nog missen')}</span><button class="nbx" data-x>✕</button></div>
+    ${order.length ? order.map(g => `<div class="shg"><div class="shg-h">🏪 ${esc(L(INV_FIND[g][1], INV_FIND[g][2]))}<button class="btn ghost" data-near="${g}" style="height:24px;padding:0 8px;font-size:10px;margin-left:auto">⌖ ${L('nearest', 'dichtstbij')}</button></div>` +
+      Object.entries(groups[g]).map(([id, n]) => `<label class="shi"><input type="checkbox"><span>${it(id).e}</span>${n}× ${esc(iname(it(id)))}</label>`).join('') + '</div>').join('')
+      : `<div class="kit-ok">✓ ${L('Nothing missing — all kits complete!', 'Niets meer nodig — alle pakketten compleet!')}</div>`}
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="shCopy">📋 ${L('Copy', 'Kopiëren')}</button><button class="btn" id="shSave">💾 ${L('Save as .txt', 'Opslaan als .txt')}</button><button class="btn" id="shPrint">🖨️ ${L('Print', 'Printen')}</button></div>`);
+  $$('.shg [data-near]').forEach(b => b.onclick = () => { ov.remove(); findOnMap(INV_FIND[b.dataset.near][0], L(INV_FIND[b.dataset.near][1], INV_FIND[b.dataset.near][2]).split(',')[0]) });
+  $('#shCopy').onclick = () => { navigator.clipboard?.writeText(txt); toast(L('Copied', 'Gekopieerd')) };
+  $('#shSave').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], {type:'text/plain'})); a.download = 'nomad-shopping-list.txt'; a.click() };
+  $('#shPrint').onclick = () => { const w = window.open('', '_blank'); w.document.write('<pre style="font:14px/1.6 system-ui">' + esc(txt) + '</pre>'); w.document.close(); w.print() };
+}
+
+/* small status on Home and in Survival */
+function renderInvHome(){
+  if(!INV) invLoad();
+  const all = totals(INV.stacks), html = INV.stacks.length ? `<span class="ivh-t">🎒 ${L('INVENTORY', 'INVENTARIS')}</span>
+    <span>🍽️ <b>${fmtDays(all.food)}</b> ${L('days food', 'dagen eten')}</span><span>💧 <b>${fmtDays(all.water)}</b> ${L('days water', 'dagen water')}</span>
+    ${all.bad ? `<span style="color:#ff5470">☠ ${all.bad} ${L('expired', 'verlopen')}</span>` : all.soon ? `<span style="color:#ffb63a">⏳ ${all.soon} ${L('expiring soon', 'bijna over datum')}</span>` : ''}<em>→</em>`
+    : `<span class="ivh-t">🎒 ${L('INVENTORY', 'INVENTARIS')}</span><span>${L('Track your supplies: how many days of food & water do you have?', 'Houd je voorraad bij: hoeveel dagen eten en water heb je?')}</span><em>→</em>`;
+  for(const id of ['invHome', 'invSos']){ const el = document.getElementById(id); if(el){ el.innerHTML = html; el.onclick = () => location.hash = 'inv' } }
+}

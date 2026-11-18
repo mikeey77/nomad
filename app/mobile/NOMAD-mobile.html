@@ -67,6 +67,7 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke
 .grid{position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(transparent 0,var(--bg) 92%),repeating-linear-gradient(90deg,rgba(46,207,133,.04) 0 1px,transparent 1px 44px),repeating-linear-gradient(0deg,rgba(46,207,133,.04) 0 1px,transparent 1px 44px)}
 #poibar{position:absolute;left:0;right:0;top:8px;z-index:3;display:flex;gap:6px;overflow-x:auto;padding:2px 10px 6px;scrollbar-width:none}
 #poibar::-webkit-scrollbar{display:none}
+.nlogo{display:none}
 .pc{flex:none;display:flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 5px;border-radius:20px;border:1px solid var(--line2);background:rgba(10,25,18,.92);color:var(--dim);font-size:12.5px;white-space:nowrap}
 .pc i{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#1a2a22;color:var(--dim)}
 .pc i svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
@@ -89,6 +90,48 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke
 .li{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);background:var(--card);border-radius:12px;margin-bottom:6px}
 .li span{flex:1;min-width:0}.li b{display:block;color:var(--hi);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.li small{color:var(--dim);font:11px var(--mono)}
 .li.off{opacity:.45}.li button{border:0;background:none;color:var(--dim);font-size:16px;padding:4px}
+#minvHud{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.mh{display:flex;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.mh>span{font-size:26px}.mh div{flex:1;min-width:0}.mh small{display:block;font:600 10px var(--mono);letter-spacing:.18em;color:var(--dim)}
+.mh b{font:700 20px var(--mono);display:block}.mh b em{font:normal 11px var(--mono);color:var(--dim)}
+.mh i{display:block;height:5px;border-radius:5px;background:rgba(255,255,255,.08);margin-top:5px;overflow:hidden}.mh u{display:block;height:100%;border-radius:5px}
+#minvBoxes{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
+.mbx{flex:none;height:36px;padding:0 14px;border-radius:20px;border:1px solid var(--line2);background:var(--card);color:var(--dim);font-size:13px;white-space:nowrap}
+.mbx.on{color:var(--hi);border-color:var(--acc);background:rgba(46,207,133,.1)}
+#minvGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:7px;margin:4px 0 14px}
+.mslot{position:relative;aspect-ratio:1;border-radius:12px;border:1.5px solid color-mix(in srgb,var(--rc) 55%,transparent);background:radial-gradient(120% 90% at 50% 0%,color-mix(in srgb,var(--rc) 22%,transparent),transparent 70%),rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}
+.mslot .e{font-size:30px;margin-top:-10px}.mslot>b{position:absolute;right:6px;top:3px;font:700 12px var(--mono);color:#fff;text-shadow:0 1px 3px #000}
+.mslot .d{position:absolute;left:5px;top:4px;font:600 9px var(--mono);font-style:normal}.mslot .f{position:absolute;left:6px;bottom:18px;color:#ffd23a;font-size:10px;font-style:normal}
+.mslot small{position:absolute;left:3px;right:3px;bottom:4px;font-size:9.5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+nav button{min-width:0}
+
+/* ── tablets & iPads: side rail, wider content, map list as side panel ── */
+@media (min-width:768px){
+  nav{top:0;right:auto;width:92px;flex-direction:column;justify-content:flex-start;gap:6px;padding:calc(var(--sat) + 76px) 6px calc(var(--sab) + 10px);border-top:0;border-right:1px solid var(--line)}
+  nav button{flex:none;padding:12px 0;border-radius:14px}
+  nav button.on{background:rgba(46,207,133,.08)}
+  header{left:92px}
+  header .logo{display:none}
+  .nlogo{display:grid!important;place-items:center;position:absolute;top:calc(var(--sat) + 14px);left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:12px;border:1px solid var(--line2);color:var(--acc);font:700 20px var(--mono);box-shadow:0 0 18px rgba(46,207,133,.18) inset}
+  .view{left:92px;bottom:var(--sab)}
+  #toast{bottom:calc(var(--sab) + 24px);left:calc(50% + 46px)}
+  .pad{max-width:1100px;margin:0 auto;padding:10px 28px 30px}
+  #books{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+  #books .card{margin:0}
+  #mylists{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+  #qhits{display:grid;grid-template-columns:1fr 1fr;column-gap:18px}
+  #v-set .pad{max-width:760px}
+  #sheet{left:12px;right:auto;top:64px;bottom:12px;width:360px;max-height:none;border-radius:18px;border:1px solid var(--line2);transform:translateX(-110%)}
+  #sheet.on{transform:none}
+  #poibar{left:12px;right:80px}
+  #minvHud{grid-template-columns:repeat(2,minmax(0,320px))}
+  #minvGrid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+  .mslot .e{font-size:38px}
+  #reader .rbar{padding-left:16px;padding-right:16px}
+  #rhits{left:50%;right:auto;width:min(640px,90vw);transform:translateX(-50%)}
+  #ract{right:24px;bottom:calc(var(--sab) + 24px)}
+}
+@media (min-width:1100px){ #mylists{grid-template-columns:1fr 1fr} }
 @keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .lang{margin-left:6px}
 </style>
@@ -117,6 +160,14 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke
   <div id="sheet"><div class="sh-h"><b data-t="nearby"></b><button id="sheetX">✕</button></div><div id="nearlist"></div></div>
   <button class="fab" id="locBtn" title="My location"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg></button>
 </section>
+
+<section class="view" id="v-inv"><div class="pad">
+  <div id="minvHud"></div>
+  <div id="minvBoxes"></div>
+  <div id="minvGrid"></div>
+  <div id="minvExp"></div>
+  <div class="tip" data-t="inv_ro"></div>
+</div></section>
 
 <section class="view" id="v-set"><div class="pad">
   <div class="k" data-t="language"></div>
@@ -147,12 +198,253 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke
 </div>
 
 <nav>
+  <div class="nlogo">N</div>
   <button class="on" data-v="lib"><svg class="i" viewBox="0 0 24 24"><path d="M4 4h6a2 2 0 012 2v14a2 2 0 00-2-2H4zM20 4h-6a2 2 0 00-2 2v14a2 2 0 012-2h6z"/></svg><span data-t="library"></span></button>
   <button data-v="map"><svg class="i" viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg><span data-t="map"></span></button>
+  <button data-v="inv"><svg class="i" viewBox="0 0 24 24"><path d="M8 7V5a4 4 0 018 0v2"/><rect x="4" y="7" width="16" height="14" rx="3"/><path d="M4 13h16M10 13v2h4v-2"/></svg><span data-t="inventory"></span></button>
   <button data-v="set"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><span data-t="settings"></span></button>
 </nav>
 <div id="toast"></div>
 
+<script>/* NOMAD inventory — item database.
+   [id, emoji, English, Nederlands, category, rarity, kg per unit, kcal per unit, litres per unit, shelf life (days, 0 = n/a), where-to-find group]
+   rarity: c common · u uncommon · r rare · e epic · l legendary */
+const INV_ITEMS = [
+  // ── water ──
+  ['water_bottle', '💧', 'Water bottle 1.5 L', 'Fles water 1,5 L', 'water', 'c', 1.55, 0, 1.5, 730, 'super'],
+  ['water_jerry', '🛢️', 'Water jerrycan 20 L', 'Jerrycan water 20 L', 'water', 'u', 21, 0, 20, 365, 'outdoor'],
+  ['water_pack', '🚰', 'Water 6-pack 0.5 L', 'Water 6-pack 0,5 L', 'water', 'c', 3.1, 0, 3, 730, 'super'],
+  ['water_pouch', '🧃', 'Emergency water pouch', 'Noodwater-zakje', 'water', 'u', 0.13, 0, 0.125, 1825, 'outdoor'],
+  ['water_filter', '🧪', 'Water filter (Sawyer type)', 'Waterfilter (Sawyer-type)', 'water', 'e', 0.09, 0, 0, 0, 'outdoor'],
+  ['water_tabs', '💊', 'Water purification tablets (50)', 'Waterzuiveringstabletten (50)', 'water', 'r', 0.03, 0, 0, 1825, 'outdoor'],
+  ['water_bag', '🎒', 'Collapsible water bag 10 L', 'Opvouwbare waterzak 10 L', 'water', 'u', 0.2, 0, 0, 0, 'outdoor'],
+  ['rain_barrel', '🛢️', 'Rain barrel 200 L', 'Regenton 200 L', 'water', 'r', 12, 0, 0, 0, 'garden'],
+  ['bleach', '🧴', 'Unscented bleach (water)', 'Chloor zonder geur (water)', 'water', 'u', 1.1, 0, 0, 365, 'super'],
+  ['canteen', '🥤', 'Metal canteen', 'Metalen veldfles', 'water', 'u', 0.35, 0, 0, 0, 'outdoor'],
+  // ── food ──
+  ['canned_beans', '🥫', 'Canned beans', 'Bonen in blik', 'food', 'c', 0.45, 350, 0, 1095, 'super'],
+  ['canned_soup', '🥫', 'Canned soup', 'Soep in blik', 'food', 'c', 0.85, 300, 0, 730, 'super'],
+  ['canned_meat', '🥩', 'Canned meat', 'Vlees in blik', 'food', 'u', 0.35, 600, 0, 1460, 'super'],
+  ['canned_fish', '🐟', 'Canned tuna / sardines', 'Tonijn / sardines in blik', 'food', 'c', 0.18, 250, 0, 1460, 'super'],
+  ['canned_veg', '🥕', 'Canned vegetables', 'Groente in pot/blik', 'food', 'c', 0.7, 150, 0, 1095, 'super'],
+  ['canned_fruit', '🍑', 'Canned fruit', 'Fruit in blik', 'food', 'c', 0.45, 300, 0, 730, 'super'],
+  ['rice', '🍚', 'Rice 1 kg', 'Rijst 1 kg', 'food', 'c', 1, 3600, 0, 1460, 'super'],
+  ['pasta', '🍝', 'Pasta 500 g', 'Pasta 500 g', 'food', 'c', 0.5, 1780, 0, 730, 'super'],
+  ['oats', '🥣', 'Oats 1 kg', 'Havermout 1 kg', 'food', 'c', 1, 3700, 0, 365, 'super'],
+  ['flour', '🌾', 'Flour 1 kg', 'Bloem 1 kg', 'food', 'c', 1, 3640, 0, 365, 'super'],
+  ['sugar', '🍬', 'Sugar 1 kg', 'Suiker 1 kg', 'food', 'c', 1, 4000, 0, 3650, 'super'],
+  ['salt', '🧂', 'Salt 1 kg', 'Zout 1 kg', 'food', 'c', 1, 0, 0, 0, 'super'],
+  ['honey', '🍯', 'Honey', 'Honing', 'food', 'u', 0.45, 1360, 0, 0, 'super'],
+  ['peanut_butter', '🥜', 'Peanut butter', 'Pindakaas', 'food', 'c', 0.35, 2100, 0, 365, 'super'],
+  ['crackers', '🍘', 'Crackers / crispbread', 'Crackers / knäckebröd', 'food', 'c', 0.25, 1000, 0, 270, 'super'],
+  ['ration_bar', '🧱', 'Emergency ration bar 2400 kcal', 'Noodrantsoen 2400 kcal', 'food', 'r', 0.5, 2400, 0, 1825, 'outdoor'],
+  ['mre', '🎖️', 'MRE meal', 'MRE-maaltijd', 'food', 'r', 0.6, 1250, 0, 1825, 'outdoor'],
+  ['freeze_dried', '🍲', 'Freeze-dried meal', 'Gevriesdroogde maaltijd', 'food', 'r', 0.12, 600, 0, 3650, 'outdoor'],
+  ['protein_bar', '🍫', 'Protein / energy bar', 'Proteïne-/energiereep', 'food', 'c', 0.06, 220, 0, 270, 'super'],
+  ['chocolate', '🍫', 'Chocolate bar', 'Reep chocolade', 'food', 'c', 0.2, 1070, 0, 365, 'super'],
+  ['nuts', '🌰', 'Nuts 500 g', 'Noten 500 g', 'food', 'c', 0.5, 3000, 0, 270, 'super'],
+  ['dried_fruit', '🍇', 'Dried fruit', 'Gedroogd fruit', 'food', 'c', 0.25, 750, 0, 365, 'super'],
+  ['jerky', '🥓', 'Beef jerky', 'Beef jerky', 'food', 'u', 0.07, 280, 0, 365, 'super'],
+  ['powdered_milk', '🥛', 'Powdered milk', 'Melkpoeder', 'food', 'u', 0.4, 2000, 0, 540, 'super'],
+  ['coffee', '☕', 'Coffee', 'Koffie', 'food', 'c', 0.25, 0, 0, 540, 'super'],
+  ['tea', '🍵', 'Tea', 'Thee', 'food', 'c', 0.05, 0, 0, 730, 'super'],
+  ['cooking_oil', '🫒', 'Cooking oil 1 L', 'Olie 1 L', 'food', 'c', 0.92, 8200, 0, 540, 'super'],
+  ['lentils', '🫘', 'Dried lentils / beans 1 kg', 'Gedroogde linzen / bonen 1 kg', 'food', 'c', 1, 3500, 0, 1460, 'super'],
+  ['instant_noodles', '🍜', 'Instant noodles', 'Instant noedels', 'food', 'c', 0.08, 380, 0, 270, 'super'],
+  ['baby_food', '🍼', 'Baby food / formula', 'Babyvoeding', 'food', 'u', 0.8, 4000, 0, 365, 'super'],
+  ['pet_food', '🦴', 'Pet food', 'Dierenvoer', 'food', 'c', 2, 0, 0, 365, 'pet'],
+  ['vitamins', '💊', 'Multivitamins', 'Multivitaminen', 'food', 'u', 0.1, 0, 0, 730, 'pharm'],
+  ['seeds', '🌱', 'Vegetable seeds', 'Groentezaden', 'food', 'r', 0.05, 0, 0, 1095, 'garden'],
+  ['fishing_kit', '🎣', 'Fishing kit', 'Visset', 'food', 'r', 0.2, 0, 0, 0, 'outdoor'],
+  // ── medical ──
+  ['first_aid', '🩹', 'First-aid kit', 'EHBO-doos', 'medical', 'u', 0.6, 0, 0, 1825, 'pharm'],
+  ['trauma_kit', '🚑', 'Trauma kit (IFAK)', 'Traumakit (IFAK)', 'medical', 'e', 0.5, 0, 0, 1825, 'outdoor'],
+  ['tourniquet', '🩸', 'Tourniquet', 'Tourniquet', 'medical', 'r', 0.08, 0, 0, 0, 'outdoor'],
+  ['bandages', '🩹', 'Bandages & plasters', 'Verband & pleisters', 'medical', 'c', 0.15, 0, 0, 1825, 'pharm'],
+  ['painkillers', '💊', 'Painkillers (paracetamol)', 'Pijnstillers (paracetamol)', 'medical', 'c', 0.03, 0, 0, 1095, 'pharm'],
+  ['ibuprofen', '💊', 'Ibuprofen', 'Ibuprofen', 'medical', 'c', 0.03, 0, 0, 1095, 'pharm'],
+  ['antihistamine', '💊', 'Antihistamine', 'Antihistamine', 'medical', 'u', 0.02, 0, 0, 1095, 'pharm'],
+  ['ors', '🧂', 'Rehydration salts (ORS)', 'ORS (rehydratiezout)', 'medical', 'u', 0.05, 0, 0, 1095, 'pharm'],
+  ['disinfectant', '🧴', 'Disinfectant', 'Desinfectiemiddel', 'medical', 'c', 0.25, 0, 0, 1095, 'pharm'],
+  ['thermometer', '🌡️', 'Thermometer', 'Thermometer', 'medical', 'u', 0.05, 0, 0, 0, 'pharm'],
+  ['face_masks', '😷', 'Face masks FFP2 (10)', 'Mondkapjes FFP2 (10)', 'medical', 'u', 0.1, 0, 0, 1825, 'pharm'],
+  ['gloves_nitrile', '🧤', 'Nitrile gloves (50)', 'Nitril handschoenen (50)', 'medical', 'c', 0.3, 0, 0, 1825, 'pharm'],
+  ['prescription', '💉', 'Prescription meds (supply)', 'Eigen medicijnen (voorraad)', 'medical', 'r', 0.1, 0, 0, 365, 'pharm'],
+  ['burn_gel', '🔥', 'Burn gel', 'Brandwondengel', 'medical', 'u', 0.05, 0, 0, 1095, 'pharm'],
+  ['splint', '🦴', 'SAM splint', 'SAM-spalk', 'medical', 'r', 0.12, 0, 0, 0, 'outdoor'],
+  ['iodine_tabs', '☢️', 'Potassium iodide tablets', 'Jodiumtabletten', 'medical', 'e', 0.02, 0, 0, 2555, 'pharm'],
+  ['eye_drops', '👁️', 'Eye wash / drops', 'Oogspoeling / druppels', 'medical', 'c', 0.05, 0, 0, 730, 'pharm'],
+  ['tick_remover', '🕷️', 'Tick remover', 'Tekentang', 'medical', 'c', 0.01, 0, 0, 0, 'pharm'],
+  // ── fire & cooking ──
+  ['lighter', '🔥', 'Lighter', 'Aansteker', 'fire', 'c', 0.02, 0, 0, 0, 'super'],
+  ['matches', '🔥', 'Storm-proof matches', 'Stormlucifers', 'fire', 'u', 0.05, 0, 0, 0, 'outdoor'],
+  ['ferro_rod', '✨', 'Ferro rod', 'Vuurstaaf', 'fire', 'r', 0.05, 0, 0, 0, 'outdoor'],
+  ['tinder', '🪵', 'Tinder / fire starters', 'Aanmaakblokjes', 'fire', 'c', 0.2, 0, 0, 0, 'super'],
+  ['camp_stove', '🍳', 'Camping stove', 'Kampeerbrander', 'fire', 'r', 0.4, 0, 0, 0, 'outdoor'],
+  ['gas_canister', '🧯', 'Gas canister', 'Gasbusje', 'fire', 'u', 0.35, 0, 0, 0, 'outdoor'],
+  ['pot', '🍲', 'Cooking pot', 'Kookpan', 'fire', 'c', 0.4, 0, 0, 0, 'hw'],
+  ['mess_kit', '🥄', 'Mess kit / spork', 'Eetgerei / spork', 'fire', 'c', 0.2, 0, 0, 0, 'outdoor'],
+  ['can_opener', '🥫', 'Can opener', 'Blikopener', 'fire', 'c', 0.05, 0, 0, 0, 'super'],
+  ['firewood', '🪵', 'Firewood (bundle)', 'Brandhout (bundel)', 'fire', 'c', 10, 0, 0, 0, 'garden'],
+  ['charcoal', '⚫', 'Charcoal / briquettes', 'Houtskool / briketten', 'fire', 'c', 3, 0, 0, 0, 'garden'],
+  ['fire_extinguisher', '🧯', 'Fire extinguisher', 'Brandblusser', 'fire', 'u', 2.5, 0, 0, 1825, 'hw'],
+  ['fire_blanket', '🟥', 'Fire blanket', 'Blusdeken', 'fire', 'u', 0.8, 0, 0, 0, 'hw'],
+  ['candles', '🕯️', 'Candles', 'Kaarsen', 'fire', 'c', 0.3, 0, 0, 0, 'super'],
+  // ── light & power ──
+  ['flashlight', '🔦', 'Flashlight', 'Zaklamp', 'power', 'c', 0.15, 0, 0, 0, 'hw'],
+  ['headlamp', '🔦', 'Headlamp', 'Hoofdlamp', 'power', 'u', 0.1, 0, 0, 0, 'outdoor'],
+  ['dynamo_light', '🔋', 'Wind-up flashlight', 'Knijpkat / opwindlamp', 'power', 'u', 0.2, 0, 0, 0, 'outdoor'],
+  ['lantern', '🏮', 'LED lantern', 'LED-lantaarn', 'power', 'u', 0.4, 0, 0, 0, 'outdoor'],
+  ['batteries_aa', '🔋', 'Batteries AA (pack)', 'Batterijen AA (pak)', 'power', 'c', 0.2, 0, 0, 3650, 'super'],
+  ['batteries_aaa', '🔋', 'Batteries AAA (pack)', 'Batterijen AAA (pak)', 'power', 'c', 0.1, 0, 0, 3650, 'super'],
+  ['powerbank', '🔌', 'Power bank 20 000 mAh', 'Powerbank 20.000 mAh', 'power', 'u', 0.4, 0, 0, 0, 'elec'],
+  ['solar_charger', '☀️', 'Solar charger', 'Zonnelader', 'power', 'r', 0.5, 0, 0, 0, 'outdoor'],
+  ['power_station', '⚡', 'Portable power station', 'Draagbaar powerstation', 'power', 'e', 12, 0, 0, 0, 'elec'],
+  ['solar_panel', '🔆', 'Solar panel 100 W', 'Zonnepaneel 100 W', 'power', 'e', 5, 0, 0, 0, 'elec'],
+  ['generator', '⚙️', 'Generator', 'Aggregaat', 'power', 'l', 25, 0, 0, 0, 'hw'],
+  ['fuel_can', '⛽', 'Fuel can 20 L', 'Jerrycan brandstof 20 L', 'power', 'u', 16, 0, 0, 365, 'fuel'],
+  ['cables', '🔌', 'Charging cables', 'Oplaadkabels', 'power', 'c', 0.1, 0, 0, 0, 'elec'],
+  ['glow_sticks', '🧪', 'Glow sticks', 'Breeklichtjes', 'power', 'c', 0.05, 0, 0, 1460, 'outdoor'],
+  ['inverter', '🔄', 'Car power inverter', 'Omvormer (auto)', 'power', 'r', 0.6, 0, 0, 0, 'car'],
+  // ── comms & navigation ──
+  ['radio', '📻', 'Hand-crank radio', 'Noodradio (opwindbaar)', 'comms', 'r', 0.4, 0, 0, 0, 'elec'],
+  ['walkie', '📟', 'Walkie-talkies (pair)', 'Walkietalkies (paar)', 'comms', 'r', 0.4, 0, 0, 0, 'elec'],
+  ['whistle', '📯', 'Whistle', 'Fluitje', 'comms', 'c', 0.02, 0, 0, 0, 'outdoor'],
+  ['phone_old', '📱', 'Spare phone', 'Reserve telefoon', 'comms', 'u', 0.2, 0, 0, 0, 'elec'],
+  ['sat_messenger', '🛰️', 'Satellite messenger', 'Satellietcommunicator', 'comms', 'l', 0.15, 0, 0, 0, 'outdoor'],
+  ['ham_radio', '📡', 'Ham radio (handheld)', 'Zendamateur-portofoon', 'comms', 'e', 0.3, 0, 0, 0, 'elec'],
+  ['map_paper', '🗺️', 'Paper map (region)', 'Papieren kaart (regio)', 'comms', 'u', 0.15, 0, 0, 0, 'books'],
+  ['compass', '🧭', 'Compass', 'Kompas', 'comms', 'u', 0.05, 0, 0, 0, 'outdoor'],
+  ['gps', '📍', 'GPS device', 'GPS-apparaat', 'comms', 'r', 0.2, 0, 0, 0, 'outdoor'],
+  ['signal_mirror', '🪞', 'Signal mirror', 'Signaalspiegel', 'comms', 'u', 0.03, 0, 0, 0, 'outdoor'],
+  ['notebook', '📓', 'Notebook & pencil', 'Notitieboek & potlood', 'comms', 'c', 0.1, 0, 0, 0, 'books'],
+  ['nomad_ssd', '💾', 'NOMAD SSD', 'NOMAD-SSD', 'comms', 'l', 0.05, 0, 0, 0, 'elec'],
+  // ── tools ──
+  ['multitool', '🛠️', 'Multitool', 'Multitool', 'tools', 'r', 0.25, 0, 0, 0, 'outdoor'],
+  ['knife', '🔪', 'Fixed-blade knife', 'Vast mes', 'tools', 'u', 0.2, 0, 0, 0, 'outdoor'],
+  ['axe', '🪓', 'Axe / hatchet', 'Bijl', 'tools', 'u', 1, 0, 0, 0, 'hw'],
+  ['saw', '🪚', 'Folding saw', 'Klapzaag', 'tools', 'u', 0.3, 0, 0, 0, 'hw'],
+  ['shovel', '⛏️', 'Folding shovel', 'Klapschep', 'tools', 'u', 1, 0, 0, 0, 'outdoor'],
+  ['crowbar', '🔧', 'Crowbar', 'Koevoet', 'tools', 'u', 1.5, 0, 0, 0, 'hw'],
+  ['hammer', '🔨', 'Hammer', 'Hamer', 'tools', 'c', 0.6, 0, 0, 0, 'hw'],
+  ['screwdrivers', '🪛', 'Screwdriver set', 'Schroevendraaiers', 'tools', 'c', 0.5, 0, 0, 0, 'hw'],
+  ['wrench', '🔧', 'Adjustable wrench', 'Verstelbare sleutel', 'tools', 'c', 0.4, 0, 0, 0, 'hw'],
+  ['pliers', '🗜️', 'Pliers', 'Tang', 'tools', 'c', 0.25, 0, 0, 0, 'hw'],
+  ['duct_tape', '🩶', 'Duct tape', 'Ducttape', 'tools', 'c', 0.3, 0, 0, 0, 'hw'],
+  ['zip_ties', '➰', 'Zip ties', 'Tie-wraps', 'tools', 'c', 0.1, 0, 0, 0, 'hw'],
+  ['paracord', '🪢', 'Paracord 30 m', 'Paracord 30 m', 'tools', 'u', 0.2, 0, 0, 0, 'outdoor'],
+  ['rope', '🪢', 'Rope 20 m', 'Touw 20 m', 'tools', 'c', 1, 0, 0, 0, 'hw'],
+  ['work_gloves', '🧤', 'Work gloves', 'Werkhandschoenen', 'tools', 'c', 0.15, 0, 0, 0, 'hw'],
+  ['sewing_kit', '🧵', 'Sewing kit', 'Naaiset', 'tools', 'c', 0.05, 0, 0, 0, 'super'],
+  ['wd40', '🛢️', 'Multi-spray (WD-40)', 'Kruipolie (WD-40)', 'tools', 'c', 0.3, 0, 0, 0, 'hw'],
+  ['bike_tools', '🚲', 'Bike repair kit', 'Fietsreparatieset', 'tools', 'u', 0.3, 0, 0, 0, 'bike'],
+  ['bicycle', '🚲', 'Bicycle', 'Fiets', 'tools', 'r', 15, 0, 0, 0, 'bike'],
+  ['cable_kit', '⚡', 'Wire, connectors & tester', 'Draad, klemmen & tester', 'tools', 'u', 0.5, 0, 0, 0, 'hw'],
+  ['siphon', '🪈', 'Siphon pump', 'Hevelpomp', 'tools', 'u', 0.3, 0, 0, 0, 'car'],
+  // ── shelter & clothing ──
+  ['tent', '⛺', 'Tent', 'Tent', 'shelter', 'r', 2.5, 0, 0, 0, 'outdoor'],
+  ['tarp', '🟫', 'Tarp', 'Zeil / tarp', 'shelter', 'u', 0.6, 0, 0, 0, 'outdoor'],
+  ['sleeping_bag', '🛌', 'Sleeping bag', 'Slaapzak', 'shelter', 'u', 1.4, 0, 0, 0, 'outdoor'],
+  ['sleeping_mat', '🧘', 'Sleeping mat', 'Slaapmat', 'shelter', 'c', 0.5, 0, 0, 0, 'outdoor'],
+  ['emergency_blanket', '🪙', 'Emergency (foil) blanket', 'Reddingsdeken', 'shelter', 'c', 0.06, 0, 0, 0, 'outdoor'],
+  ['bivvy', '🛡️', 'Emergency bivvy bag', 'Noodslaapzak (bivvy)', 'shelter', 'r', 0.2, 0, 0, 0, 'outdoor'],
+  ['wool_blanket', '🧶', 'Wool blanket', 'Wollen deken', 'shelter', 'c', 1.5, 0, 0, 0, 'clothes'],
+  ['rain_jacket', '🧥', 'Rain jacket', 'Regenjas', 'shelter', 'c', 0.4, 0, 0, 0, 'clothes'],
+  ['poncho', '🌧️', 'Rain poncho', 'Regenponcho', 'shelter', 'c', 0.3, 0, 0, 0, 'outdoor'],
+  ['boots', '🥾', 'Hiking boots', 'Wandelschoenen', 'shelter', 'u', 1.4, 0, 0, 0, 'clothes'],
+  ['socks', '🧦', 'Wool socks', 'Wollen sokken', 'shelter', 'c', 0.1, 0, 0, 0, 'clothes'],
+  ['thermal', '🧣', 'Thermal underwear', 'Thermo-ondergoed', 'shelter', 'c', 0.3, 0, 0, 0, 'clothes'],
+  ['hat_gloves', '🧤', 'Hat & warm gloves', 'Muts & warme handschoenen', 'shelter', 'c', 0.2, 0, 0, 0, 'clothes'],
+  ['clothes_set', '👕', 'Spare clothes set', 'Set reservekleding', 'shelter', 'c', 1, 0, 0, 0, 'clothes'],
+  ['backpack', '🎒', 'Backpack 40-60 L', 'Rugzak 40-60 L', 'shelter', 'u', 1.5, 0, 0, 0, 'outdoor'],
+  ['sunglasses', '🕶️', 'Sunglasses', 'Zonnebril', 'shelter', 'c', 0.03, 0, 0, 0, 'clothes'],
+  ['plastic_sheet', '🧻', 'Plastic sheeting & tape', 'Bouwfolie & tape', 'shelter', 'c', 1, 0, 0, 0, 'hw'],
+  // ── hygiene ──
+  ['toilet_paper', '🧻', 'Toilet paper (pack)', 'Toiletpapier (pak)', 'hygiene', 'c', 0.9, 0, 0, 0, 'super'],
+  ['soap', '🧼', 'Soap', 'Zeep', 'hygiene', 'c', 0.1, 0, 0, 1095, 'super'],
+  ['hand_sanitizer', '🧴', 'Hand sanitizer', 'Handgel', 'hygiene', 'c', 0.1, 0, 0, 1095, 'pharm'],
+  ['toothbrush', '🪥', 'Toothbrush & paste', 'Tandenborstel & pasta', 'hygiene', 'c', 0.1, 0, 0, 730, 'super'],
+  ['wet_wipes', '🧽', 'Wet wipes', 'Vochtige doekjes', 'hygiene', 'c', 0.3, 0, 0, 730, 'super'],
+  ['garbage_bags', '🗑️', 'Garbage bags', 'Vuilniszakken', 'hygiene', 'c', 0.3, 0, 0, 0, 'super'],
+  ['bucket_toilet', '🪣', 'Bucket toilet + bags', 'Emmertoilet + zakken', 'hygiene', 'u', 1.5, 0, 0, 0, 'hw'],
+  ['feminine', '🩲', 'Feminine hygiene', 'Maandverband / tampons', 'hygiene', 'c', 0.2, 0, 0, 1825, 'super'],
+  ['towel', '🧺', 'Quick-dry towel', 'Sneldroghanddoek', 'hygiene', 'c', 0.2, 0, 0, 0, 'outdoor'],
+  ['sunscreen', '🧴', 'Sunscreen', 'Zonnebrand', 'hygiene', 'c', 0.2, 0, 0, 730, 'pharm'],
+  ['insect_repellent', '🦟', 'Insect repellent', 'Muggenspray', 'hygiene', 'c', 0.1, 0, 0, 1095, 'pharm'],
+  ['diapers', '👶', 'Diapers', 'Luiers', 'hygiene', 'c', 1.5, 0, 0, 0, 'super'],
+  // ── documents & money ──
+  ['cash', '💶', 'Cash (small notes)', 'Contant geld (kleine biljetten)', 'docs', 'r', 0.05, 0, 0, 0, 'bank'],
+  ['id_copies', '🪪', 'Copies of ID & documents', 'Kopieën ID & documenten', 'docs', 'u', 0.05, 0, 0, 0, 'books'],
+  ['contacts_list', '📇', 'Emergency contact list (paper)', 'Noodcontactenlijst (papier)', 'docs', 'c', 0.01, 0, 0, 0, 'books'],
+  ['usb_backup', '💽', 'USB stick with backups', 'USB-stick met back-ups', 'docs', 'u', 0.01, 0, 0, 0, 'elec'],
+  ['keys_spare', '🔑', 'Spare keys', 'Reservesleutels', 'docs', 'u', 0.05, 0, 0, 0, 'hw'],
+  ['coins', '🪙', 'Coins', 'Muntgeld', 'docs', 'c', 0.2, 0, 0, 0, 'bank'],
+  ['silver', '🥈', 'Silver coin', 'Zilveren munt', 'docs', 'e', 0.03, 0, 0, 0, 'bank'],
+  ['gold', '🥇', 'Gold coin', 'Gouden munt', 'docs', 'l', 0.03, 0, 0, 0, 'bank'],
+  ['playing_cards', '🃏', 'Playing cards', 'Speelkaarten', 'docs', 'c', 0.1, 0, 0, 0, 'books'],
+  ['book_survival', '📕', 'Survival handbook', 'Overlevingshandboek', 'docs', 'r', 0.4, 0, 0, 0, 'books'],
+  // ── car ──
+  ['jumper_cables', '🔋', 'Jumper cables', 'Startkabels', 'car', 'u', 1.5, 0, 0, 0, 'car'],
+  ['jump_starter', '⚡', 'Jump starter pack', 'Jumpstarter', 'car', 'r', 0.8, 0, 0, 0, 'car'],
+  ['tow_rope', '🪢', 'Tow rope', 'Sleeptouw', 'car', 'u', 1.2, 0, 0, 0, 'car'],
+  ['warning_triangle', '⚠️', 'Warning triangle', 'Gevarendriehoek', 'car', 'c', 0.6, 0, 0, 0, 'car'],
+  ['safety_vest', '🦺', 'Safety vest', 'Veiligheidsvest', 'car', 'c', 0.15, 0, 0, 0, 'car'],
+  ['ice_scraper', '🧊', 'Ice scraper', 'IJskrabber', 'car', 'c', 0.15, 0, 0, 0, 'car'],
+  ['tire_kit', '🛞', 'Tire repair kit / compressor', 'Bandenreparatieset / compressor', 'car', 'u', 1.5, 0, 0, 0, 'car'],
+  ['window_breaker', '🔨', 'Seatbelt cutter & window breaker', 'Gordelsnijder & noodhamer', 'car', 'u', 0.1, 0, 0, 0, 'car'],
+  ['snow_chains', '⛓️', 'Snow chains', 'Sneeuwkettingen', 'car', 'r', 3, 0, 0, 0, 'car'],
+  // ── defence & security ──
+  ['door_wedge', '🚪', 'Door wedge / alarm', 'Deurstopper / alarm', 'security', 'c', 0.2, 0, 0, 0, 'hw'],
+  ['padlock', '🔒', 'Padlock', 'Hangslot', 'security', 'c', 0.3, 0, 0, 0, 'hw'],
+  ['pepper_spray', '🌶️', 'Animal deterrent spray', 'Dierenafweerspray', 'security', 'r', 0.2, 0, 0, 1095, 'outdoor'],
+  ['binoculars', '🔭', 'Binoculars', 'Verrekijker', 'security', 'r', 0.6, 0, 0, 0, 'outdoor'],
+  ['smoke_alarm', '🚨', 'Smoke / CO alarm', 'Rook- / CO-melder', 'security', 'u', 0.2, 0, 0, 3650, 'hw'],
+  ['helmet', '⛑️', 'Helmet', 'Helm', 'security', 'u', 0.5, 0, 0, 0, 'hw'],
+  ['gas_mask', '😶‍🌫️', 'Respirator / gas mask', 'Gasmasker', 'security', 'e', 0.6, 0, 0, 0, 'outdoor'],
+  ['dosimeter', '☢️', 'Geiger counter', 'Geigerteller', 'security', 'l', 0.2, 0, 0, 0, 'elec'],
+];
+
+const INV_CATS = [
+  ['water', '💧', 'Water', 'Water'], ['food', '🥫', 'Food', 'Eten'], ['medical', '🩹', 'Medical', 'Medisch'],
+  ['fire', '🔥', 'Fire & cooking', 'Vuur & koken'], ['power', '🔋', 'Light & power', 'Licht & stroom'],
+  ['comms', '📻', 'Comms & navigation', 'Communicatie & navigatie'], ['tools', '🛠️', 'Tools', 'Gereedschap'],
+  ['shelter', '⛺', 'Shelter & clothing', 'Onderdak & kleding'], ['hygiene', '🧼', 'Hygiene', 'Hygiëne'],
+  ['docs', '🪪', 'Documents & money', 'Documenten & geld'], ['car', '🚗', 'Car', 'Auto'], ['security', '🛡️', 'Security', 'Veiligheid'],
+];
+
+/* where to find: map place kinds (OpenStreetMap) + a hint for searching a house/area */
+const INV_FIND = {
+  super:   [['supermarket', 'convenience', 'grocery', 'general'], 'Supermarket, corner shop', 'Supermarkt, buurtwinkel', 'Kitchen cupboards, pantry, basement', 'Keukenkastjes, voorraadkast, kelder'],
+  pharm:   [['pharmacy', 'chemist', 'doctors'], 'Pharmacy, drugstore', 'Apotheek, drogist', 'Bathroom cabinet, first-aid box in cars and offices', 'Badkamerkastje, EHBO-doos in auto’s en kantoren'],
+  outdoor: [['outdoor', 'sports', 'hunting', 'fishing', 'camping'], 'Outdoor / camping / sports shop', 'Outdoor-, kampeer- of sportwinkel', 'Garage, attic, camping gear, scouting buildings', 'Garage, zolder, kampeerspullen, scoutinggebouw'],
+  hw:      [['hardware', 'doityourself', 'trade', 'tools'], 'Hardware / DIY store', 'Bouwmarkt, ijzerwaren', 'Shed, garage, toolbox, utility room', 'Schuur, garage, gereedschapskist, bijkeuken'],
+  elec:    [['electronics', 'mobile_phone', 'computer', 'hifi'], 'Electronics shop', 'Elektronicawinkel', 'Desk drawers, office, tech cupboard', 'Bureaulades, kantoor, techniekkast'],
+  fuel:    [['fuel'], 'Fuel station', 'Tankstation', 'Car, shed with garden machines', 'Auto, schuur met tuinmachines'],
+  car:     [['car_repair', 'car_parts', 'car', 'fuel'], 'Car parts shop, garage, fuel station', 'Autoparts, garage, tankstation', 'Car boot, garage', 'Kofferbak, garage'],
+  garden:  [['garden_centre', 'farm', 'agrarian'], 'Garden centre, farm shop', 'Tuincentrum, boerderijwinkel', 'Garden shed, allotment', 'Tuinhuis, volkstuin'],
+  clothes: [['clothes', 'shoes', 'second_hand', 'charity'], 'Clothing / second-hand shop', 'Kleding- of kringloopwinkel', 'Wardrobes, attic, laundry room', 'Kledingkast, zolder, washok'],
+  bike:    [['bicycle'], 'Bicycle shop', 'Fietsenwinkel', 'Bike shed, garage', 'Fietsenschuur, garage'],
+  books:   [['books', 'stationery', 'newsagent'], 'Book / stationery shop', 'Boekhandel, kantoorboekhandel', 'Bookshelves, desk, car glovebox', 'Boekenkast, bureau, dashboardkastje'],
+  pet:     [['pet', 'veterinary'], 'Pet shop, vet', 'Dierenwinkel, dierenarts', 'Utility room, near pet bowls', 'Bijkeuken, bij de voerbakken'],
+  bank:    [['atm', 'bank', 'bureau_de_change', 'jewelry'], 'ATM, bank, jeweller', 'Geldautomaat, bank, juwelier', 'Safe, wallet, drawers', 'Kluis, portemonnee, lades'],
+};
+
+/* recommended kits — [item id, quantity, per person?] */
+const INV_KITS = [
+  {id:'bag72', icon:'🎒', type:'backpack', en:'72-hour bug-out bag', nl:'72-uurs rugzak (vluchttas)',
+   items:[['water_bottle', 2, 1], ['water_filter', 1], ['water_tabs', 1], ['ration_bar', 2, 1], ['protein_bar', 6, 1], ['first_aid', 1], ['painkillers', 1], ['headlamp', 1], ['batteries_aa', 1],
+          ['powerbank', 1], ['radio', 1], ['lighter', 1], ['ferro_rod', 1], ['multitool', 1], ['knife', 1], ['paracord', 1], ['emergency_blanket', 2], ['poncho', 1, 1], ['socks', 2, 1],
+          ['hat_gloves', 1, 1], ['whistle', 1], ['compass', 1], ['map_paper', 1], ['cash', 1], ['id_copies', 1], ['hand_sanitizer', 1], ['duct_tape', 1], ['face_masks', 1], ['mess_kit', 1, 1]]},
+  {id:'home14', icon:'🏠', type:'home', en:'Home supply for 2 weeks', nl:'Thuisvoorraad voor 2 weken',
+   items:[['water_pack', 10, 1], ['water_jerry', 1], ['canned_beans', 6, 1], ['canned_soup', 6, 1], ['canned_fish', 4, 1], ['canned_veg', 6, 1], ['rice', 2, 1], ['pasta', 2, 1], ['oats', 1, 1],
+          ['peanut_butter', 1, 1], ['crackers', 3, 1], ['sugar', 1], ['salt', 1], ['cooking_oil', 1], ['camp_stove', 1], ['gas_canister', 4], ['can_opener', 1], ['first_aid', 1],
+          ['prescription', 1, 1], ['painkillers', 1], ['radio', 1], ['flashlight', 2], ['batteries_aa', 2], ['candles', 1], ['lighter', 2], ['toilet_paper', 2, 1], ['garbage_bags', 1],
+          ['bucket_toilet', 1], ['bleach', 1], ['wool_blanket', 1, 1], ['cash', 1], ['fire_extinguisher', 1], ['smoke_alarm', 1], ['powerbank', 1], ['book_survival', 1]]},
+  {id:'car', icon:'🚗', type:'car', en:'Car emergency kit', nl:'Noodpakket auto',
+   items:[['water_bottle', 2], ['protein_bar', 4], ['first_aid', 1], ['warning_triangle', 1], ['safety_vest', 2], ['jumper_cables', 1], ['tow_rope', 1], ['tire_kit', 1], ['flashlight', 1],
+          ['emergency_blanket', 2], ['wool_blanket', 1], ['ice_scraper', 1], ['window_breaker', 1], ['work_gloves', 1], ['map_paper', 1], ['cables', 1], ['shovel', 1]]},
+];
+</script>
 <script>!function(f){typeof module!='undefined'&&typeof exports=='object'?module.exports=f():typeof define!='undefined'&&define.amd?define(['fzstd',f]):(typeof self!='undefined'?self:this).fzstd=f()}(function(){var _e={};"use strict";var r=ArrayBuffer,t=Uint8Array,e=Uint16Array,n=Int16Array,a=Uint32Array,s=Int32Array,i=function(r,e,n){if(t.prototype.slice)return t.prototype.slice.call(r,e,n);(null==e||e<0)&&(e=0),(null==n||n>r.length)&&(n=r.length);var a=new t(n-e);return a.set(r.subarray(e,n)),a},o=function(r,e,n,a){if(t.prototype.fill)return t.prototype.fill.call(r,e,n,a);for((null==n||n<0)&&(n=0),(null==a||a>r.length)&&(a=r.length);n<a;++n)r[n]=e;return r},u=function(r,e,n,a){if(t.prototype.copyWithin)return t.prototype.copyWithin.call(r,e,n,a);for((null==n||n<0)&&(n=0),(null==a||a>r.length)&&(a=r.length);n<a;)r[e++]=r[n++]};_e.ZstdErrorCode={InvalidData:0,WindowSizeTooLarge:1,InvalidBlockType:2,FSEAccuracyTooHigh:3,DistanceTooFarBack:4,UnexpectedEOF:5};var h=["invalid zstd data","window size too large (>2046MB)","invalid block type","FSE accuracy too high","match distance too far back","unexpected EOF"],f=function(r,t,e){var n=Error(t||h[r]);if(n.code=r,Error.captureStackTrace&&Error.captureStackTrace(n,f),!e)throw n;return n},l=function(r,t,e){for(var n=0,a=0;n<e;++n)a|=r[t++]<<(n<<3);return a},v=function(r,t){return(r[t]|r[t+1]<<8|r[t+2]<<16|r[t+3]<<24)>>>0},c=function(r,e){var n=r[0]|r[1]<<8|r[2]<<16;if(3126568==n&&253==r[3]){var a=r[4],i=a>>5&1,o=a>>2&1,u=3&a,h=a>>6;8&a&&f(0);var c=6-i,b=3==u?4:u,y=l(r,c,b),p=h?1<<h:i,w=l(r,c+=b,p)+(1==h&&256),g=w;if(!i){var d=1<<10+(r[5]>>3);g=d+(d>>3)*(7&r[5])}g>2145386496&&f(1);var m=new t((1==e?w||g:e?0:g)+12);return m[0]=1,m[4]=4,m[8]=8,{b:c+p,y:0,l:0,d:y,w:e&&1!=e?e:m.subarray(12),e:g,o:new s(m.buffer,0,3),u:w,c:o,m:Math.min(131072,g)}}if(25481893==(n>>4|r[3]<<20))return v(r,4)+8;f(0)},b=function(r){for(var t=0;1<<t<=r;++t);return t-1},y=function(a,s,i){var o=4+(s<<3),u=5+(15&a[s]);u>i&&f(3);for(var h=1<<u,l=h,v=-1,c=-1,y=-1,p=h,w=new r(512+(h<<2)),g=new n(w,0,256),d=new e(w,0,256),m=new e(w,512,h),z=512+(h<<1),E=new t(w,z,h),k=new t(w,z+h);v<255&&l>0;){var A=b(l+1),T=o>>3,x=(1<<A+1)-1,F=(a[T]|a[T+1]<<8|a[T+2]<<16)>>(7&o)&x,S=(1<<A)-1,B=x-l-1,I=F&S;if(I<B?(o+=A,F=I):(o+=A+1,F>S&&(F-=B)),g[++v]=--F,-1==F?(l+=F,E[--p]=v):l-=F,!F)do{var U=o>>3;c=(a[U]|a[U+1]<<8)>>(7&o)&3,o+=2,v+=c}while(3==c)}(v>255||l)&&f(0);for(var D=0,M=(h>>1)+(h>>3)+3,W=h-1,O=0;O<=v;++O){var j=g[O];if(j<1)d[O]=-j;else for(y=0;y<j;++y){E[D]=O;do{D=D+M&W}while(D>=p)}}for(D&&f(0),y=0;y<h;++y){var C=d[E[y]]++,H=k[y]=u-b(C);m[y]=(C<<H)-h}return[o+7>>3,{b:u,s:E,n:k,t:m}]},p=function(r,n){var a=0,s=-1,i=new t(292),u=r[n],h=i.subarray(0,256),l=i.subarray(256,268),v=new e(i.buffer,268);if(u<128){var c=y(r,n+1,6),p=c[1],w=c[0]<<3,g=r[n+=u];g||f(0);for(var d=0,m=0,z=p.b,E=z,k=(++n<<3)-8+b(g);!((k-=z)<w);){var A=k>>3;if(h[++s]=p.s[d+=(r[A]|r[A+1]<<8)>>(7&k)&(1<<z)-1],(k-=E)<w)break;h[++s]=p.s[m+=(r[A=k>>3]|r[A+1]<<8)>>(7&k)&(1<<E)-1],z=p.n[d],d=p.t[d],E=p.n[m],m=p.t[m]}++s>255&&f(0)}else{for(s=u-127;a<s;a+=2){var T=r[++n];h[a]=T>>4,h[a+1]=15&T}++n}var x=0;for(a=0;a<s;++a)(I=h[a])>11&&f(0),x+=I&&1<<I-1;var F=b(x)+1,S=1<<F,B=S-x;for(B&B-1&&f(0),h[s++]=b(B)+1,a=0;a<s;++a){var I;++l[h[a]=(I=h[a])&&F+1-I]}var U=new t(S<<1),D=U.subarray(0,S),M=U.subarray(S);for(v[F]=0,a=F;a>0;--a){var W=v[a];o(M,a,W,v[a-1]=W+l[a]*(1<<F-a))}for(v[0]!=S&&f(0),a=0;a<s;++a){var O=h[a];if(O){var j=v[O];o(D,a,j,v[O]=j+(1<<F-O))}}return[n,{n:M,b:F,s:D}]},w=y(new t([81,16,99,140,49,198,24,99,12,33,196,24,99,102,102,134,70,146,4]),0,6)[1],g=y(new t([33,20,196,24,99,140,33,132,16,66,8,33,132,16,66,8,33,68,68,68,68,68,68,68,68,36,9]),0,6)[1],d=y(new t([32,132,16,66,102,70,68,68,68,68,36,73,2]),0,5)[1],m=function(r,t){for(var e=r.length,n=new s(e),a=0;a<e;++a)n[a]=t,t+=1<<r[a];return n},z=new t(new s([0,0,0,0,16843009,50528770,134678020,202050057,269422093]).buffer,0,36),E=m(z,0),k=new t(new s([0,0,0,0,0,0,0,0,16843009,50528770,117769220,185207048,252579084,16]).buffer,0,53),A=m(k,3),T=function(r,t,e){var n=r.length,a=t.length,s=r[n-1],i=(1<<e.b)-1,o=-e.b;s||f(0);for(var u=0,h=e.b,l=(n<<3)-8+b(s)-h,v=-1;l>o&&v<a;){var c=l>>3;t[++v]=e.s[u=(u<<h|(r[c]|r[c+1]<<8|r[c+2]<<16)>>(7&l))&i],l-=h=e.n[u]}l==o&&v+1==a||f(0)},x=function(r,t,e){var n=6,a=t.length+3>>2,s=a<<1,i=a+s;T(r.subarray(n,n+=r[0]|r[1]<<8),t.subarray(0,a),e),T(r.subarray(n,n+=r[2]|r[3]<<8),t.subarray(a,s),e),T(r.subarray(n,n+=r[4]|r[5]<<8),t.subarray(s,i),e),T(r.subarray(n),t.subarray(i),e)},F=function(r,n,a){var s,u=n.b,h=r[u],l=h>>1&3;n.l=1&h;var v=h>>3|r[u+1]<<5|r[u+2]<<13,c=(u+=3)+v;if(1==l){if(u>=r.length)return;return n.b=u+1,a?(o(a,r[u],n.y,n.y+=v),a):o(new t(v),r[u])}if(!(c>r.length)){if(0==l)return n.b=c,a?(a.set(r.subarray(u,c),n.y),n.y+=v,a):i(r,u,c);if(2==l){var m=r[u],F=3&m,S=m>>2&3,B=m>>4,I=0,U=0;F<2?1&S?B|=r[++u]<<4|(2&S&&r[++u]<<12):B=m>>3:(U=S,S<2?(B|=(63&r[++u])<<4,I=r[u]>>6|r[++u]<<2):2==S?(B|=r[++u]<<4|(3&r[++u])<<12,I=r[u]>>2|r[++u]<<6):(B|=r[++u]<<4|(63&r[++u])<<12,I=r[u]>>6|r[++u]<<2|r[++u]<<10)),++u;var D=a?a.subarray(n.y,n.y+n.m):new t(n.m),M=D.length-B;if(0==F)D.set(r.subarray(u,u+=B),M);else if(1==F)o(D,r[u++],M);else{var W=n.h;if(2==F){var O=p(r,u);I+=u-(u=O[0]),n.h=W=O[1]}else W||f(0);(U?x:T)(r.subarray(u,u+=I),D.subarray(M),W)}var j=r[u++];if(j){255==j?j=32512+(r[u++]|r[u++]<<8):j>127&&(j=j-128<<8|r[u++]);var C=r[u++];3&C&&f(0);for(var H=[g,d,w],L=2;L>-1;--L){var Z=C>>2+(L<<1)&3;if(1==Z){var q=new t([0,0,r[u++]]);H[L]={s:q.subarray(2,3),n:q.subarray(0,1),t:new e(q.buffer,0,1),b:0}}else 2==Z?(u=(s=y(r,u,9-(1&L)))[0],H[L]=s[1]):3==Z&&(n.t||f(0),H[L]=n.t[L])}var G=n.t=H,J=G[0],K=G[1],N=G[2],P=r[c-1];P||f(0);var Q=(c<<3)-8+b(P)-N.b,R=Q>>3,V=0,X=(r[R]|r[R+1]<<8)>>(7&Q)&(1<<N.b)-1,Y=(r[R=(Q-=K.b)>>3]|r[R+1]<<8)>>(7&Q)&(1<<K.b)-1,$=(r[R=(Q-=J.b)>>3]|r[R+1]<<8)>>(7&Q)&(1<<J.b)-1;for(++j;--j;){var _=N.s[X],rr=N.n[X],tr=J.s[$],er=J.n[$],nr=K.s[Y],ar=K.n[Y],sr=1<<nr,ir=sr+((r[R=(Q-=nr)>>3]|r[R+1]<<8|r[R+2]<<16|r[R+3]<<24)>>>(7&Q)&sr-1);R=(Q-=k[tr])>>3;var or=A[tr]+((r[R]|r[R+1]<<8|r[R+2]<<16)>>(7&Q)&(1<<k[tr])-1);R=(Q-=z[_])>>3;var ur=E[_]+((r[R]|r[R+1]<<8|r[R+2]<<16)>>(7&Q)&(1<<z[_])-1);if(R=(Q-=rr)>>3,X=N.t[X]+((r[R]|r[R+1]<<8)>>(7&Q)&(1<<rr)-1),R=(Q-=er)>>3,$=J.t[$]+((r[R]|r[R+1]<<8)>>(7&Q)&(1<<er)-1),R=(Q-=ar)>>3,Y=K.t[Y]+((r[R]|r[R+1]<<8)>>(7&Q)&(1<<ar)-1),ir>3)n.o[2]=n.o[1],n.o[1]=n.o[0],n.o[0]=ir-=3;else{var hr=ir-(0!=ur);hr?(ir=3==hr?n.o[0]-1:n.o[hr],hr>1&&(n.o[2]=n.o[1]),n.o[1]=n.o[0],n.o[0]=ir):ir=n.o[0]}for(L=0;L<ur;++L)D[V+L]=D[M+L];M+=ur;var fr=(V+=ur)-ir;if(fr<0){var lr=-fr,vr=n.e+fr;for(lr>or&&(lr=or),L=0;L<lr;++L)D[V+L]=n.w[vr+L];V+=lr,or-=lr,fr=0}for(L=0;L<or;++L)D[V+L]=D[fr+L];V+=or}if(V!=M)for(;M<D.length;)D[V++]=D[M++];else V=D.length;a?n.y+=V:D=i(D,0,V)}else if(a){if(n.y+=B,M)for(L=0;L<B;++L)D[L]=D[M+L]}else M&&(D=i(D,M));return n.b=c,D}f(2)}},S=function(r,e){if(1==r.length)return r[0];for(var n=new t(e),a=0,s=0;a<r.length;++a){var i=r[a];n.set(i,s),s+=i.length}return n};function B(r,t){for(var e=[],n=+!t,a=0,s=0;r.length;){var i=c(r,n||t);if("object"==typeof i){for(n?(t=null,i.w.length==i.u&&(e.push(t=i.w),s+=i.u)):(e.push(t),i.e=0);!i.l;){var o=F(r,i,t);o||f(5),t?i.e=i.y:(e.push(o),s+=o.length,u(i.w,0,o.length),i.w.set(o,i.w.length-o.length))}a=i.b+4*i.c}else a=i;r=r.subarray(a)}return S(e,s)}_e.decompress=B;var I=function(){function r(r){this.ondata=r,this.c=[],this.l=0,this.z=0}return r.prototype.push=function(r,e){if("number"==typeof this.s){var n=Math.min(r.length,this.s);r=r.subarray(n),this.s-=n}var a=r.length+this.l;if(!this.s){if(e){if(!a)return void this.ondata(new t(0),!0);a<5&&f(5)}else if(a<18)return this.c.push(r),void(this.l=a);if(this.l&&(this.c.push(r),r=S(this.c,a),this.c=[],this.l=0),"number"==typeof(this.s=c(r)))return this.push(r,e)}if("number"!=typeof this.s){if(a<(this.z||3))return e&&f(5),this.c.push(r),void(this.l=a);if(this.l&&(this.c.push(r),r=S(this.c,a),this.c=[],this.l=0),!this.z&&a<(this.z=2&r[this.s.b]?4:3+(r[this.s.b]>>3|r[this.s.b+1]<<5|r[this.s.b+2]<<13)))return e&&f(5),this.c.push(r),void(this.l=a);for(this.z=0;;){var s=F(r,this.s);if(!s){e&&f(5);var i=r.subarray(this.s.b);return this.s.b=0,this.c.push(i),void(this.l+=i.length)}if(this.ondata(s,!1),u(this.s.w,0,s.length),this.s.w.set(s,this.s.w.length-s.length),this.s.l){var o=r.subarray(this.s.b);return this.s=4*this.s.c,void this.push(o,e)}}}else e&&f(5)},r}();_e.Decompress=I;return _e})</script>
 <script>"use strict";var pmtiles=(()=>{var k=Object.defineProperty;var Je=Object.getOwnPropertyDescriptor;var Ye=Object.getOwnPropertyNames;var Qe=Object.prototype.hasOwnProperty;var De=Math.pow;var l=(r,e)=>k(r,"name",{value:e,configurable:!0});var Xe=(r,e)=>{for(var t in e)k(r,t,{get:e[t],enumerable:!0})},_e=(r,e,t,n)=>{if(e&&typeof e=="object"||typeof e=="function")for(let i of Ye(e))!Qe.call(r,i)&&i!==t&&k(r,i,{get:()=>e[i],enumerable:!(n=Je(e,i))||n.enumerable});return r};var et=r=>_e(k({},"__esModule",{value:!0}),r);var d=(r,e,t)=>new Promise((n,i)=>{var a=f=>{try{s(t.next(f))}catch(h){i(h)}},o=f=>{try{s(t.throw(f))}catch(h){i(h)}},s=f=>f.done?n(f.value):Promise.resolve(f.value).then(a,o);s((t=t.apply(r,e)).next())});var Tt={};Xe(Tt,{Compression:()=>Ie,EtagMismatch:()=>B,FetchSource:()=>V,FileSource:()=>oe,PMTiles:()=>S,Protocol:()=>ne,ResolvedValueCache:()=>se,SharedPromiseCache:()=>G,TileType:()=>ae,bytesToHeader:()=>$e,findTile:()=>Ze,getUint64:()=>b,leafletRasterLayer:()=>wt,readVarint:()=>R,tileIdToZxy:()=>zt,tileTypeExt:()=>Oe,zxyToTileId:()=>He});var w=Uint8Array,U=Uint16Array,tt=Int32Array,Me=new w([0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0,0,0,0]),Ee=new w([0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,0,0]),rt=new w([16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15]),Ue=l(function(r,e){for(var t=new U(31),n=0;n<31;++n)t[n]=e+=1<<r[n-1];for(var i=new tt(t[30]),n=1;n<30;++n)for(var a=t[n];a<t[n+1];++a)i[a]=a-t[n]<<5|n;return{b:t,r:i}},"freb"),Le=Ue(Me,2),Se=Le.b,nt=Le.r;Se[28]=258,nt[258]=28;var Pe=Ue(Ee,0),it=Pe.b,Mt=Pe.r,te=new U(32768);for(g=0;g<32768;++g)C=(g&43690)>>1|(g&21845)<<1,C=(C&52428)>>2|(C&13107)<<2,C=(C&61680)>>4|(C&3855)<<4,te[g]=((C&65280)>>8|(C&255)<<8)>>1;var C,g,O=l(function(r,e,t){for(var n=r.length,i=0,a=new U(e);i<n;++i)r[i]&&++a[r[i]-1];var o=new U(e);for(i=1;i<e;++i)o[i]=o[i-1]+a[i-1]<<1;var s;if(t){s=new U(1<<e);var f=15-e;for(i=0;i<n;++i)if(r[i])for(var h=i<<4|r[i],c=e-r[i],u=o[r[i]-1]++<<c,v=u|(1<<c)-1;u<=v;++u)s[te[u]>>f]=h}else for(s=new U(n),i=0;i<n;++i)r[i]&&(s[i]=te[o[r[i]-1]++]>>15-r[i]);return s},"hMap"),Z=new w(288);for(g=0;g<144;++g)Z[g]=8;var g;for(g=144;g<256;++g)Z[g]=9;var g;for(g=256;g<280;++g)Z[g]=7;var g;for(g=280;g<288;++g)Z[g]=8;var g,Re=new w(32);for(g=0;g<32;++g)Re[g]=5;var g;var at=O(Z,9,1);var ot=O(Re,5,1),_=l(function(r){for(var e=r[0],t=1;t<r.length;++t)r[t]>e&&(e=r[t]);return e},"max"),A=l(function(r,e,t){var n=e/8|0;return(r[n]|r[n+1]<<8)>>(e&7)&t},"bits"),ee=l(function(r,e){var t=e/8|0;return(r[t]|r[t+1]<<8|r[t+2]<<16)>>(e&7)},"bits16"),st=l(function(r){return(r+7)/8|0},"shft"),ut=l(function(r,e,t){return(e==null||e<0)&&(e=0),(t==null||t>r.length)&&(t=r.length),new w(r.subarray(e,t))},"slc");var ft=["unexpected EOF","invalid block type","invalid length/literal","invalid distance","stream finished","no stream handler",,"no callback","invalid UTF-8 data","extra field too long","date not in range 1980-2099","filename too long","stream finishing","invalid zip data"],y=l(function(r,e,t){var n=new Error(e||ft[r]);if(n.code=r,Error.captureStackTrace&&Error.captureStackTrace(n,y),!t)throw n;return n},"err"),re=l(function(r,e,t,n){var i=r.length,a=n?n.length:0;if(!i||e.f&&!e.l)return t||new w(0);var o=!t,s=o||e.i!=2,f=e.i;o&&(t=new w(i*3));var h=l(function(ze){var Ce=t.length;if(ze>Ce){var Te=new w(Math.max(Ce*2,ze));Te.set(t),t=Te}},"cbuf"),c=e.f||0,u=e.p||0,v=e.b||0,p=e.l,m=e.d,D=e.m,F=e.n,K=i*8;do{if(!p){c=A(r,u,1);var q=A(r,u+1,3);if(u+=3,q)if(q==1)p=at,m=ot,D=9,F=5;else if(q==2){var N=A(r,u,31)+257,pe=A(r,u+10,15)+4,me=N+A(r,u+5,31)+1;u+=14;for(var H=new w(me),J=new w(19),x=0;x<pe;++x)J[rt[x]]=A(r,u+x*3,7);u+=pe*3;for(var de=_(J),Ke=(1<<de)-1,qe=O(J,de,1),x=0;x<me;){var ye=qe[A(r,u,Ke)];u+=ye&15;var z=ye>>4;if(z<16)H[x++]=z;else{var M=0,$=0;for(z==16?($=3+A(r,u,3),u+=2,M=H[x-1]):z==17?($=3+A(r,u,7),u+=3):z==18&&($=11+A(r,u,127),u+=7);$--;)H[x++]=M}}var we=H.subarray(0,N),T=H.subarray(N);D=_(we),F=_(T),p=O(we,D,1),m=O(T,F,1)}else y(1);else{var z=st(u)+4,j=r[z-4]|r[z-3]<<8,W=z+j;if(W>i){f&&y(0);break}s&&h(v+j),t.set(r.subarray(z,W),v),e.b=v+=j,e.p=u=W*8,e.f=c;continue}if(u>K){f&&y(0);break}}s&&h(v+131072);for(var je=(1<<D)-1,We=(1<<F)-1,Y=u;;Y=u){var M=p[ee(r,u)&je],E=M>>4;if(u+=M&15,u>K){f&&y(0);break}if(M||y(2),E<256)t[v++]=E;else if(E==256){Y=u,p=null;break}else{var xe=E-254;if(E>264){var x=E-257,I=Me[x];xe=A(r,u,(1<<I)-1)+Se[x],u+=I}var Q=m[ee(r,u)&We],X=Q>>4;Q||y(3),u+=Q&15;var T=it[X];if(X>3){var I=Ee[X];T+=ee(r,u)&(1<<I)-1,u+=I}if(u>K){f&&y(0);break}s&&h(v+131072);var be=v+xe;if(v<T){var Ae=a-T,Ne=Math.min(T,be);for(Ae+v<0&&y(3);v<Ne;++v)t[v]=n[Ae+v]}for(;v<be;++v)t[v]=t[v-T]}}e.l=p,e.p=Y,e.b=v,e.f=c,p&&(c=1,e.m=D,e.d=m,e.n=F)}while(!c);return v!=t.length&&o?ut(t,0,v):t.subarray(0,v)},"inflt");var lt=new w(0);var ht=l(function(r){(r[0]!=31||r[1]!=139||r[2]!=8)&&y(6,"invalid gzip data");var e=r[3],t=10;e&4&&(t+=(r[10]|r[11]<<8)+2);for(var n=(e>>3&1)+(e>>4&1);n>0;n-=!r[t++]);return t+(e&2)},"gzs"),ct=l(function(r){var e=r.length;return(r[e-4]|r[e-3]<<8|r[e-2]<<16|r[e-1]<<24)>>>0},"gzl");var vt=l(function(r,e){return((r[0]&15)!=8||r[0]>>4>7||(r[0]<<8|r[1])%31)&&y(6,"invalid zlib data"),(r[1]>>5&1)==+!e&&y(6,"invalid zlib data: "+(r[1]&32?"need":"unexpected")+" dictionary"),(r[1]>>3&4)+2},"zls");function gt(r,e){return re(r,{i:2},e&&e.out,e&&e.dictionary)}l(gt,"inflateSync");function pt(r,e){var t=ht(r);return t+8>r.length&&y(6,"invalid gzip data"),re(r.subarray(t,-8),{i:2},e&&e.out||new w(ct(r)),e&&e.dictionary)}l(pt,"gunzipSync");function mt(r,e){return re(r.subarray(vt(r,e&&e.dictionary),-4),{i:2},e&&e.out,e&&e.dictionary)}l(mt,"unzlibSync");function Be(r,e){return r[0]==31&&r[1]==139&&r[2]==8?pt(r,e):(r[0]&15)!=8||r[0]>>4>7||(r[0]<<8|r[1])%31?gt(r,e):mt(r,e)}l(Be,"decompressSync");var dt=typeof TextDecoder!="undefined"&&new TextDecoder,yt=0;try{dt.decode(lt,{stream:!0}),yt=1}catch(r){}var wt=l((r,e)=>{let t=!1,n="",i=L.GridLayer.extend({createTile:l((a,o)=>{let s=document.createElement("img"),f=new AbortController,h=f.signal;return s.cancel=()=>{f.abort()},t||(r.getHeader().then(c=>{c.tileType===1||c.tileType===6?console.error("Error: archive contains vector tiles, but leafletRasterLayer is for displaying raster tiles. See https://github.com/protomaps/PMTiles/tree/main/js for details."):c.tileType===2?n="image/png":c.tileType===3?n="image/jpeg":c.tileType===4?n="image/webp":c.tileType===5&&(n="image/avif")}),t=!0),r.getZxy(a.z,a.x,a.y,h).then(c=>{if(c){let u=new Blob([c.data],{type:n}),v=window.URL.createObjectURL(u);s.src=v}else s.style.display="none";s.cancel=void 0,o(void 0,s)}).catch(c=>{if(c.name!=="AbortError")throw c}),s},"createTile"),_removeTile:l(function(a){let o=this._tiles[a];o&&(o.el.cancel&&o.el.cancel(),o.el.src&&window.URL.revokeObjectURL(o.el.src),o.el.width=0,o.el.height=0,o.el.deleted=!0,L.DomUtil.remove(o.el),delete this._tiles[a],this.fire("tileunload",{tile:o.el,coords:this._keyToTileCoords(a)}))},"_removeTile")});return new i(e)},"leafletRasterLayer"),xt=l(r=>(e,t)=>{if(t instanceof AbortController)return r(e,t);let n=new AbortController;return r(e,n).then(i=>t(void 0,i.data,i.cacheControl||"",i.expires||""),i=>t(i)).catch(i=>t(i)),{cancel:l(()=>n.abort(),"cancel")}},"v3compat"),ie=class ie{constructor(e){this.tilev4=l((e,t)=>d(this,null,function*(){if(e.type==="json"){let v=e.url.substr(10),p=this.tiles.get(v);if(p||(p=new S(v),this.tiles.set(v,p)),this.metadata){let D=yield p.getTileJson(e.url);return t.signal.throwIfAborted(),{data:D}}let m=yield p.getHeader();return t.signal.throwIfAborted(),(m.minLon>=m.maxLon||m.minLat>=m.maxLat)&&console.error(`Bounds of PMTiles archive ${m.minLon},${m.minLat},${m.maxLon},${m.maxLat} are not valid.`),{data:{tiles:[`${e.url}/{z}/{x}/{y}`],minzoom:m.minZoom,maxzoom:m.maxZoom,bounds:[m.minLon,m.minLat,m.maxLon,m.maxLat]}}}let n=new RegExp(/pmtiles:\/\/(.+)\/(\d+)\/(\d+)\/(\d+)/),i=e.url.match(n);if(!i)throw new Error("Invalid PMTiles protocol URL");let a=i[1],o=this.tiles.get(a);o||(o=new S(a),this.tiles.set(a,o));let s=i[2],f=i[3],h=i[4],c=yield o==null?void 0:o.getZxy(+s,+f,+h,t.signal);if(t.signal.throwIfAborted(),c)return{data:new Uint8Array(c.data),cacheControl:c.cacheControl,expires:c.expires};let u=yield o.getHeader();if(u.tileType===1||u.tileType===6){if(this.errorOnMissingTile)throw new Error("Tile not found.");return{data:new Uint8Array}}return{data:null}}),"tilev4");this.tile=xt(this.tilev4);this.tiles=new Map,this.metadata=(e==null?void 0:e.metadata)||!1,this.errorOnMissingTile=(e==null?void 0:e.errorOnMissingTile)||!1}add(e){this.tiles.set(e.source.getKey(),e)}get(e){return this.tiles.get(e)}};l(ie,"Protocol");var ne=ie;function P(r,e){return(e>>>0)*4294967296+(r>>>0)}l(P,"toNum");function bt(r,e){let t=e.buf,n=t[e.pos++],i=(n&112)>>4;if(n<128||(n=t[e.pos++],i|=(n&127)<<3,n<128)||(n=t[e.pos++],i|=(n&127)<<10,n<128)||(n=t[e.pos++],i|=(n&127)<<17,n<128)||(n=t[e.pos++],i|=(n&127)<<24,n<128)||(n=t[e.pos++],i|=(n&1)<<31,n<128))return P(r,i);throw new Error("Expected varint not more than 10 bytes")}l(bt,"readVarintRemainder");function R(r){let e=r.buf,t=e[r.pos++],n=t&127;return t<128||(t=e[r.pos++],n|=(t&127)<<7,t<128)||(t=e[r.pos++],n|=(t&127)<<14,t<128)||(t=e[r.pos++],n|=(t&127)<<21,t<128)?n:(t=e[r.pos],n|=(t&15)<<28,bt(n,r))}l(R,"readVarint");function Fe(r,e,t,n,i){return i===0?n!==0?[r-1-t,r-1-e]:[t,e]:[e,t]}l(Fe,"rotate");function He(r,e,t){if(r>26)throw new Error("Tile zoom level exceeds max safe number limit (26)");if(e>=1<<r||t>=1<<r)throw new Error("tile x/y outside zoom level bounds");let n=((1<<r)*(1<<r)-1)/3,i=r-1,[a,o]=[e,t];for(let s=1<<i;s>0;s>>=1){let f=a&s,h=o&s;n+=(3*f^h)*(1<<i),[a,o]=Fe(s,a,o,f,h),i--}return n}l(He,"zxyToTileId");function At(r){let e=3*r+1;return e<4294967296?31-Math.clz32(e):63-Math.clz32(e/4294967296)}l(At,"tileIdToZ");function zt(r){let e=At(r)>>1;if(e>26)throw new Error("Tile zoom level exceeds max safe number limit (26)");let t=((1<<e)*(1<<e)-1)/3,n=r-t,i=0,a=0,o=1<<e;for(let s=1;s<o;s<<=1){let f=s&n/2,h=s&(n^f);[i,a]=Fe(s,i,a,f,h),n=n/2,i+=f,a+=h}return[e,i,a]}l(zt,"tileIdToZxy");var Ie=(a=>(a[a.Unknown=0]="Unknown",a[a.None=1]="None",a[a.Gzip=2]="Gzip",a[a.Brotli=3]="Brotli",a[a.Zstd=4]="Zstd",a))(Ie||{});function ue(r,e){return d(this,null,function*(){if(e===1||e===0)return r;if(e===2){if(typeof globalThis.DecompressionStream=="undefined")return Be(new Uint8Array(r));let t=new Response(r).body;if(!t)throw new Error("Failed to read response stream");let n=t.pipeThrough(new globalThis.DecompressionStream("gzip"));return new Response(n).arrayBuffer()}throw new Error("Compression method not supported")})}l(ue,"defaultDecompress");var ae=(s=>(s[s.Unknown=0]="Unknown",s[s.Mvt=1]="Mvt",s[s.Png=2]="Png",s[s.Jpeg=3]="Jpeg",s[s.Webp=4]="Webp",s[s.Avif=5]="Avif",s[s.Mlt=6]="Mlt",s))(ae||{});function Oe(r){return r===1?".mvt":r===2?".png":r===3?".jpg":r===4?".webp":r===5?".avif":r===6?".mlt":""}l(Oe,"tileTypeExt");var Ct=127;function Ze(r,e){let t=0,n=r.length-1;for(;t<=n;){let i=n+t>>1,a=e-r[i].tileId;if(a>0)t=i+1;else if(a<0)n=i-1;else return r[i]}return n>=0&&(r[n].runLength===0||e-r[n].tileId<r[n].runLength)?r[n]:null}l(Ze,"findTile");var fe=class fe{constructor(e){this.file=e}getKey(){return this.file.name}getBytes(e,t){return d(this,null,function*(){return{data:yield this.file.slice(e,e+t).arrayBuffer()}})}};l(fe,"FileSource");var oe=fe,le=class le{constructor(e,t=new Headers,n=void 0){var s,f;this.url=e,this.customHeaders=t,this.credentials=n,this.mustReload=!1;let i="";"navigator"in globalThis&&(i=(f=(s=globalThis.navigator)==null?void 0:s.userAgent)!=null?f:"");let a=i.indexOf("Windows")>-1,o=/Chrome|Chromium|Edg|OPR|Brave/.test(i);this.chromeWindowsNoCache=!1,a&&o&&(this.chromeWindowsNoCache=!0)}getKey(){return this.url}setHeaders(e){this.customHeaders=e}getBytes(e,t,n,i){return d(this,null,function*(){let a,o;n?o=n:(a=new AbortController,o=a.signal);let s=new Headers(this.customHeaders);s.set("range",`bytes=${e}-${e+t-1}`);let f;this.mustReload?f="reload":this.chromeWindowsNoCache&&(f="no-store");let h=yield fetch(this.url,{signal:o,cache:f,headers:s,credentials:this.credentials});if(e===0&&h.status===416){let p=h.headers.get("Content-Range");if(!p||!p.startsWith("bytes */"))throw new Error("Missing content-length on 416 response");let m=+p.substr(8);s.set("range",`bytes=0-${m-1}`),h=yield fetch(this.url,{signal:o,cache:"reload",headers:s,credentials:this.credentials})}let c=h.headers.get("Etag");if(c!=null&&c.startsWith("W/")&&(c=null),h.status===416||i&&c&&c!==i)throw this.mustReload=!0,new B(`Server returned non-matching ETag ${i} after one retry. Check browser extensions and servers for issues that may affect correct ETag headers.`);if(h.status>=300)throw new Error(`Bad response code: ${h.status}`);let u=h.headers.get("Content-Length");if(h.status===200&&(!u||+u>t))throw a&&a.abort(),new Error("Server returned no content-length header or content-length exceeding request. Check that your storage backend supports HTTP Byte Serving.");return{data:yield h.arrayBuffer(),etag:c||void 0,cacheControl:h.headers.get("Cache-Control")||void 0,expires:h.headers.get("Expires")||void 0}})}};l(le,"FetchSource");var V=le;function b(r,e){let t=r.getUint32(e+4,!0),n=r.getUint32(e+0,!0);return t*De(2,32)+n}l(b,"getUint64");function $e(r,e){let t=new DataView(r),n=t.getUint8(7);if(n>3)throw new Error(`Archive is spec version ${n} but this library supports up to spec version 3`);return{specVersion:n,rootDirectoryOffset:b(t,8),rootDirectoryLength:b(t,16),jsonMetadataOffset:b(t,24),jsonMetadataLength:b(t,32),leafDirectoryOffset:b(t,40),leafDirectoryLength:b(t,48),tileDataOffset:b(t,56),tileDataLength:b(t,64),numAddressedTiles:b(t,72),numTileEntries:b(t,80),numTileContents:b(t,88),clustered:t.getUint8(96)===1,internalCompression:t.getUint8(97),tileCompression:t.getUint8(98),tileType:t.getUint8(99),minZoom:t.getUint8(100),maxZoom:t.getUint8(101),minLon:t.getInt32(102,!0)/1e7,minLat:t.getInt32(106,!0)/1e7,maxLon:t.getInt32(110,!0)/1e7,maxLat:t.getInt32(114,!0)/1e7,centerZoom:t.getUint8(118),centerLon:t.getInt32(119,!0)/1e7,centerLat:t.getInt32(123,!0)/1e7,etag:e}}l($e,"bytesToHeader");function ke(r){let e={buf:new Uint8Array(r),pos:0},t=R(e),n=[],i=0;for(let a=0;a<t;a++){let o=R(e);n.push({tileId:i+o,offset:0,length:0,runLength:1}),i+=o}for(let a=0;a<t;a++)n[a].runLength=R(e);for(let a=0;a<t;a++)n[a].length=R(e);for(let a=0;a<t;a++){let o=R(e);o===0&&a>0?n[a].offset=n[a-1].offset+n[a-1].length:n[a].offset=o-1}return n}l(ke,"deserializeIndex");var he=class he extends Error{};l(he,"EtagMismatch");var B=he;function Ve(r,e){return d(this,null,function*(){let t=yield r.getBytes(0,16384);if(new DataView(t.data).getUint16(0,!0)!==19792)throw new Error("Wrong magic number for PMTiles archive");let i=t.data.slice(0,Ct),a=$e(i,t.etag),o=t.data.slice(a.rootDirectoryOffset,a.rootDirectoryOffset+a.rootDirectoryLength),s=`${r.getKey()}|${a.etag||""}|${a.rootDirectoryOffset}|${a.rootDirectoryLength}`,f=ke(yield e(o,a.internalCompression));return[a,[s,f.length,f]]})}l(Ve,"getHeaderAndRoot");function Ge(r,e,t,n,i,a){return d(this,null,function*(){let o=yield r.getBytes(t,n,a,i.etag),s=yield e(o.data,i.internalCompression),f=ke(s);if(f.length===0)throw new Error("Empty directory is invalid");return f})}l(Ge,"getDirectory");var ce=class ce{constructor(e=100,t=!0,n=ue){this.cache=new Map,this.maxCacheEntries=e,this.counter=1,this.decompress=n}getHeader(e){return d(this,null,function*(){let t=e.getKey(),n=this.cache.get(t);if(n)return n.lastUsed=this.counter++,n.data;let i=yield Ve(e,this.decompress);return i[1]&&this.cache.set(i[1][0],{lastUsed:this.counter++,data:i[1][2]}),this.cache.set(t,{lastUsed:this.counter++,data:i[0]}),this.prune(),i[0]})}getDirectory(e,t,n,i,a){return d(this,null,function*(){let o=`${e.getKey()}|${i.etag||""}|${t}|${n}`,s=this.cache.get(o);if(s)return s.lastUsed=this.counter++,s.data;let f=yield Ge(e,this.decompress,t,n,i,a);return this.cache.set(o,{lastUsed:this.counter++,data:f}),this.prune(),f})}prune(){if(this.cache.size>this.maxCacheEntries){let e=1/0,t;this.cache.forEach((n,i)=>{n.lastUsed<e&&(e=n.lastUsed,t=i)}),t&&this.cache.delete(t)}}invalidate(e){return d(this,null,function*(){this.cache.delete(e.getKey())})}};l(ce,"ResolvedValueCache");var se=ce,ve=class ve{constructor(e=100,t=!0,n=ue){this.cache=new Map,this.invalidations=new Map,this.pendingFetches=new Map,this.maxCacheEntries=e,this.counter=1,this.decompress=n}getHeader(e){return d(this,null,function*(){let t=e.getKey(),n=this.cache.get(t);if(n)return n.lastUsed=this.counter++,yield n.data;let i=new Promise((a,o)=>{Ve(e,this.decompress).then(s=>{s[1]&&this.cache.set(s[1][0],{lastUsed:this.counter++,data:Promise.resolve(s[1][2])}),a(s[0]),this.prune()}).catch(s=>{o(s)})});return this.cache.set(t,{lastUsed:this.counter++,data:i}),i})}trackSignal(e,t,n){t.refs++,n.addEventListener("abort",()=>{--t.refs<=0&&this.pendingFetches.get(e)===t&&(t.controller.abort(),this.cache.delete(e),this.pendingFetches.delete(e))},{once:!0})}getDirectory(e,t,n,i,a){return d(this,null,function*(){let o=`${e.getKey()}|${i.etag||""}|${t}|${n}`,s=this.cache.get(o);if(s){s.lastUsed=this.counter++;let u=this.pendingFetches.get(o);return u&&this.trackSignal(o,u,a!=null?a:new AbortController().signal),yield s.data}let f=new AbortController,h={controller:f,refs:0};this.trackSignal(o,h,a!=null?a:new AbortController().signal),this.pendingFetches.set(o,h);let c=new Promise((u,v)=>{Ge(e,this.decompress,t,n,i,f.signal).then(p=>{this.pendingFetches.delete(o),u(p),this.prune()}).catch(p=>{v(p)})});return this.cache.set(o,{lastUsed:this.counter++,data:c}),c})}prune(){if(this.cache.size>=this.maxCacheEntries){let e=1/0,t;this.cache.forEach((n,i)=>{n.lastUsed<e&&(e=n.lastUsed,t=i)}),t&&this.cache.delete(t)}}invalidate(e){return d(this,null,function*(){let t=e.getKey();if(this.invalidations.get(t))return yield this.invalidations.get(t);this.cache.delete(e.getKey());let n=new Promise((i,a)=>{this.getHeader(e).then(o=>{i(),this.invalidations.delete(t)}).catch(o=>{a(o)})});this.invalidations.set(t,n)})}};l(ve,"SharedPromiseCache");var G=ve,ge=class ge{constructor(e,t,n){typeof e=="string"?this.source=new V(e):this.source=e,n?this.decompress=n:this.decompress=ue,t?this.cache=t:this.cache=new G}getHeader(){return d(this,null,function*(){return yield this.cache.getHeader(this.source)})}getZxyAttempt(e,t,n,i){return d(this,null,function*(){let a=He(e,t,n),o=yield this.cache.getHeader(this.source);if(i==null||i.throwIfAborted(),e<o.minZoom||e>o.maxZoom)return;let s=o.rootDirectoryOffset,f=o.rootDirectoryLength;for(let h=0;h<=3;h++){let c=yield this.cache.getDirectory(this.source,s,f,o,i);i==null||i.throwIfAborted();let u=Ze(c,a);if(u){if(u.runLength>0){let v=yield this.source.getBytes(o.tileDataOffset+u.offset,u.length,i,o.etag);return{data:yield this.decompress(v.data,o.tileCompression),cacheControl:v.cacheControl,expires:v.expires}}s=o.leafDirectoryOffset+u.offset,f=u.length}else return}throw new Error("Maximum directory depth exceeded")})}getZxy(e,t,n,i){return d(this,null,function*(){try{return yield this.getZxyAttempt(e,t,n,i)}catch(a){if(a instanceof B)return this.cache.invalidate(this.source),yield this.getZxyAttempt(e,t,n,i);throw a}})}getMetadataAttempt(){return d(this,null,function*(){let e=yield this.cache.getHeader(this.source),t=yield this.source.getBytes(e.jsonMetadataOffset,e.jsonMetadataLength,void 0,e.etag),n=yield this.decompress(t.data,e.internalCompression),i=new TextDecoder("utf-8");return JSON.parse(i.decode(n))})}getMetadata(){return d(this,null,function*(){try{return yield this.getMetadataAttempt()}catch(e){if(e instanceof B)return this.cache.invalidate(this.source),yield this.getMetadataAttempt();throw e}})}getTileJson(e){return d(this,null,function*(){let t=yield this.getHeader(),n=yield this.getMetadata(),i=Oe(t.tileType);return{tilejson:"3.0.0",scheme:"xyz",tiles:[`${e}/{z}/{x}/{y}${i}`],vector_layers:n.vector_layers,attribution:n.attribution,description:n.description,name:n.name,version:n.version,bounds:[t.minLon,t.minLat,t.maxLon,t.maxLat],center:[t.centerLon,t.centerLat,t.centerZoom],minzoom:t.minZoom,maxzoom:t.maxZoom}})}};l(ge,"PMTiles");var S=ge;return et(Tt);})();
 //# sourceMappingURL=pmtiles.js.map</script>
@@ -246,6 +538,7 @@ const T = {
       nomap_t:'NO MAP OPEN', nomap:'Open <code>world.pmtiles</code> (NOMAD/data/maps/world) with <b>OPEN FILES</b>.',
       articles:'articles', opened:'Opened {n} file(s)', xz:'This .zim uses old xz compression — download a newer version.', notzim:'Not a .zim or .pmtiles file: {f}',
       notfound:'Page not found in this file.',
+      inventory:'STASH', inv_ro:'Your inventory comes from <code>nomad-user.json</code> on the SSD. Add and change items in NOMAD on the PC; open the file again here to update.', inv_none:'No inventory yet. Open <code>NOMAD/data/nomad-user.json</code> (OPEN FILES) to see your supplies.', days:'days', food:'FOOD', water:'WATER', use_first:'USE FIRST', expired:'expired', left:'days left',
       readlater:'READING LIST', favorites:'FAVORITES', not_open:'open {f} first', nearby:'NEARBY', near_zoom:'Zoom in to street level to see places.', near_none:'No places of this type in view.', route_none:'Route planning needs the NOMAD PC app.',
       sync:'SYNC WITH YOUR PC (VIA THE SSD)', sync_save:'SAVE CHANGES FOR PC', sync_none:'No file from your PC opened yet. Tap OPEN FILES and pick <code>NOMAD/data/nomad-user.json</code> to see your favorites, reading list and pins.',
       sync_loaded:'From PC: {f} favorites · {r} on reading list · {p} pins ({date}).', sync_pending:'<b>{n} change(s)</b> on this phone not yet on the PC.', sync_clean:'No changes on this phone.',
@@ -259,6 +552,7 @@ const T = {
       nomap_t:'GEEN KAART OPEN', nomap:'Open <code>world.pmtiles</code> (NOMAD/data/maps/world) via <b>BESTANDEN OPENEN</b>.',
       articles:'artikelen', opened:'{n} bestand(en) geopend', xz:'Deze .zim gebruikt oude xz-compressie — download een nieuwere versie.', notzim:'Geen .zim of .pmtiles: {f}',
       notfound:'Pagina niet gevonden in dit bestand.',
+      inventory:'VOORRAAD', inv_ro:'Je inventaris komt uit <code>nomad-user.json</code> op de SSD. Items toevoegen en aanpassen doe je in NOMAD op de pc; open het bestand hier opnieuw om bij te werken.', inv_none:'Nog geen inventaris. Open <code>NOMAD/data/nomad-user.json</code> (BESTANDEN OPENEN) om je voorraad te zien.', days:'dagen', food:'ETEN', water:'WATER', use_first:'EERST OPMAKEN', expired:'verlopen', left:'dagen over',
       readlater:'LEESLIJST', favorites:'FAVORIETEN', not_open:'open eerst {f}', nearby:'IN DE BUURT', near_zoom:'Zoom in tot straatniveau om plekken te zien.', near_none:'Geen plekken van dit type in beeld.', route_none:'Route plannen kan alleen in de NOMAD-pc-app.',
       sync:'SYNCHRONISEREN MET JE PC (VIA DE SSD)', sync_save:'WIJZIGINGEN OPSLAAN VOOR PC', sync_none:'Nog geen bestand van je pc geopend. Tik op BESTANDEN OPENEN en kies <code>NOMAD/data/nomad-user.json</code> om je favorieten, leeslijst en pins te zien.',
       sync_loaded:'Van pc: {f} favorieten · {r} op leeslijst · {p} pins ({date}).', sync_pending:'<b>{n} wijziging(en)</b> op deze telefoon die nog niet op de pc staan.', sync_clean:'Geen wijzigingen op deze telefoon.',
@@ -650,7 +944,7 @@ let SYNCINFO = ls.get('nm.syncinfo', null);
 const kFav = x => x.book + '/' + x.path;
 const kPin = x => String(Math.round(x.lat * 1e5) / 1e5) + ',' + String(Math.round(x.lon * 1e5) / 1e5);
 const KEY = {favorites:kFav, readlater:kFav, pins:kPin};
-function saveUD(){ ls.set('nm.user', UD); ls.set('nm.pending', PEND); renderLists(); renderSync(); drawPins() }
+function saveUD(){ ls.set('nm.user', UD); ls.set('nm.pending', PEND); renderLists(); renderSync(); drawPins(); renderMInv() }
 function pendingCount(){ return ['favorites', 'readlater', 'pins'].reduce((n, k) => n + PEND.add[k].length + PEND.removed[k].length, 0) + Object.keys(PEND.notes).length }
 function loadUserFile(data, f){
   const u = data.user && data.nomad_backup ? data.user : data;
@@ -662,6 +956,7 @@ function loadUserFile(data, f){
     UD[k] = list;
   }
   UD.notes = {...(u.notes || {}), ...PEND.notes};
+  UD.inventory = u.inventory || null;
   SYNCINFO = {date:new Date(f.lastModified || Date.now()).toLocaleString(), f:UD.favorites.length, r:UD.readlater.length, p:UD.pins.length};
   ls.set('nm.syncinfo', SYNCINFO); saveUD(); toast(t('user_loaded'));
 }
@@ -684,7 +979,7 @@ function renderLists(){
     const b = BOOKS.find(z => z.id === x.book);
     return `<div class="li${b ? '' : ' off'}" data-k="${kind}" data-i="${i}"><span><b>${kind === 'favorites' ? '★' : '🔖'} ${esc(x.title)}</b><small>${b ? esc(b.title) : t('not_open', {f:esc(x.book)})}</small></span><button data-x>✕</button></div>`;
   };
-  el.innerHTML = ['readlater', 'favorites'].filter(k => UD[k].length).map(k => `<div class="k">${t(k)}</div>` + UD[k].map((x, i) => row(k, x, i)).join('')).join('');
+  el.innerHTML = ['readlater', 'favorites'].filter(k => UD[k].length).map(k => `<div class="lsec"><div class="k">${t(k)}</div>` + UD[k].map((x, i) => row(k, x, i)).join('') + '</div>').join('');
   el.querySelectorAll('.li').forEach(r => r.onclick = e => {
     const kind = r.dataset.k, x = UD[kind][+r.dataset.i];
     if(e.target.dataset.x !== undefined){ toggleItem(kind, x); return }
@@ -790,10 +1085,40 @@ function renderNearby(){
 $('#sheetX').onclick = () => $('#sheet').classList.remove('on');
 
 /* ───────── views & settings ───────── */
+/* ───────── inventory (read-only view of the PC inventory) ───────── */
+const MITEM = {}; INV_ITEMS.forEach(r => MITEM[r[0]] = {e:r[1], en:r[2], nl:r[3], cat:r[4], rar:r[5], kcal:r[7], l:r[8]});
+const RARC = {c:'#9aa7b0', u:'#3ddc84', r:'#3a9bff', e:'#b26bff', l:'#ffb020'};
+let MBOX = ls.get('nm.invbox', null);
+function renderMInv(){
+  const I = UD.inventory, el = $('#minvGrid'); if(!el) return;
+  if(!I || !I.boxes){ $('#minvHud').innerHTML = ''; $('#minvBoxes').innerHTML = ''; $('#minvExp').innerHTML = ''; el.innerHTML = `<div class="empty"><h3>🎒</h3><div>${t('inv_none')}</div></div>`; return }
+  (I.custom || []).forEach(c => MITEM[c.id] = c);
+  const it = id => MITEM[id] || {e:'📦', en:id, nl:id, rar:'c', kcal:0, l:0}, nm = i => LANG === 'nl' ? i.nl : i.en;
+  const dl = s => s.exp ? Math.ceil((new Date(s.exp) - Date.now()) / 864e5) : null, ok = s => dl(s) === null || dl(s) >= 0;
+  const p = I.people || {a:1, c:0, p:0}, nk = p.a * 2000 + p.c * 1400 + p.p * 500, nl = p.a * 3 + p.c * 2 + p.p;
+  const kcal = I.stacks.filter(ok).reduce((a, s) => a + it(s.item).kcal * s.qty, 0), lit = I.stacks.filter(ok).reduce((a, s) => a + it(s.item).l * s.qty, 0);
+  const fd = nk ? kcal / nk : 0, wd = nl ? lit / nl : 0, col = d => d >= 14 ? 'var(--acc)' : d >= 3 ? '#ffb63a' : '#ff5470', f1 = d => d >= 99 ? '99+' : d >= 10 ? Math.floor(d) : d.toFixed(1).replace('.0', '');
+  $('#minvHud').innerHTML = `<div class="mh"><span>🍽️</span><div><small>${t('food')}</small><b style="color:${col(fd)}">${f1(fd)} <em>${t('days')}</em></b><i><u style="width:${Math.min(100, fd / 14 * 100)}%;background:${col(fd)}"></u></i></div></div>
+    <div class="mh"><span>💧</span><div><small>${t('water')}</small><b style="color:${col(wd)}">${f1(wd)} <em>${t('days')}</em></b><i><u style="width:${Math.min(100, wd / 14 * 100)}%;background:${col(wd)}"></u></i></div></div>`;
+  if(!I.boxes.some(b => b.id === MBOX)) MBOX = I.boxes[0].id;
+  $('#minvBoxes').innerHTML = I.boxes.map(b => `<button class="mbx${b.id === MBOX ? ' on' : ''}" data-b="${b.id}">${b.icon} ${esc(b.name || ({home:LANG === 'nl' ? 'Thuis' : 'Home', backpack:LANG === 'nl' ? 'Rugzak' : 'Backpack', car:LANG === 'nl' ? 'Auto' : 'Car'}[b.type] || 'Box'))}</button>`).join('');
+  $$('#minvBoxes .mbx').forEach(b => b.onclick = () => { MBOX = b.dataset.b; ls.set('nm.invbox', MBOX); renderMInv() });
+  const favs = I.favs || [];
+  el.innerHTML = I.stacks.filter(s => s.box === MBOX).sort((a, b) => favs.includes(b.item) - favs.includes(a.item) || nm(it(a.item)).localeCompare(nm(it(b.item)))).map(s => {
+    const i = it(s.item), d = dl(s);
+    return `<div class="mslot" style="--rc:${RARC[i.rar] || RARC.c}"><span class="e">${i.e}</span>${s.qty > 1 ? `<b>${s.qty}</b>` : ''}${favs.includes(s.item) ? '<i class="f">★</i>' : ''}
+      ${d !== null ? `<i class="d" style="color:${d < 0 ? '#ff5470' : d <= 30 ? '#ffb63a' : 'var(--dim)'}">${d < 0 ? '☠' : d > 999 ? Math.round(d / 365) + 'y' : d + 'd'}</i>` : ''}<small>${esc(nm(i))}</small></div>`;
+  }).join('') || `<div class="tip">—</div>`;
+  const exp = I.stacks.filter(s => dl(s) !== null && dl(s) <= 30).sort((a, b) => dl(a) - dl(b));
+  $('#minvExp').innerHTML = exp.length ? `<div class="k">⏳ ${t('use_first')}</div>` + exp.map(s => { const i = it(s.item), d = dl(s), b = I.boxes.find(x => x.id === s.box);
+    return `<div class="li"><span><b>${i.e} ${esc(nm(i))} ×${s.qty}</b><small style="color:${d < 0 ? '#ff5470' : '#ffb63a'}">${d < 0 ? t('expired') : d + ' ' + t('left')} · ${b ? b.icon : ''}</small></span></div>` }).join('') : '';
+}
+
 function setView(v){
   $$('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
   $$('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   if(v === 'map'){ initMap(); setTimeout(() => MAP && MAP.resize(), 50) }
+  if(v === 'inv') renderMInv();
 }
 $$('nav button').forEach(b => b.onclick = () => setView(b.dataset.v));
 $$('#langSeg button').forEach(b => b.onclick = () => { LANG = b.dataset.v; ls.set('nm.lang', LANG); i18n(); if(MAP){ MAP.remove(); MAP = null; initMap() } });

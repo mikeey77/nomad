@@ -740,3 +740,28 @@ details.think>div{white-space:pre-wrap;color:var(--dim);font-size:13.5px;line-he
 @media(max-width:760px){.inv{padding:12px}.inv-body{grid-template-columns:1fr}#invBoxes{display:flex;gap:8px;overflow-x:auto}.ibox{min-width:190px}.inv-hud{grid-template-columns:1fr 1fr}.inv-tools{width:100%}.inv-tools .inp{flex:1;width:auto!important}}
 [data-theme=sun] .slot,[data-theme=sun] .pk{background:#fff!important;border-width:2px}
 [data-theme=sun] .ihud,[data-theme=sun] .kit,[data-theme=sun] .invpan{background:#fff!important;border:2px solid #000}
+
+/* v0.16 — inventory polish */
+.slot .sf{position:absolute;left:6px;bottom:20px;color:#ffd23a;font-size:11px;text-shadow:0 0 6px #000}
+.slot .sqk{position:absolute;right:4px;bottom:20px;display:flex;gap:3px;opacity:0;transition:.12s}
+.slot:hover .sqk{opacity:1}
+.slot .sqk button{width:20px;height:20px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.65);color:#fff;font:700 12px var(--mono);cursor:pointer;line-height:1;padding:0}
+.slot .sqk button:hover{background:var(--acc);color:#04120a}
+@media (hover:none){.slot .sqk{display:none}}
+.icat.fav{color:#ffd23a}.icat.fav.on{border-color:#ffd23a;background:rgba(255,210,58,.1)}
+.pk{position:relative}
+.pkf{position:absolute;right:8px;top:6px;font-style:normal;font-size:15px;color:var(--dim);opacity:.5;transition:.12s}
+.pk:hover .pkf,.pkf.on{opacity:1}.pkf.on{color:#ffd23a}.pkf:hover{transform:scale(1.25);color:#ffd23a}
+.expk{border-color:rgba(255,182,58,.35)}
+.shg{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.shg-h{display:flex;align-items:center;gap:8px;font:600 12px var(--mono);letter-spacing:.06em;color:var(--hi);margin-bottom:6px}
+.shi{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13.5px;cursor:pointer}.shi span{font-size:17px}
+.shi input:checked+span,.shi:has(input:checked){opacity:.45;text-decoration:line-through}
+.invlink{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:14px 18px;cursor:pointer;margin:14px 0;font-size:13.5px;transition:.15s}
+.invlink:hover{border-color:var(--acc);transform:translateY(-1px)}
+.invlink b{font:700 16px var(--mono);color:var(--hi)}
+.ivh-t{font:600 11px var(--mono);letter-spacing:.2em;color:var(--acc)}
+.invlink em{margin-left:auto;font-style:normal;color:var(--acc);font-size:18px}
+.sos-tools .invlink{margin:0;flex-direction:column;align-items:flex-start;justify-content:center;gap:8px}
+.sos-tools .invlink em{margin-left:0}
+#sPlug button:disabled{opacity:.4}

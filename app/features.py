@@ -30,6 +30,8 @@ def get_settings():
     s = {k: N.CFG.get(k, v) for k, v in SETTING_KEYS.items()}
     s["autostart"] = autostart_enabled()
     s["autostart_supported"] = sys.platform.startswith("win")
+    import more
+    s["plug_mode"] = more.plug_mode() if s["autostart_supported"] else "off"
     return s
 
 
@@ -48,6 +50,9 @@ def set_settings(new):
             changed = True
     if "autostart" in new:
         set_autostart(bool(new["autostart"]))
+    if "plug_mode" in new:
+        import more
+        more.set_plug_mode(new["plug_mode"])
     if changed:
         N.save_json(N.CONFIG_FILE, N.CFG)
     return get_settings()

@@ -581,18 +581,8 @@ function onOri(e){
   $('#needle').style.transform = `rotate(${-h}deg)`;
   $('#heading').textContent = Math.round(h) + '° ' + ['N','NE','E','SE','S','SW','W','NW'][Math.round(h / 45) % 8];
 }
-function renderCheck(){
-  const done = USER.checklist.filter(c => c.done).length, n = USER.checklist.length;
-  $('#chkProg').textContent = `${done}/${n}`; $('#chkBar').style.width = (n ? done / n * 100 : 0) + '%';
-  $('#check').innerHTML = USER.checklist.map((c, i) => `<div class="chk${c.done ? ' done' : ''}" data-i="${i}"><i></i><span>${esc(c.t)}</span><b data-x="${i}">×</b></div>`).join('');
-  $$('#check .chk').forEach(el => el.onclick = e => {
-    const i = +el.dataset.i, list = USER.checklist.map(x => ({...x}));
-    if(e.target.dataset.x !== undefined) list.splice(i, 1); else list[i].done = !list[i].done;
-    saveUser({checklist:list}); renderCheck();
-  });
-}
-$('#checkAdd').onclick = () => { const v = $('#checkIn').value.trim(); if(!v) return; $('#checkIn').value = ''; saveUser({checklist:[...USER.checklist, {t:v, done:false}]}); renderCheck() };
-$('#checkIn').addEventListener('keydown', e => { if(e.key === 'Enter') $('#checkAdd').click() });
+/* v0.16: the emergency-kit checklist moved into the Inventory (recommended kits) */
+function renderCheck(){ if(typeof renderInvHome === 'function') renderInvHome() }
 let flashing = null, audio = null;
 function stopFlash(){ clearTimeout(flashing); flashing = null; $('#flash').className = ''; try{ audio && audio.close() }catch(e){} audio = null }
 $('#flash').onclick = stopFlash;

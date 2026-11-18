@@ -347,3 +347,112 @@ def inbox_loop():
         except Exception as e:
             print("inbox:", e)
         time.sleep(10)
+
+
+# ───────── Windows: popup / auto-open when the NOMAD SSD is plugged in ─────────
+# Windows no longer runs anything automatically from USB drives (security), so a tiny watcher
+# runs on the PC itself (installed from Settings). It only watches for drives and asks first.
+PLUG_PS1 = r"""# PROJECT NOMAD - watches for the NOMAD SSD and offers to open it. Remove via NOMAD Settings.
+$mode = '__MODE__'
+$rel  = '__REL__'
+Add-Type -AssemblyName System.Windows.Forms
+function Find-Nomad { foreach($d in [IO.DriveInfo]::GetDrives()){ try { if($d.IsReady){ $p = Join-Path $d.RootDirectory.FullName $rel; if(Test-Path $p){ return $p } } } catch {} } return $null }
+$was = Find-Nomad
+Register-CimIndicationEvent -ClassName Win32_VolumeChangeEvent -SourceIdentifier nomadvol | Out-Null
+while($true){
+  Wait-Event -SourceIdentifier nomadvol | Out-Null
+  Remove-Event -SourceIdentifier nomadvol -ErrorAction SilentlyContinue
+  Start-Sleep -Seconds 2
+  Get-Event -SourceIdentifier nomadvol -ErrorAction SilentlyContinue | Remove-Event
+  $now = Find-Nomad
+  if($now -and -not $was -and -not (Get-Process NOMAD -ErrorAction SilentlyContinue)){
+    if($mode -eq 'open'){ Start-Process $now }
+    else {
+      $f = New-Object Windows.Forms.Form -Property @{TopMost = $true; ShowInTaskbar = $false}
+      $r = [Windows.Forms.MessageBox]::Show($f, "Your NOMAD SSD is connected.`n`nOpen PROJECT NOMAD now?", 'PROJECT NOMAD', 'YesNo', 'Information')
+      $f.Dispose()
+      if($r -eq 'Yes'){ Start-Process $now }
+    }
+  }
+  $was = $now
+}
+"""
+
+
+def _plug_paths():
+    la, ad = os.environ.get("LOCALAPPDATA"), os.environ.get("APPDATA")
+    if not la or not ad:
+        return None, None
+    return (os.path.join(la, "NOMAD", "nomad-plug.ps1"),
+            os.path.join(ad, "Microsoft", "Windows", "Start Menu", "Programs", "Startup", "NOMAD-plug.vbs"))
+
+
+def plug_mode():
+    ps1, vbs = _plug_paths()
+    if not ps1 or not os.path.isfile(vbs) or not os.path.isfile(ps1):
+        return "off"
+    try:
+        with open(ps1, encoding="utf-8") as f:
+            return "open" if "$mode = 'open'" in f.read() else "ask"
+    except OSError:
+        return "off"
+
+
+def _stop_watcher():
+    import subprocess
+    subprocess.run(["powershell", "-NoProfile", "-Command",
+                    "Get-CimInstance Win32_Process -Filter \"Name='powershell.exe'\" | Where-Object { $_.CommandLine -like '*nomad-plug.ps1*' } | "
+                    "ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"],
+                   capture_output=True, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+
+
+def set_plug_mode(mode):
+    import subprocess
+    import sys as s_
+    if not s_.platform.startswith("win"):
+        return "off"
+    ps1, vbs = _plug_paths()
+    _stop_watcher()
+    if mode not in ("ask", "open"):
+        for p in (ps1, vbs):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+        return "off"
+    drive, rest = os.path.splitdrive(N.ROOT)
+    rel = os.path.join(rest.strip("\\/"), "NOMAD.exe") if rest.strip("\\/") else "NOMAD.exe"
+    os.makedirs(os.path.dirname(ps1), exist_ok=True)
+    with open(ps1, "w", encoding="utf-8-sig") as f:
+        f.write(PLUG_PS1.replace("__MODE__", mode).replace("__REL__", rel.replace("'", "''")))
+    with open(vbs, "w", encoding="utf-8") as f:
+        f.write('CreateObject("WScript.Shell").Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""' + ps1 + '""", 0, False\r\n')
+    subprocess.Popen(["wscript.exe", vbs], creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    return mode
+
+
+def drive_branding():
+    """NOMAD icon + name for the SSD in Explorer (autorun.inf; Windows ignores the 'open' part on USB, which is fine)."""
+    import sys as s_
+    if not s_.platform.startswith("win"):
+        return
+    drive, rest = os.path.splitdrive(N.ROOT)
+    if not drive:
+        return
+    inf = drive + "\\autorun.inf"
+    rel = (rest.strip("\\/") + "\\" if rest.strip("\\/") else "") + "NOMAD.exe"
+    body = f"; PROJECT NOMAD\r\n[autorun]\r\nicon={rel},0\r\nlabel=NOMAD\r\n"
+    try:
+        if os.path.exists(inf):
+            with open(inf, encoding="utf-8", errors="replace") as f:
+                old = f.read()
+            if "PROJECT NOMAD" not in old or old == body:
+                return
+            import ctypes
+            ctypes.windll.kernel32.SetFileAttributesW(inf, 0x80)
+        with open(inf, "w", encoding="utf-8") as f:
+            f.write(body)
+        import ctypes
+        ctypes.windll.kernel32.SetFileAttributesW(inf, 0x02 | 0x04)  # hidden + system
+    except Exception:
+        pass

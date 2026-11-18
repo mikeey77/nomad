@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.15.0"
+VERSION = "0.16.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -1420,6 +1420,7 @@ def main():
     import more
     threading.Thread(target=more.backup_loop, daemon=True).start()
     threading.Thread(target=more.inbox_loop, daemon=True).start()
+    threading.Thread(target=more.drive_branding, daemon=True).start()
     if not a.no_services:
         threading.Thread(target=lambda: (start_ollama(), warm_model()), daemon=True).start()
         threading.Thread(target=start_photon, daemon=True).start()
