@@ -214,7 +214,7 @@ def restore(data, mode="merge"):
     snapshot()  # keep a copy of the current state first
     cur = features.load_user()
     if mode == "replace":
-        new = {k: user.get(k, cur[k]) for k in ("favorites", "readlater", "notes", "pins", "checklist", "chats", "saved")}
+        new = {k: user.get(k, cur[k]) for k in ("favorites", "readlater", "notes", "pins", "checklist", "chats", "saved", "inventory")}
     else:
         def merge_list(a, b, key):
             seen = {key(x) for x in a}
@@ -224,6 +224,7 @@ def restore(data, mode="merge"):
             "favorites": merge_list(cur["favorites"], user.get("favorites", []), lambda x: (x.get("book"), x.get("path")) if isinstance(x, dict) else j(x)),
             "readlater": merge_list(cur["readlater"], user.get("readlater", []), lambda x: (x.get("book"), x.get("path")) if isinstance(x, dict) else j(x)),
             "notes": {**user.get("notes", {}), **cur["notes"]},
+            "inventory": cur.get("inventory") or user.get("inventory"),
             "pins": merge_list(cur["pins"], user.get("pins", []), j),
             "checklist": merge_list(cur["checklist"], user.get("checklist", []), lambda x: x.get("t") if isinstance(x, dict) else j(x)),
             "chats": merge_list(cur["chats"], user.get("chats", []), lambda x: x.get("id") if isinstance(x, dict) else j(x)),

@@ -35,14 +35,17 @@ function poiIcon(color, sym){
   g.restore();
   return {width:n, height:n, data:g.getImageData(0, 0, n, n).data};
 }
-function poiKinds(){ return POI_CATS.filter(([c]) => POI_ON.has(c)).flatMap(([, , k]) => k) }
+let FIND = null;  // {kinds, label} from the inventory's "where to find"
+function poiKinds(){ if(FIND) return FIND.kinds; return POI_CATS.filter(([c]) => POI_ON.has(c)).flatMap(([, , k]) => k) }
 function drawPois(){
   if(!MAP) return;
   if(!MAP.isStyleLoaded()){ MAP.once('idle', drawPois); return }
   if(!MAP.getSource('protomaps')) return;
   POI_CATS.forEach(([c, col, , sym]) => { if(!MAP.hasImage('poi-' + c)) MAP.addImage('poi-' + c, poiIcon(col, sym), {pixelRatio:2}) });
+  if(!MAP.hasImage('poi-find')) MAP.addImage('poi-find', poiIcon('#b26bff', 'M12 2l3 7h7l-5.5 4.5 2 7.5L12 17l-6.5 4 2-7.5L2 9h7z'), {pixelRatio:2});
   const kinds = poiKinds(), filter = ['in', ['get', 'kind'], ['literal', kinds.length ? kinds : ['__none__']]];
-  const cat = ['match', ['get', 'kind']]; POI_CATS.forEach(([c, , ks]) => cat.push(ks, 'poi-' + c)); cat.push('poi-shop');
+  const cat = ['match', ['get', 'kind']]; POI_CATS.forEach(([c, , ks]) => cat.push(ks, 'poi-' + c)); cat.push(FIND ? 'poi-find' : 'poi-shop');
+  if(MAP.getLayer('nomad-pois')) MAP.setLayoutProperty('nomad-pois', 'icon-image', cat);
   if(!MAP.getLayer('nomad-pois')){
     MAP.addLayer({id:'nomad-pois', type:'symbol', source:'protomaps', 'source-layer':'pois', minzoom:12, filter,
       layout:{'icon-image':cat, 'icon-size':['interpolate', ['linear'], ['zoom'], 12, .75, 16, 1], 'icon-allow-overlap':['step', ['zoom'], false, 15, true],
@@ -54,7 +57,8 @@ function drawPois(){
     MAP.on('mouseleave', 'nomad-pois', () => MAP.getCanvas().style.cursor = '');
   } else MAP.setFilter('nomad-pois', filter);
 }
-function poiName(f){ return f.properties['name:' + LANG] || f.properties.name || t('c_' + (POI_KIND[f.properties.kind] || 'shop')) }
+const kindLabel = k => POI_KIND[k] ? t('c_' + POI_KIND[k]) : String(k || '').replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
+function poiName(f){ return f.properties['name:' + LANG] || f.properties.name || kindLabel(f.properties.kind) }
 function refPoint(){ return POS ? [POS.lon, POS.lat] : (MAP ? MAP.getCenter().toArray() : [0, 0]) }
 function dist(a, b){
   const R = 6371000, r = Math.PI / 180, dLat = (b[1] - a[1]) * r, dLon = (b[0] - a[0]) * r;
@@ -63,9 +67,9 @@ function dist(a, b){
 }
 const fmtD = m => m >= 1000 ? (m / 1000).toFixed(m >= 10000 ? 0 : 1) + ' km' : Math.round(m) + ' m';
 function poiPopup(f){
-  const ll = f.geometry.coordinates, c = POI_KIND[f.properties.kind] || 'shop', col = POI_CATS.find(x => x[0] === c)[1];
+  const ll = f.geometry.coordinates, c = POI_KIND[f.properties.kind] || 'shop', col = POI_KIND[f.properties.kind] ? POI_CATS.find(x => x[0] === c)[1] : '#b26bff';
   const div = document.createElement('div');
-  div.innerHTML = `<b>${esc(poiName(f))}</b><br><span class="mono dim" style="color:${col}">● ${esc(t('c_' + c))}</span> <span class="mono dim">· ${fmtD(dist(refPoint(), ll))}</span>
+  div.innerHTML = `<b>${esc(poiName(f))}</b><br><span class="mono dim" style="color:${col}">● ${esc(kindLabel(f.properties.kind))}</span> <span class="mono dim">· ${fmtD(dist(refPoint(), ll))}</span>
     <div style="display:flex;gap:6px;margin-top:8px"><button class="btn" style="height:28px;flex:1">${t('route_here')}</button></div>`;
   div.querySelector('button').onclick = () => {
     RTO = {lng:ll[0], lat:ll[1]};
@@ -79,6 +83,7 @@ function renderPoiChips(){
       <i>${POI_PATHS[sym] ? `<svg viewBox="0 0 24 24"><path d="${POI_PATHS[sym]}"/></svg>` : `<b>${sym}</b>`}</i><span>${esc(t('c_' + c))}</span></button>`).join('') +
     `<button class="btn" id="nearBtn" style="width:100%;height:30px;margin-top:8px">◎ ${t('nearby')}</button>`;
   $$('#poichips .pchip2').forEach(b => b.onclick = () => {
+    FIND = null; setNearTitle();
     POI_ON.has(b.dataset.c) ? POI_ON.delete(b.dataset.c) : POI_ON.add(b.dataset.c);
     store.set('nomad.poi', [...POI_ON]); renderPoiChips(); drawPois(); if($('#nearbox').classList.contains('on')) setTimeout(renderNearby, 300);
   });
@@ -92,12 +97,21 @@ function renderNearby(){
     const k = poiName(f) + f.geometry.coordinates.map(v => v.toFixed(4)).join(); if(seen.has(k)) return false; seen.add(k); return true;
   }).map(f => ({f, d:dist(ref, f.geometry.coordinates)})).sort((a, b) => a.d - b.d).slice(0, 40);
   $('#nearlist').innerHTML = feats.length ? feats.map(({f, d}, i) => {
-    const c = POI_KIND[f.properties.kind] || 'shop', col = POI_CATS.find(x => x[0] === c)[1];
-    return `<a class="nrow" data-i="${i}"><i style="background:${col}"></i><span><b>${esc(poiName(f))}</b><small>${esc(t('c_' + c))}</small></span><em>${fmtD(d)}</em></a>`;
+    const c = POI_KIND[f.properties.kind], col = c ? POI_CATS.find(x => x[0] === c)[1] : '#b26bff';
+    return `<a class="nrow" data-i="${i}"><i style="background:${col}"></i><span><b>${esc(poiName(f))}</b><small>${esc(kindLabel(f.properties.kind))}</small></span><em>${fmtD(d)}</em></a>`;
   }).join('') : `<div class="empty" style="white-space:normal">${t('near_none')}</div>`;
   $$('#nearlist .nrow').forEach(a => a.onclick = () => { const f = feats[+a.dataset.i].f; MAP.flyTo({center:f.geometry.coordinates, zoom:Math.max(MAP.getZoom(), 16)}); poiPopup(f) });
 }
-$('#nearClose').onclick = () => $('#nearbox').classList.remove('on');
+function setNearTitle(){ const sp = $('#nearbox .hud span'); if(sp) sp.textContent = FIND ? t('finding') + ': ' + FIND.label : t('nearby') }
+$('#nearClose').onclick = () => { $('#nearbox').classList.remove('on'); if(FIND){ FIND = null; setNearTitle(); drawPois() } };
+window.findOnMap = (kinds, label) => {
+  FIND = {kinds, label}; location.hash = 'map';
+  setTimeout(() => {
+    hookPois(); drawPois(); setNearTitle();
+    if(MAP){ const c = POS ? [POS.lon, POS.lat] : MAP.getCenter().toArray(); if(MAP.getZoom() < 13) MAP.jumpTo({center:c, zoom:14}) }
+    $('#nearbox').classList.add('on'); renderNearby(); MAP && MAP.once('idle', renderNearby);
+  }, 500);
+};
 renderPoiChips();
 
 let _poiHooked = null;
@@ -105,7 +119,7 @@ function hookPois(){
   if(!MAP || _poiHooked === MAP) return;
   _poiHooked = MAP;
   MAP.on('style.load', () => setTimeout(drawPois, 50));
-  MAP.on('moveend', () => renderNearby());
+  MAP.on('moveend', () => { renderNearby(); MAP.once('idle', renderNearby) });
   drawPois();
 }
 setInterval(hookPois, 1500);

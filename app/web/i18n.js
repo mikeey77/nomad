@@ -1,6 +1,7 @@
 /* NOMAD — vertalingen. Engels is standaard; Nederlands kiesbaar in Settings. */
 window.I18N = {
   en: {
+    inv:'Inventory', v_inv:'INVENTORY', inv_boxes:'STORAGE', inv_kits:'RECOMMENDED', inv_add:'ADD', inv_search:'Search your stash…', finding:'Finding',
     readlater:'READING LIST', no_later:'Nothing on your reading list. Open an article and tap 🔖 Read later.', rl_add:'🔖 Read later', rl_rm:'🔖 On list', rl_done:'Done — remove from list',
     places:'PLACES', nearby:'NEARBY', near_zoom:'Zoom in to street level to see places.', near_none:'No places of this type in view.', route_here:'Route here', p_on:'Show on map',
     c_fuel:'Fuel', c_charge:'EV charging', c_hospital:'Hospital & doctor', c_pharmacy:'Pharmacy', c_shop:'Supermarket', c_food:'Food & drink', c_parking:'Parking', c_water:'Water & toilets', c_police:'Police & fire', c_camp:'Camping & shelter', c_money:'ATM & bank',
@@ -87,6 +88,7 @@ window.I18N = {
     saved:'Saved', g_green:'Green', g_blue:'Blue', g_amber:'Amber', g_red:'Red',
   },
   nl: {
+    inv:'Inventaris', v_inv:'INVENTARIS', inv_boxes:'OPSLAG', inv_kits:'AANBEVOLEN', inv_add:'TOEVOEGEN', inv_search:'Zoek in je voorraad…', finding:'Zoeken naar',
     readlater:'LEESLIJST', no_later:'Je leeslijst is leeg. Open een artikel en tik op 🔖 Later lezen.', rl_add:'🔖 Later lezen', rl_rm:'🔖 Op leeslijst', rl_done:'Gelezen — van de lijst halen',
     places:'PLEKKEN', nearby:'IN DE BUURT', near_zoom:'Zoom in tot straatniveau om plekken te zien.', near_none:'Geen plekken van dit type in beeld.', route_here:'Route hierheen', p_on:'Toon op kaart',
     c_fuel:'Tankstation', c_charge:'Laadpaal', c_hospital:'Ziekenhuis & dokter', c_pharmacy:'Apotheek', c_shop:'Supermarkt', c_food:'Eten & drinken', c_parking:'Parkeren', c_water:'Water & wc', c_police:'Politie & brandweer', c_camp:'Camping & schuilplek', c_money:'Geldautomaat & bank',

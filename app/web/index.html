@@ -26,6 +26,7 @@
     <button class="tab" data-go="map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg><span data-t="map"></span></button>
     <button class="tab" data-go="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M9 12h.01M15 12h.01M9 16h6"/></svg><span data-t="ai"></span></button>
     <button class="tab" data-go="sos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><span data-t="sos"></span></button>
+    <button class="tab" data-go="inv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 7V5a4 4 0 018 0v2"/><rect x="4" y="7" width="16" height="14" rx="3"/><path d="M4 13h16M10 13v2h4v-2"/></svg><span data-t="inv"></span></button>
     <button class="tab" data-go="tr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h8M8 3v2M5.5 5c1 3.5 3.5 6 6.5 7M10.5 5c-1 4-3.5 7-7 8.5M13 21l4-9 4 9M14.5 18h5"/></svg><span data-t="tr"></span></button>
     <button class="tab" data-go="files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span data-t="files"></span></button>
     <div class="rail-sp"></div>
@@ -128,6 +129,19 @@
       </div>
     </section>
 
+    <section class="view" id="v-inv"><div class="inv">
+      <div class="inv-hud" id="invHud"></div>
+      <div class="inv-body">
+        <div class="inv-side"><div class="hud" style="margin:0 4px 8px" data-t="inv_boxes"></div><div id="invBoxes"></div></div>
+        <div class="inv-main glass">
+          <div class="inv-top"><div><h2 id="invTitle"></h2><div class="sub mono" id="invSub"></div></div>
+            <div class="inv-tools"><input class="inp" id="invQ" data-tp="inv_search" autocomplete="off" style="width:220px;height:38px"><button class="btn pri" id="invAddBtn">＋ <span data-t="inv_add"></span></button></div></div>
+          <div class="inv-cats" id="invCats"></div>
+          <div class="inv-grid" id="invGrid"></div>
+        </div>
+        <div class="inv-kits"><div class="hud" style="margin:0 4px 8px" data-t="inv_kits"></div><div id="invKits"></div></div>
+      </div>
+    </div></section>
     <section class="view" id="v-sos"><div class="dash sos">
       <div class="sos-hero">
         <div><div class="k sos-k" data-t="sos_mode"></div><h2 class="sos-h" data-t="sos_title"></h2><div class="sub" data-t="sos_sub"></div></div>
@@ -277,6 +291,8 @@
 <script src="/web/v12.js"></script>
 <script src="/web/v13.js"></script>
 <script src="/web/v14.js"></script>
+<script src="/web/inv-items.js"></script>
+<script src="/web/inv.js"></script>
 <script src="/web/fx.js"></script>
 </body>
 </html>

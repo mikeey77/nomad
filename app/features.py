@@ -84,7 +84,7 @@ def set_autostart(on):
 
 USER_FILE = None
 USER_LOCK = threading.Lock()
-DEFAULT_USER = {"favorites": [], "readlater": [], "notes": {}, "pins": [], "chats": [], "saved": [], "checklist": [
+DEFAULT_USER = {"inventory": None, "favorites": [], "readlater": [], "notes": {}, "pins": [], "chats": [], "saved": [], "checklist": [
     {"t": t, "done": False} for t in [
         "Water (3 L per person per day, 3 days)", "Non-perishable food for 3 days", "First aid kit",
         "Flashlight + spare batteries", "Power bank (charged)", "Battery / crank radio", "Cash",
@@ -109,7 +109,7 @@ def load_user():
 def save_user(patch):
     with USER_LOCK:
         u = load_user()
-        for k in ("favorites", "readlater", "notes", "pins", "checklist", "chats", "saved"):
+        for k in ("favorites", "readlater", "notes", "pins", "checklist", "chats", "saved", "inventory"):
             if k in patch:
                 u[k] = patch[k]
         N.save_json(user_file(), u)
