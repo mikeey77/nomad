@@ -17,22 +17,47 @@ def init(nomad_module):
     N = nomad_module
 
 
-# ───────── bestandsbeheer ─────────
-PROTECTED = ("app", "tools")          # niet verwijderen/hernoemen vanuit de app
-TEXT_EXT = {".txt", ".md", ".json", ".csv", ".log", ".ini", ".cfg", ".yml", ".yaml", ".xml", ".html", ".css", ".js", ".py", ".bat", ".ps1", ".gpx", ".geojson"}
+# ───────── file manager: the whole SSD (v0.17) ─────────
+PROTECTED = ("app", "tools")          # inside the NOMAD folder: never delete/rename from the app
+HIDDEN = {"$recycle.bin", "system volume information", "recycler", ".trashes", ".spotlight-v100", ".fseventsd", "autorun.inf"}
+TEXT_EXT = {".txt", ".md", ".json", ".csv", ".log", ".ini", ".cfg", ".yml", ".yaml", ".xml", ".html", ".css", ".js", ".py", ".bat", ".ps1", ".gpx", ".geojson", ".srt", ".vtt"}
+
+
+def fs_root():
+    """Root of the drive NOMAD lives on (D:\\ on Windows, the mount point elsewhere)."""
+    drive, _ = os.path.splitdrive(N.ROOT)
+    if drive:
+        return drive + os.sep
+    p = N.ROOT
+    while p != os.path.dirname(p) and not os.path.ismount(p):
+        p = os.path.dirname(p)
+    return p
+
+
+def nomad_rel():
+    r = os.path.relpath(N.ROOT, fs_root()).replace("\\", "/")
+    return "" if r == "." else r
 
 
 def safe(rel):
     rel = (rel or "").replace("\\", "/").strip("/")
-    full = os.path.normpath(os.path.join(N.ROOT, rel))
-    if full != N.ROOT and not full.startswith(N.ROOT + os.sep):
-        raise PermissionError("outside NOMAD")
+    root = os.path.normpath(fs_root())
+    full = os.path.normpath(os.path.join(root, rel))
+    if full != root and not full.startswith(root.rstrip(os.sep) + os.sep):
+        raise PermissionError("outside the SSD")
     return full, rel
 
 
 def protected(rel):
-    top = rel.split("/")[0] if rel else ""
-    return top in PROTECTED or rel == ""
+    if rel == "":
+        return True
+    nr = nomad_rel()
+    inner = rel[len(nr) + 1:] if nr and rel.startswith(nr + "/") else (rel if not nr else None)
+    if nr and rel == nr:
+        return True
+    if inner is None:
+        return False
+    return inner.split("/")[0] in PROTECTED
 
 
 def fs_list(rel):
@@ -40,6 +65,8 @@ def fs_list(rel):
     items = []
     with os.scandir(full) as it:
         for e in it:
+            if e.name.lower() in HIDDEN:
+                continue
             try:
                 st = e.stat()
                 items.append({"name": e.name, "dir": e.is_dir(), "size": 0 if e.is_dir() else st.st_size,
@@ -47,7 +74,8 @@ def fs_list(rel):
             except OSError:
                 pass
     items.sort(key=lambda x: (not x["dir"], x["name"].lower()))
-    return {"path": rel, "items": items, "protected": protected(rel)}
+    return {"path": rel, "items": items, "protected": protected(rel), "nomad": nomad_rel(),
+            "root": os.path.basename(fs_root().rstrip("/\\")) or fs_root()}
 
 
 def fs_read(rel):
@@ -64,7 +92,7 @@ def fs_read(rel):
 
 def fs_write(rel, content):
     full, rel = safe(rel)
-    if rel.startswith("tools/"):
+    if protected(rel) or protected(os.path.dirname(rel).replace("\\", "/")) and os.path.dirname(rel):
         return {"error": "protected folder"}
     tmp = full + ".tmp"
     with open(tmp, "w", encoding="utf-8", newline="") as f:
@@ -92,7 +120,9 @@ def fs_rename(rel, new_name):
 
 def fs_delete(rel):
     full, rel = safe(rel)
-    if protected(rel) or rel.split("/")[0] in ("data", "ai", "downloads") and rel.count("/") == 0:
+    nr = nomad_rel()
+    inner = rel[len(nr) + 1:] if nr and rel.startswith(nr + "/") else (rel if not nr else "")
+    if protected(rel) or (inner and inner.split("/")[0] in ("data", "ai", "downloads") and inner.count("/") == 0):
         return {"error": "not allowed"}
     if os.path.isdir(full):
         shutil.rmtree(full)

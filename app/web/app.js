@@ -382,9 +382,10 @@ async function pinPopup(ll){
   const r = await api(`/api/geocode?lat=${ll.lat}&lon=${ll.lng}`).catch(() => ({}));
   const name = placeName((r.features || [])[0]) || t('location');
   const div = document.createElement('div');
-  div.innerHTML = `<b>${esc(name)}</b><br><span class="mono dim">${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}</span>
-    <div style="display:flex;gap:6px;margin-top:8px"><input class="inp" style="flex:1;height:30px" value="${esc(name)}"><button class="btn pri" style="height:30px">${t('save_pin')}</button></div>`;
-  const pop = new maplibregl.Popup().setLngLat(ll).setDOMContent(div).addTo(MAP);
+  div.className = 'mpop';
+  div.innerHTML = `<b>${esc(name)}</b><span class="mono dim">${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}</span>
+    <div class="mpop-row"><input class="inp" value="${esc(name)}"><button class="btn pri">📍 ${t('save_pin')}</button></div>`;
+  const pop = new maplibregl.Popup({maxWidth:'320px'}).setLngLat(ll).setDOMContent(div).addTo(MAP);
   div.querySelector('button').onclick = () => {
     const pins = [...USER.pins, {lat:+ll.lat.toFixed(6), lon:+ll.lng.toFixed(6), name:div.querySelector('input').value.trim() || name, added:Date.now()}];
     saveUser({pins}); pop.remove(); renderPins();
@@ -748,7 +749,7 @@ function renderZim(){
     const sel = G.v.find(x => x.id === SELFLAV[G.key]) || G.inst || G.v[0], i = sel, id = 'zim:' + i.id, j = jobOf(id);
     const fl = G.v.length > 1 ? `<div class="flavs">${G.v.map(x => `<button class="${x === sel ? 'on' : ''}" data-g="${esc(G.key)}" data-f="${x.id}">${esc((LANG === 'nl' ? FLAV_NL : FLAV)[x.flavour] || x.flavour)}<small>${fmtB(x.size)}</small></button>`).join('')}</div>` : '';
     const ico = `<img class="cico" loading="lazy" src="/api/icon/${i.id}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cico ph',textContent:'${esc(G.title[0] || '?')}'}))">`;
-    return `<div class="ccard${i.installed ? ' inst' : ''}"><div class="ctop">${ico}<div class="cmain"><b title="${esc(G.title)}">${esc(G.title)}</b>
+    return `<div class="ccard${i.installed ? ' inst' : ''}" data-id="${esc(id)}"><div class="ctop">${ico}<div class="cmain"><b title="${esc(G.title)}">${esc(G.title)}</b>
         <span class="mono dim"><em class="lang">${esc(langName(i.lang))}</em> · ${fmtN(i.articles)} ${t('articles')} · ${esc(i.date)}</span></div><em class="csize">${fmtB(i.size)}</em></div>
       <div class="csum">${esc(i.summary || '')}</div>${fl}${j && j.status !== 'klaar' ? jobBar(j) : ''}<div class="cbtns">${itemBtns(id, i, 'zim')}</div></div>`;
   }).join('') || `<div class="empty">${t('nothing')}</div>`;
@@ -773,7 +774,7 @@ function itemBtns(id, i, kind){
 function card(id, i, kind, iconHtml){
   const j = jobOf(id), meta = kind === 'zim'
     ? `${esc(i.lang)} · ${esc(i.flavour || '—')} · ${fmtN(i.articles)} ${t('articles')} · ${esc(i.date)}` : esc(i.date || '');
-  return `<div class="ccard${i.installed ? ' inst' : ''}"><div class="ctop">${iconHtml}<div class="cmain"><b>${esc(i.title)}</b><span class="mono dim">${meta}</span></div><em class="csize">${fmtB(i.size)}</em></div>
+  return `<div class="ccard${i.installed ? ' inst' : ''}" data-id="${esc(id)}"><div class="ctop">${iconHtml}<div class="cmain"><b>${esc(i.title)}</b><span class="mono dim">${meta}</span></div><em class="csize">${fmtB(i.size)}</em></div>
     <div class="csum">${esc(i.summary || '')}</div>${j && j.status !== 'klaar' ? jobBar(j) : ''}<div class="cbtns">${itemBtns(id, i, kind)}</div></div>`;
 }
 function renderExtras(){

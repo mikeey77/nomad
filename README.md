@@ -69,6 +69,9 @@ Files you copy in by hand are detected automatically.</td>
 - 📱 **Phone & iPad** — scan the QR code on the dashboard, add NOMAD to your home screen, use it over Wi-Fi.
 - 📴 **NOMAD Mobile, no PC needed** — `NOMAD-mobile.html` is one self-contained file: open it on your phone, pick your `.zim` and `world.pmtiles` files, and read, search and browse the map straight from the SSD. Also installable from [mikeey77.github.io/nomad/mobile](https://mikeey77.github.io/nomad/mobile/).
 - 🎒 **Inventory** — track your real supplies game-style: home, backpack, car and your own stashes, 180+ items with emoji and rarity, days of food & water for your household, expiry warnings, recommended kits (72-hour bag, 2-week home supply, car kit) and *where to find* any item on the map.
+- 🎬 **Video library** — your own videos plus public-domain & Creative-Commons films from the Internet Archive (survival, first aid, farming…), with a custom player: resume, speed, subtitles, picture-in-picture, keyboard shortcuts.
+- 🛰️ **Satellite layer** — NASA Blue Marble (public domain), built into map tiles on your PC. Missing map layers link straight to their download.
+- 💽 **One profile per SSD** — inventory, favorites, notes, settings and app preferences all live on the SSD, so any computer you plug it into shows *your* NOMAD. The file manager shows the whole SSD.
 - 🔌 **Plug & go (Windows)** — the SSD shows up with the NOMAD icon, and an optional helper asks to open NOMAD (or opens it) as soon as you plug the SSD in.
 - 📱 **Phones & tablets** — NOMAD Mobile adapts to iPad/tablet screens (side rail, two-column library, side panel on the map) and shows your inventory read-only.
 - 📍 **Places on the map** — fuel, EV charging, hospitals, pharmacies, supermarkets, parking, water, camping… as toggles, with a *Nearby* list sorted by distance. Straight from the map data, no extra download.

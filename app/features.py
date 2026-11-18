@@ -89,7 +89,7 @@ def set_autostart(on):
 
 USER_FILE = None
 USER_LOCK = threading.Lock()
-DEFAULT_USER = {"inventory": None, "favorites": [], "readlater": [], "notes": {}, "pins": [], "chats": [], "saved": [], "checklist": [
+DEFAULT_USER = {"inventory": None, "videos": {}, "ui": {}, "favorites": [], "readlater": [], "notes": {}, "pins": [], "chats": [], "saved": [], "checklist": [
     {"t": t, "done": False} for t in [
         "Water (3 L per person per day, 3 days)", "Non-perishable food for 3 days", "First aid kit",
         "Flashlight + spare batteries", "Power bank (charged)", "Battery / crank radio", "Cash",
@@ -114,7 +114,7 @@ def load_user():
 def save_user(patch):
     with USER_LOCK:
         u = load_user()
-        for k in ("favorites", "readlater", "notes", "pins", "checklist", "chats", "saved", "inventory"):
+        for k in ("favorites", "readlater", "notes", "pins", "checklist", "chats", "saved", "inventory", "videos", "ui"):
             if k in patch:
                 u[k] = patch[k]
         N.save_json(user_file(), u)
@@ -313,6 +313,8 @@ def extras():
     for size, title, summ, gb in extra.WHISPER_SIZES:
         out.append({"id": "stt:" + size, "kind": "stt", "cat": "ai", "title": title + " · speech to text", "summary": summ + ". Talk instead of typing — works offline.",
                     "file": size, "date": "", "size": int(gb * (1 << 30)), "installed": extra.whisper_installed(size)})
+    import sat
+    out += sat.items()
     import fast
     out += fast.mt_items()
     for mid, title, summ, gb in AI_MODELS:
@@ -332,17 +334,17 @@ def catalog(force=False):
 
 
 # ── wachtrij: downloads één voor één, de rest staat "in wachtrij" ──
-def enqueue(item_id):
+def enqueue(item_id, item=None):
     jobs = N.STATE["jobs"]
     if item_id in jobs and jobs[item_id]["status"] in ("bezig", "wachtrij"):
         return {"ok": True}
-    item = _find(item_id)
+    item = item or _find(item_id)
     if not item:
         return {"error": "unknown item"}
     if item.get("kind") == "torrent":
         return {"error": "torrent only"}
     free = N.shutil.disk_usage(N.ROOT).free
-    if item.get("size") and item["size"] > free and item.get("kind") not in ("ai", "stt", "mt"):
+    if item.get("size") and item["size"] > free and item.get("kind") not in ("ai", "stt", "mt", "sat", "video"):
         return {"error": "not enough free space"}
     jobs[item_id] = {"status": "wachtrij", "title": item["title"], "done": 0, "total": item.get("size", 0), "msg": "", "target": item.get("target", "")}
     with QUEUE_LOCK:
@@ -380,6 +382,12 @@ def _worker():
             kind = item["kind"]
             if kind == "ai":
                 _pull_model(job, item["file"])
+            elif kind == "sat":
+                import sat
+                sat.build(job, item["id"].split(":", 1)[1])
+            elif kind == "video":
+                import video
+                video.fetch(job, item)
             elif kind == "mt":
                 import fast
                 fast.install_mt(job, item["file"])
@@ -499,6 +507,19 @@ BUNDLES = [
      "items": ["mdwiki_en_all_maxi", "wikipedia_en_medicine_maxi", "zimgit-medicine_en", "zimgit-water_en", "zimgit-food-preparation_en",
                "zimgit-post-disaster_en", "outdoors.stackexchange.com_en_all", "appropedia_en_all_maxi", "energypedia_en_all_maxi",
                "ifixit_en_all", "wikivoyage_en_all_maxi"]},
+    {"id": "practical", "icon": "wrench", "title": "Practical Skills",
+     "desc": "How-to guides, repair, gardening, cooking, homesteading, knots, electronics and mechanics — answers from people who did it.",
+     "items": ["wikihow_en_maxi", "zimgit-knots_en", "gardening.stackexchange.com_en_all", "cooking.stackexchange.com_en_all",
+               "diy.stackexchange.com_en_all", "mechanics.stackexchange.com_en_all", "electronics.stackexchange.com_en_all",
+               "homebrew.stackexchange.com_en_all", "sustainability.stackexchange.com_en_all", "outdoors.stackexchange.com_en_all",
+               "bicycles.stackexchange.com_en_all", "woodworking.stackexchange.com_en_all"]},
+    {"id": "medical", "icon": "heart", "title": "Medical Library",
+     "desc": "Emergency medicine, drug information and health encyclopedias for when no doctor is around.",
+     "items": ["wikem_en_all_maxi", "mdwiki_en_all_maxi", "wikipedia_en_medicine_maxi", "zimgit-medicine_en", "medlineplus.gov_en_all",
+               "nhs.uk_en_medicines", "fas-military-medicine_en", "health.stackexchange.com_en_all"]},
+    {"id": "maps_full", "icon": "map", "title": "Maps & Satellite",
+     "desc": "World street map plus a satellite layer of the whole Earth — everything the map needs offline.",
+     "items": ["map:world", "sat:world", "sat:detail"]},
     {"id": "survival_xl", "icon": "archive", "title": "Survivor Library",
      "desc": "205 GB of historical how-to books: farming, blacksmithing, medicine, building, chemistry — rebuild-civilisation knowledge.",
      "items": ["survivorlibrary.com_en_all"]},
@@ -566,7 +587,7 @@ def bundles():
     for b in BUNDLES:
         items = []
         for p in b["items"]:
-            if ":" in p and p.split(":")[0] in ("map", "geo", "torrent", "ai", "route"):
+            if ":" in p and p.split(":")[0] in ("map", "geo", "torrent", "ai", "route", "sat"):
                 e = ext.get(p)
                 if e:
                     items.append({"id": p, "title": e["title"], "size": e["size"], "installed": bool(e["installed"]), "kind": e["kind"]})

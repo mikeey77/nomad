@@ -214,7 +214,7 @@ def restore(data, mode="merge"):
     snapshot()  # keep a copy of the current state first
     cur = features.load_user()
     if mode == "replace":
-        new = {k: user.get(k, cur[k]) for k in ("favorites", "readlater", "notes", "pins", "checklist", "chats", "saved", "inventory")}
+        new = {k: user.get(k, cur[k]) for k in ("favorites", "readlater", "notes", "pins", "checklist", "chats", "saved", "inventory", "videos", "ui")}
     else:
         def merge_list(a, b, key):
             seen = {key(x) for x in a}

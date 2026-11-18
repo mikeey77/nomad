@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.16.0"
+VERSION = "0.17.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -976,6 +976,27 @@ class Handler(BaseHTTPRequestHandler):
                 if f.get("book") in BOOKS:
                     f["img"] = more.first_image(BOOKS[f["book"]], f["path"])
                 return self.json(f)
+            if p.startswith("/video/"):
+                import video
+                try:
+                    full = video.safe_rel(p[len("/video/"):])
+                except PermissionError:
+                    return self.send(403, "forbidden")
+                if not os.path.isfile(full):
+                    return self.send(404, "not found")
+                ctype = mimetypes.guess_type(full)[0] or "application/octet-stream"
+                if full.lower().endswith(".mkv"):
+                    ctype = "video/webm"
+                return self.ranged(full, ctype)
+            if p == "/api/videos":
+                import video
+                return self.json({"videos": video.videos(), "topics": video.TOPICS, "dir": video.video_dir()})
+            if p == "/api/videos/search":
+                import video
+                try:
+                    return self.json(video.search(q("q"), int(q("page", "1") or 1)))
+                except Exception as e:
+                    return self.json({"error": "Internet Archive not reachable (" + str(e)[:80] + ")", "results": []})
             if p == "/api/tracks":
                 import more
                 return self.json(more.tracks())
@@ -1055,6 +1076,22 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json(features.remove(self.body_json().get("id")))
             if p == "/api/ai/use":
                 return self.json(features.use_model(self.body_json().get("model")))
+            if p == "/api/videos/get":
+                import video
+                b = self.body_json()
+                try:
+                    if b.get("ident"):
+                        return self.json(video.queue_ia(b["ident"], b.get("topic", "")))
+                    return self.json(video.queue_url(b.get("url", ""), b.get("title", "")))
+                except Exception as e:
+                    return self.json({"error": str(e)[:200]}, 400)
+            if p == "/api/videos/thumb":
+                import video
+                b = self.body_json()
+                return self.json(video.save_thumb(b.get("rel", ""), b.get("image", "")))
+            if p == "/api/videos/delete":
+                import video
+                return self.json(video.delete(self.body_json().get("rel", "")))
             if p == "/api/ocr":
                 import more
                 try:

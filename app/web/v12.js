@@ -31,8 +31,9 @@ $('#trGo').onclick = trGo;
 /* ───────── downloads: AI tab grouped (chat · photo · translate · speech) ───────── */
 renderExtras = function(){
   if(!CAT) return;
-  const ex = CAT.extras || [], ic = {map:'map', torrent:'globe', geo:'pin', route:'compass'};
-  $('#mapgrid').innerHTML = ex.filter(i => ic[i.kind]).map(i => card(i.id, i, i.kind, `<div class="cico ph">${icon(ic[i.kind])}</div>`)).join('');
+  const ex = CAT.extras || [], ic = {map:'map', sat:'globe', torrent:'globe', geo:'pin', route:'compass'};
+  const ord = {map:0, sat:1, torrent:2, geo:3, route:4};
+  $('#mapgrid').innerHTML = ex.filter(i => ic[i.kind]).sort((a, b) => ord[a.kind] - ord[b.kind]).map(i => card(i.id, i, i.kind, `<div class="cico ph">${icon(ic[i.kind])}</div>`)).join('');
   const vis = i => /^Vision|· also recognises photos/.test(i.summary || '');
   const groups = [
     [t('assistant'), ex.filter(i => i.kind === 'ai' && !vis(i)), 'cpu'],
@@ -43,6 +44,7 @@ renderExtras = function(){
   $('#aigrid').innerHTML = groups.filter(g => g[1].length).map(([name, items, ico]) =>
     `<div class="grp-t">${icon(ico)} ${esc(name)}</div>` + items.map(i => card(i.id, i, i.kind, `<div class="cico ph">${icon(ico)}</div>`)).join('')).join('');
   bindBtns('#mapgrid'); bindBtns('#aigrid');
+  if(window.__hl){ const el = document.querySelector(`.ccard[data-id="${CSS.escape(window.__hl.id)}"]`); if(el){ el.classList.add('hl'); if(!window.__hl.done){ window.__hl.done = 1; setTimeout(() => el.scrollIntoView({behavior:'smooth', block:'center'}), 80) } } }
 };
 
 /* ───────── storage clean-up: explained, nothing ticked by default ───────── */

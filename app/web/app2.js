@@ -81,11 +81,11 @@ async function loadFiles(p){
   FPATH = p || ''; FSEL = null;
   const r = await api('/api/fs/list?path=' + encodeURIComponent(FPATH)).catch(() => ({items:[]}));
   const parts = FPATH ? FPATH.split('/') : [];
-  $('#crumbs').innerHTML = `<a data-p="">NOMAD</a>` + parts.map((x, i) => `<span>/</span><a data-p="${esc(parts.slice(0, i + 1).join('/'))}">${esc(x)}</a>`).join('') + (r.protected && FPATH ? ` <em class="okb">${t('f_protected')}</em>` : '');
+  $('#crumbs').innerHTML = `<a data-p="">💽 ${esc(r.root || 'SSD')}</a>` + parts.map((x, i) => `<span>/</span><a data-p="${esc(parts.slice(0, i + 1).join('/'))}">${esc(x)}</a>`).join('') + (r.protected && FPATH ? ` <em class="okb">${t('f_protected')}</em>` : '');
   $$('#crumbs a').forEach(a => a.onclick = () => loadFiles(a.dataset.p));
   const fmtD = ts => new Date(ts * 1000).toLocaleDateString(LANG === 'nl' ? 'nl-NL' : 'en-GB', {day:'2-digit', month:'short', year:'numeric'});
   $('#flist').innerHTML = (FPATH ? `<div class="frow up" data-up="1"><span class="fi">${icon('chev','flip')}</span><span class="fn">..</span></div>` : '') + r.items.map((f, i) =>
-    `<div class="frow" data-i="${i}" style="--i:${Math.min(i, 12)}"><span class="fi${f.dir ? ' d' : ''}">${icon(f.dir ? 'folder' : (FIC[f.ext.slice(1)] || 'file'))}</span><span class="fn">${esc(f.name)}</span>
+    `<div class="frow" data-i="${i}" style="--i:${Math.min(i, 12)}"><span class="fi${f.dir ? ' d' : ''}">${icon(f.dir ? 'folder' : (FIC[f.ext.slice(1)] || 'file'))}</span><span class="fn">${esc(f.name)}${f.dir && (FPATH ? FPATH + '/' : '') + f.name === r.nomad ? ' <em class="okb">NOMAD</em>' : ''}</span>
      <span class="fs mono dim">${f.dir ? '' : fmtB(f.size)}</span><span class="fd mono dim">${fmtD(f.mtime)}</span></div>`).join('') || `<div class="empty">—</div>`;
   $$('#flist .frow').forEach(row => row.onclick = () => {
     if(row.dataset.up) return loadFiles(FPATH.split('/').slice(0, -1).join('/'));
@@ -143,8 +143,8 @@ pinPopup = async function(ll){
   const box = document.querySelector('.maplibregl-popup-content > div');
   if(!box) return;
   const row = document.createElement('div');
-  row.style.cssText = 'display:flex;gap:6px;margin-top:6px';
-  row.innerHTML = `<button class="btn" style="height:28px;flex:1">${t('r_from')}</button><button class="btn" style="height:28px;flex:1">${t('r_to')}</button>`;
+  row.className = 'mpop-row two';
+  row.innerHTML = `<button class="btn">🅰 ${t('r_from')}</button><button class="btn">🅱 ${t('r_to')}</button>`;
   box.appendChild(row);
   const [a, b] = row.querySelectorAll('button');
   a.onclick = () => { RFROM = ll; document.querySelector('.maplibregl-popup')?.remove(); routeNow() };

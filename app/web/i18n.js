@@ -1,6 +1,10 @@
 /* NOMAD — vertalingen. Engels is standaard; Nederlands kiesbaar in Settings. */
 window.I18N = {
   en: {
+    get:'Download', videos:'VIDEOS', v_get:'Get videos', v_src:'Internet Archive — public-domain & Creative-Commons films', v_search:'Search films: survival, first aid, farming…',
+    v_link:'Download from a direct link', v_link_help:'Paste a direct link to a video file (.mp4, .webm). You can also copy your own videos into NOMAD\\data\\videos — subfolders become categories.',
+    v_offline:'Searching needs internet. Your downloaded videos always play offline.', v_empty:'No videos yet. Tap <b>＋ Get videos</b> to download survival, first-aid and how-to films, or copy your own into <code>data\\videos</code>.',
+    v_next:'UP NEXT', nothing:'Nothing found',
     so_cat:'Sort: category', so_exp:'Sort: expiry', so_name:'Sort: name', so_rar:'Sort: rarity', so_qty:'Sort: amount',
     s_plug:'When the NOMAD SSD is plugged in', pl_off:'Nothing', pl_ask:'Ask', pl_open:'Open NOMAD', s_plug_help:'Windows no longer starts programs from USB drives by itself (security). This installs a tiny helper on this PC that notices the SSD and asks to open NOMAD — or opens it straight away.',
     inv:'INVENTORY', v_inv:'INVENTORY', inv_boxes:'STORAGE', inv_kits:'RECOMMENDED', inv_add:'ADD', inv_search:'Search your stash…', finding:'Finding',
@@ -90,6 +94,10 @@ window.I18N = {
     saved:'Saved', g_green:'Green', g_blue:'Blue', g_amber:'Amber', g_red:'Red',
   },
   nl: {
+    get:'Downloaden', videos:'VIDEO’S', v_get:'Video’s zoeken', v_src:'Internet Archive — films uit het publieke domein & Creative Commons', v_search:'Zoek films: survival, EHBO, landbouw…',
+    v_link:'Downloaden via een directe link', v_link_help:'Plak een directe link naar een videobestand (.mp4, .webm). Je kunt ook eigen video’s in NOMAD\\data\\videos zetten — submappen worden categorieën.',
+    v_offline:'Zoeken heeft internet nodig. Gedownloade video’s spelen altijd offline.', v_empty:'Nog geen video’s. Tik op <b>＋ Video’s zoeken</b> om survival-, EHBO- en how-to-films te downloaden, of zet je eigen video’s in <code>data\\videos</code>.',
+    v_next:'HIERNA', nothing:'Niets gevonden',
     so_cat:'Sorteer: categorie', so_exp:'Sorteer: houdbaarheid', so_name:'Sorteer: naam', so_rar:'Sorteer: zeldzaamheid', so_qty:'Sorteer: aantal',
     s_plug:'Als de NOMAD-SSD wordt aangesloten', pl_off:'Niets', pl_ask:'Vragen', pl_open:'NOMAD openen', s_plug_help:'Windows start om veiligheidsredenen zelf geen programma’s meer vanaf een USB-schijf. Dit zet een klein hulpje op deze pc dat de SSD herkent en vraagt of NOMAD open moet — of het meteen opent.',
     inv:'INVENTARIS', v_inv:'INVENTARIS', inv_boxes:'OPSLAG', inv_kits:'AANBEVOLEN', inv_add:'TOEVOEGEN', inv_search:'Zoek in je voorraad…', finding:'Zoeken naar',
