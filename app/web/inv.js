@@ -148,7 +148,7 @@ function lootFx(i, qty, el){
 /* item picker: search all items ("loot table") */
 function openPicker(){
   const ov = invOverlay(`<div class="pk-h"><b>${L('ADD ITEMS', 'ITEMS TOEVOEGEN')}</b><span class="dim">${L('to', 'naar')} ${INV.boxes.find(b => b.id === INV_BOX).icon} ${esc(boxName(INV.boxes.find(b => b.id === INV_BOX)))}</span><button class="nbx" data-x>✕</button></div>
-    <input class="inp" id="pkQ" placeholder="${L('Search 200+ items… (water, knife, radio)', 'Zoek in 200+ items… (water, mes, radio)')}" autocomplete="off">
+    <input class="inp" id="pkQ" placeholder="${L('Search 180+ items… (water, knife, radio)', 'Zoek in 180+ items… (water, mes, radio)')}" autocomplete="off">
     <div class="pk-cats" id="pkCats"></div><div class="pk-grid" id="pkGrid"></div>`, 'picker');
   let cat = '';
   const draw = () => {

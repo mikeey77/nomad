@@ -68,7 +68,7 @@ Files you copy in by hand are detected automatically.</td>
 ### And the small stuff
 - 📱 **Phone & iPad** — scan the QR code on the dashboard, add NOMAD to your home screen, use it over Wi-Fi.
 - 📴 **NOMAD Mobile, no PC needed** — `NOMAD-mobile.html` is one self-contained file: open it on your phone, pick your `.zim` and `world.pmtiles` files, and read, search and browse the map straight from the SSD. Also installable from [mikeey77.github.io/nomad/mobile](https://mikeey77.github.io/nomad/mobile/).
-- 🎒 **Inventory** — track your real supplies game-style: home, backpack, car and your own stashes, 200+ items with emoji and rarity, days of food & water for your household, expiry warnings, recommended kits (72-hour bag, 2-week home supply, car kit) and *where to find* any item on the map.
+- 🎒 **Inventory** — track your real supplies game-style: home, backpack, car and your own stashes, 180+ items with emoji and rarity, days of food & water for your household, expiry warnings, recommended kits (72-hour bag, 2-week home supply, car kit) and *where to find* any item on the map.
 - 📍 **Places on the map** — fuel, EV charging, hospitals, pharmacies, supermarkets, parking, water, camping… as toggles, with a *Nearby* list sorted by distance. Straight from the map data, no extra download.
 - 🔖 **Reading list & favorites**, also on your phone. **Sync through the SSD** — no Wi-Fi, no cloud: the phone reads `data/nomad-user.json`, and phone changes go back via `data/inbox`.
 - ⚡ **Fast AI** — searches all collections in parallel with live progress, keeps the model warm, and has a **Think** mode for harder questions.
