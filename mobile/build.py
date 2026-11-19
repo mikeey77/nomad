@@ -25,6 +25,8 @@ parts = {
     "/*PMTILES*/": js(rd(W, "vendor", "pmtiles.js")),
     "/*BASEMAPS*/": js(rd(W, "vendor", "basemaps.js")),
     "/*MAPLIBRE*/": js(rd(W, "vendor", "maplibre-gl.js")),
+    "/*FONTS*/": "".join(f'@font-face{{font-family:"{fam}";font-weight:100 900;font-display:swap;src:url(data:font/woff2;base64,{b64(os.path.join(W, "assets", "fonts", fn))}) format("woff2")}}'
+                          for fam, fn in (("Inter", "inter-latin-wght-normal.woff2"), ("JetBrains Mono", "jetbrains-mono-latin-wght-normal.woff2"))),
     "/*ASSETS*/{}": json.dumps({"glyphs": glyphs, "sprites": sprites}),
 }
 for k, v in parts.items():

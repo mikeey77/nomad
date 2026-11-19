@@ -525,7 +525,7 @@ const IC = {
   camera:'<path d="M3 8a2 2 0 012-2h2l2-2h6l2 2h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><circle cx="12" cy="13" r="4"/>', zap:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>', trans:'<path d="M4 5h8M8 3v2M5 9c1 3 4 5 7 6M11 5c-1 4-4 8-7 10"/><path d="M13 21l4-9 4 9M14.5 18h5"/>',
   cpu:'<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>', check:'<path d="M5 12l5 5 9-10"/>',
 };
-const icon = (k, cls = '') => `<svg class="svgi ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[k] || ''}</svg>`;
+const icon = (k, cls = '') => `<svg class="svgi ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[k] || (window.ICONS && ICONS[k]) || ''}</svg>`;
 function fillIcons(){ $$('[data-i]').forEach(e => { if(!e.firstChild) e.innerHTML = icon(e.dataset.i) }) }
 
 /* ───────── noodpakket ───────── */

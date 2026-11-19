@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.23.0"
+VERSION = "0.24.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -1280,6 +1280,18 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json(features.catalog(q("force") == "1"))
             if p == "/api/bundles":
                 return self.json(features.bundles())
+            if p.startswith("/api/cover/"):
+                import more
+                parts = p[11:].split("/")
+                b = BOOKS.get(parts[0])
+                if not b:
+                    return self.send(404, "")
+                if len(parts) > 1 and parts[1] == "icon":
+                    try:
+                        return self.send(200, more.cover_icon(b), "image/png", cache=True)
+                    except Exception:
+                        return self.send(404, "")
+                return self.json(more.cover(b))
             if p.startswith("/api/icon/"):
                 data = features.icon(p[10:])
                 return self.send(200, data, "image/png", cache=True) if data else self.send(404, "")

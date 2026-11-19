@@ -1,7 +1,7 @@
 <p align="center"><img src="docs/img/banner.png" alt="PROJECT NOMAD" width="100%"></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.22-3dffa0?style=for-the-badge&labelColor=030806">
+  <img src="https://img.shields.io/badge/version-0.24-3dffa0?style=for-the-badge&labelColor=030806">
   <img src="https://img.shields.io/badge/platform-Windows-3dffa0?style=for-the-badge&labelColor=030806">
   <img src="https://img.shields.io/badge/works-100%25%20offline-b6ff4a?style=for-the-badge&labelColor=030806">
   <img src="https://img.shields.io/badge/storage-2%20TB%20SSD-3dffa0?style=for-the-badge&labelColor=030806">
@@ -164,7 +164,7 @@ Everything runs locally on your machine. NOMAD only goes online when you ask it 
 
 ## 🙏 Built on
 
-[Kiwix / openZIM](https://kiwix.org) · [OpenStreetMap](https://www.openstreetmap.org/copyright) · [Protomaps](https://protomaps.com) ·
+[Inter](https://rsms.me/inter/) & [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (OFL) · [Lucide icons](https://lucide.dev) (ISC) · [Kiwix / openZIM](https://kiwix.org) · [OpenStreetMap](https://www.openstreetmap.org/copyright) · [Protomaps](https://protomaps.com) ·
 [MapLibre](https://maplibre.org) · [JAXA AW3D30](https://earth.jaxa.jp/en/data/policy/) · [Photon](https://github.com/komoot/photon) ·
 [GraphHopper](https://www.graphhopper.com) · [Ollama](https://ollama.com) — and inspired by Crosstalk Solutions' Project N.O.M.A.D.
 

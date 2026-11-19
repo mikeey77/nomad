@@ -601,3 +601,35 @@ def ensure_pkgs(mods, pkgs, job=None, label=None):
             _sys.path.append(d)
     if not ok():
         raise RuntimeError("could not install " + ", ".join(pkgs) + ": " + ((r.stderr or r.stdout) or "")[-200:].strip())
+
+
+# ───────── library covers: the collection's own picture + a big image from its front page ─────────
+_COVERS = {}
+
+
+def cover(book):
+    if book.id in _COVERS:
+        return _COVERS[book.id]
+    out = {"icon": None, "img": None}
+    try:
+        a = book.archive
+        sizes = sorted(a.get_illustration_sizes()) if hasattr(a, "get_illustration_sizes") else []
+        if sizes:
+            out["icon"] = f"/api/cover/{book.id}/icon"
+    except Exception:
+        pass
+    try:
+        main = book.main_path()
+        if main:
+            out["img"] = first_image(book, main)
+    except Exception:
+        pass
+    _COVERS[book.id] = out
+    return out
+
+
+def cover_icon(book):
+    a = book.archive
+    sizes = sorted(a.get_illustration_sizes())
+    with book.lock:
+        return bytes(a.get_illustration_item(sizes[-1]).content)
