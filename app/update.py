@@ -18,7 +18,7 @@ CFG = os.path.join(APP, "config.json")
 
 REPO = "mikeey77/nomad"
 BRANCH = "main"
-UPDATABLE = ("app/", "LINKS.txt", "README.md", ".gitignore")
+UPDATABLE = ("app/", "LINKS.txt")
 KEEP = ("app/config.json", "app/.commit")
 
 

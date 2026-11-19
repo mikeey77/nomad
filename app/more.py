@@ -538,6 +538,30 @@ def auto_clean():
     done = {"cpython-*.tar.gz": "python", "jre*.zip": "java", "OpenJDK*.zip": "java", "ollama-windows-*.zip": "ollama",
             "photon-*.jar": "photon", "graphhopper-*.jar": "graphhopper"}
     freed = 0
+    # developer leftovers that don't belong on the SSD (the app updates itself from GitHub)
+    if not os.path.isdir(os.path.join(N.ROOT, ".git")):
+        import shutil
+        for junk in (".github", "launcher", "docs", "mobile", ".gitignore", "README.md"):
+            pth = os.path.join(N.ROOT, junk)
+            try:
+                if os.path.isdir(pth):
+                    shutil.rmtree(pth, ignore_errors=True)
+                elif os.path.isfile(pth):
+                    os.remove(pth)
+            except OSError:
+                pass
+    # satellite source images are only needed until the detailed layer is built
+    try:
+        sdir = os.path.join(dl, "satellite-build")
+        if os.path.isdir(sdir) and not any(j.get("status") in ("bezig", "wachtrij") and str(j.get("title", "")).startswith("Satellite")
+                                            for j in N.STATE.get("jobs", {}).values()):
+            sat = os.path.join(N.DATA, "maps", "satellite", "satellite.pmtiles")
+            built_detail = os.path.isfile(sat) and os.path.getsize(sat) > 1 << 30
+            if built_detail:
+                import shutil
+                shutil.rmtree(sdir, ignore_errors=True)
+    except Exception:
+        pass
     for pat, tool in done.items():
         if not os.path.isdir(os.path.join(tools, tool)):
             continue

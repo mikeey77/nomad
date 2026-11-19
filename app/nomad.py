@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.24.3"
+VERSION = "0.24.4"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -560,7 +560,58 @@ pause
 """
 
 
+START_HERE = """PROJECT NOMAD - start here
+=========================
+
+Windows PC / laptop .......... double-click  NOMAD.exe
+                               (no exe? use "Start NOMAD (backup).bat")
+Mac .......................... double-click  "Start NOMAD (Mac).command"
+Linux ........................ run           "Start NOMAD (Linux).sh"
+Phone / tablet / any browser . open          NOMAD-mobile.html
+                               then tap "Open files" and pick the .zim files in data/library
+                               and world.pmtiles in data/maps/world
+
+Everything works WITHOUT internet and without Wi-Fi.
+- Your profile (inventory, favorites, pins, notes) lives on this SSD in data/nomad-user.json,
+  so every device you plug the SSD into shows your NOMAD.
+- Phone changes go back to the SSD by themselves when NOMAD runs on a PC on the same Wi-Fi,
+  or as a file in data/inbox when there is no Wi-Fi.
+- Internet is only used, if available, for downloads and updates.
+"""
+
+UNIX_START = r"""#!/bin/sh
+# PROJECT NOMAD - start on Mac / Linux. Uses Python 3 if it is installed, otherwise opens the no-install version.
+cd "$(dirname "$0")"
+open_url() { (command -v open >/dev/null && open "$1") || (command -v xdg-open >/dev/null && xdg-open "$1") || echo "Open $1 in your browser"; }
+if command -v python3 >/dev/null 2>&1; then
+  python3 -c "import libzim" 2>/dev/null || python3 -m pip install --user --quiet libzim 2>/dev/null
+  if python3 -c "import libzim" 2>/dev/null; then
+    python3 app/nomad.py --no-browser &
+    sleep 4; open_url "http://localhost:8090"; wait; exit 0
+  fi
+fi
+echo "Python/libzim not available - opening NOMAD-mobile.html (works fully offline, no install)."
+open_url "NOMAD-mobile.html"
+"""
+
+
+def write_starters():
+    """'START HERE.txt' plus Mac and Linux starters, so the SSD works on any computer."""
+    for name, body, nl in (("START HERE.txt", START_HERE, "\r\n"), ("Start NOMAD (Mac).command", UNIX_START, "\n"),
+                           ("Start NOMAD (Linux).sh", UNIX_START, "\n")):
+        f = os.path.join(ROOT, name)
+        try:
+            if not os.path.isfile(f) or open(f, encoding="utf-8", errors="replace").read().replace("\r\n", "\n") != body:
+                with open(f, "w", encoding="utf-8", newline=nl) as h:
+                    h.write(body)
+                if not name.endswith(".txt"):
+                    os.chmod(f, 0o755)
+        except OSError:
+            pass
+
+
 def write_rescue():
+    write_starters()
     if os.name != "nt":
         return
     f = os.path.join(ROOT, "Start NOMAD (backup).bat")
