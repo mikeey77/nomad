@@ -202,3 +202,18 @@ footer{font:500 11px var(--sans);text-transform:none}
 [data-theme="light"] .glass{background:rgba(255,255,255,.86)}
 .phonecard>.tlabel{flex-basis:100%;margin-bottom:-12px}
 .dash.tiles>#favHome.tile{padding:16px 18px;border:1px solid var(--edge);border-radius:var(--r3);background:linear-gradient(180deg,var(--s2),var(--s1));box-shadow:var(--sh1)}
+/* v0.24.3 */
+.btn{white-space:nowrap}
+#newChat{height:30px!important;padding:0 14px}
+.msg .bub.md{white-space:pre-wrap}
+.bub.md strong{color:var(--hi);font-weight:650}
+.bub.md .mdh{display:block;font:650 16px/1.4 var(--sans);color:var(--hi);margin:6px 0 2px}
+.bub.md .mdh1{font-size:18px}
+.bub.md .mdli{display:flex;gap:10px;margin:3px 0}
+.bub.md .mdli>i{flex:none;min-width:18px;font-style:normal;color:rgb(var(--a));font-weight:700;text-align:right}
+.bub.md .mdli.num>i{font:600 13px/1.65 var(--mono)}
+.bub.md .mdc{font:13px var(--mono);background:var(--s3);padding:1px 6px;border-radius:5px}
+.bub.md .mdpre{white-space:pre;overflow:auto;background:rgba(0,0,0,.35);border:1px solid var(--edge);border-radius:10px;padding:10px 12px;font:12.5px var(--mono);margin:6px 0}
+.bub.md .mdhr{border:0;border-top:1px solid var(--edge2);margin:8px 0}
+.bar.build i{background:repeating-linear-gradient(45deg,rgba(var(--a),.9) 0 10px,rgba(var(--a),.6) 10px 20px);animation:barmove 1s linear infinite}
+@keyframes barmove{to{background-position:28px 0}}

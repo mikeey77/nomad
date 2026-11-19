@@ -2,7 +2,7 @@
 (() => {
   const ago = s => { const d = Date.now() / 1000 - s; return d < 90 ? t('dh_now') : d < 3600 ? Math.round(d / 60) + ' min' : d < 86400 ? Math.round(d / 3600) + ' h' : Math.round(d / 86400) + ' d' };
   function badge(j){
-    if(j.status === 'bezig') return `<span class="dbadge run">${j.msg && /retry|problem|lost/i.test(j.msg) ? '⟳ ' + t('dh_retrying') : '↓ ' + t('dh_active')}</span>`;
+    if(j.status === 'bezig') return `<span class="dbadge run">${j.msg && /retry|problem|lost/i.test(j.msg) ? '⟳ ' + t('dh_retrying') : /^(building|reading|writing|installing|unpacking)/i.test(j.msg || '') ? '⚙ ' + t('dh_building') : '↓ ' + t('dh_active')}</span>`;
     if(j.status === 'wachtrij') return /retry/i.test(j.msg || '') ? `<span class="dbadge warn">⟳ ${t('dh_retry_wait')}</span>` : `<span class="dbadge wait">⏸ ${t('dh_waiting')}</span>`;
     return '';
   }

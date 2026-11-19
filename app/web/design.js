@@ -192,3 +192,43 @@ function tileName(id){
 setInterval(() => { if(VIEW === 'home'){ tileify() } }, 4000);
 setTimeout(tileify, 1500);
 if(VIEW === 'lib') setTimeout(coverize, 800);
+
+/* ───────── v0.24.3: markdown in AI answers (bold, lists, headings, code) ───────── */
+function mdLite(src){
+  let s = esc(src || '');
+  const blocks = [];
+  s = s.replace(/```[\w-]*\n?([\s\S]*?)(```|$)/g, (m, c) => { blocks.push(`<pre class="mdpre"><code>${c.replace(/\n$/, '')}</code></pre>`); return `\u0000${blocks.length - 1}\u0000` });
+  s = s.split('\n').map(l => {
+    let m;
+    if((m = l.match(/^\s{0,3}(#{1,4})\s+(.*)$/))) return `<span class="mdh mdh${m[1].length}">${m[2]}</span>`;
+    if((m = l.match(/^(\s*)[-*•]\s+(.*)$/))) return `${m[1]}<span class="mdli"><i>•</i><span>${m[2]}</span></span>`;
+    if((m = l.match(/^(\s*)(\d+)[.)]\s+(.*)$/))) return `${m[1]}<span class="mdli num"><i>${m[2]}</i><span>${m[3]}</span></span>`;
+    if(/^\s*(---|\*\*\*)\s*$/.test(l)) return '<hr class="mdhr">';
+    return l;
+  }).join('\n');
+  s = s.replace(/`([^`\n]+)`/g, '<code class="mdc">$1</code>')
+       .replace(/\*\*([^*\n][^*]*?)\*\*/g, '<strong>$1</strong>')
+       .replace(/__([^_\n]+)__/g, '<strong>$1</strong>')
+       .replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s.,;:!?)]|$)/g, '$1<em>$2</em>')
+       .replace(/\n(<span class="mdli)/g, '$1').replace(/(<\/span><\/span>)\n/g, '$1')
+       .replace(/(<span class="mdh[^>]*>.*?<\/span>|<hr class="mdhr">)\n+/g, '$1').replace(/\n{3,}/g, '\n\n').trim();
+  return s.replace(/\u0000(\d+)\u0000/g, (m, i) => blocks[+i]);
+}
+renderChat = (function(orig){ return function(){
+  orig.apply(this, arguments);
+  const A = CHAT.filter(m => m.role !== 'user');
+  $$('#chat .msg.a .bub').forEach((b, i) => {
+    const m = A[i]; if(!m || m.err || !m.content) return;
+    const src = b.querySelector(':scope>.src'); if(src) src.remove();
+    b.innerHTML = mdLite(m.content); b.classList.add('md');
+    if(src) b.appendChild(src);
+  });
+} })(renderChat);
+
+/* ───────── v0.24.3: show "building" instead of "downloading 0 B" for local work ───────── */
+const BUILD_RE = /^(building|reading|writing|installing|unpacking|starting|finding)/i;
+jobBar = (function(orig){ return function(j){
+  if(!j || j.status !== 'bezig' || !BUILD_RE.test(j.msg || '')) return orig(j);
+  const pct = j.total ? Math.min(100, j.done / j.total * 100) : 0;
+  return `<div class="bar build"><i style="width:${pct.toFixed(1)}%"></i></div><span class="mono dim">${esc(j.msg)}</span>`;
+} })(jobBar);

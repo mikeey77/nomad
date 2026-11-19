@@ -4,6 +4,7 @@ raster .pmtiles file (Web Mercator, JPEG tiles) right here, so the map can use t
 import io
 import math
 import os
+import time
 import sqlite3
 import subprocess
 import sys
@@ -95,7 +96,9 @@ def build(job, vid):
             db.executemany("INSERT OR REPLACE INTO t VALUES (?,?,?,?)", batch)
             db.commit()
             done += len(batch)
-            job["msg"] = f"building satellite tiles (zoom {maxz}) {done * 100 // total}%"
+            job["total"], job["done"] = total, done
+            job["msg"] = f"building satellite tiles (zoom {maxz}) · {done * 100 // total}%"
+            time.sleep(0.002)
             if job.get("cancel"):
                 raise RuntimeError("cancelled")
         del img
@@ -103,7 +106,14 @@ def build(job, vid):
     for z in range(maxz - 1, -1, -1):
         m = 1 << z
         job["msg"] = f"building zoom {z}…"
+        job["total"], job["done"] = m * m, db.execute("SELECT COUNT(*) FROM t WHERE z=?", (z,)).fetchone()[0]
         for x in range(m):
+            if job.get("cancel"):
+                db.commit()
+                raise RuntimeError("cancelled")
+            db.commit()                          # save progress per column, so a restart continues here
+            job["msg"] = f"building zoom {z} · {job['done'] * 100 // (m * m)}%"
+            time.sleep(0.002)                    # let the rest of NOMAD breathe
             for y in range(m):
                 if db.execute("SELECT 1 FROM t WHERE z=? AND x=? AND y=?", (z, x, y)).fetchone():
                     continue
@@ -116,6 +126,7 @@ def build(job, vid):
                 buf = io.BytesIO()
                 canvas.resize((256, 256), Image.LANCZOS).save(buf, "JPEG", quality=82, optimize=True)
                 db.execute("INSERT OR REPLACE INTO t VALUES (?,?,?,?)", (z, x, y, buf.getvalue()))
+                job["done"] += 1
         db.commit()
     # 4) write the .pmtiles file
     from pmtiles.tile import zxy_to_tileid, TileType, Compression
