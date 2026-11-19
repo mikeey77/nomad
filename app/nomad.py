@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.22.0"
+VERSION = "0.23.0"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -916,7 +916,8 @@ def download(job, url, target, retries=50):
         final, total, ranges = url, 0, False
     legacy = os.path.exists(part) and not os.path.exists(seg) and os.path.getsize(part) > 0
     if ranges and total >= SEG_MIN and not legacy:
-        _download_segmented(job, url, part, seg, total, retries)
+        import dl
+        dl.download_pieces(job, url, part, seg, total)
     else:
         _download_single(job, url, part, retries)
     job["msg"] = ""
@@ -1284,7 +1285,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, data, "image/png", cache=True) if data else self.send(404, "")
             if p == "/api/updates":
                 return self.json({"online": STATE["online"], "last_check": STATE["last_check"],
-                                  "updates": STATE["updates"], "jobs": STATE["jobs"]})
+                                  "updates": STATE["updates"], "jobs": STATE["jobs"], "history": features.history()[:15]})
             if p.startswith("/lib/"):
                 parts = p[5:].split("/", 1)
                 return self.content(parts[0], parts[1] if len(parts) > 1 else "")
@@ -1381,6 +1382,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json(extra.fs_rename(b["path"], b["name"]))
             if p == "/api/fs/delete":
                 return self.json(extra.fs_delete(self.body_json()["path"]))
+            if p == "/api/download/history/clear":
+                features.clear_history()
+                return self.json({"ok": True})
+            if p == "/api/download/retry":
+                return self.json(features.enqueue(self.body_json().get("id")))
             if p == "/api/docs/scan":
                 import docs
                 threading.Thread(target=docs.scan, daemon=True).start()

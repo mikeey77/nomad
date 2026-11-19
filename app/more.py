@@ -570,3 +570,34 @@ def auto_clean():
     if freed:
         print(f"  Opgeruimd: {freed / (1 << 20):.0f} MB aan tijdelijke bestanden")
     return freed
+
+
+# ───────── install Python packages on demand (and make them importable right away) ─────────
+def ensure_pkgs(mods, pkgs, job=None, label=None):
+    import importlib
+    import site
+    import subprocess
+
+    def ok():
+        importlib.invalidate_caches()
+        try:
+            for m in mods:
+                importlib.import_module(m)
+            return True
+        except Exception:
+            return False
+    if ok():
+        return
+    if job is not None:
+        job["msg"] = f"installing {label or ', '.join(pkgs)} (one time)…"
+    if not N.is_online():
+        raise RuntimeError(f"{label or pkgs[0]} needs internet once to install")
+    args = [_sys.executable, "-m", "pip", "install", "--quiet", "--disable-pip-version-check", *pkgs]
+    r = subprocess.run(args, capture_output=True, text=True, timeout=900, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    if r.returncode != 0:     # e.g. no write access → try the user folder
+        r = subprocess.run(args + ["--user"], capture_output=True, text=True, timeout=900, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    for d in list(site.getsitepackages()) + [site.getusersitepackages()]:
+        if os.path.isdir(d) and d not in _sys.path:
+            _sys.path.append(d)
+    if not ok():
+        raise RuntimeError("could not install " + ", ".join(pkgs) + ": " + ((r.stderr or r.stdout) or "")[-200:].strip())

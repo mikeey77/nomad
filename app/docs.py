@@ -52,16 +52,9 @@ def _strip_xml(x):
 
 
 def _pdf_pages(path):
-    try:
-        import pypdf
-    except ImportError:
-        if not N.is_online():
-            raise RuntimeError("PDF reader not installed yet (needs internet once)")
-        subprocess.run([sys.executable, "-m", "pip", "install", "--quiet", "pypdf"], capture_output=True, timeout=300,
-                       creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-        import importlib
-        importlib.invalidate_caches()
-        import pypdf
+    import more
+    more.ensure_pkgs(["pypdf"], ["pypdf"], label="PDF reader")
+    import pypdf
     r = pypdf.PdfReader(path)
     for i, pg in enumerate(r.pages):
         try:

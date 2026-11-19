@@ -1017,3 +1017,28 @@ h1,h2,h3{letter-spacing:-.005em}
 .owtip{font:10px var(--mono);color:var(--dim);padding:4px 10px 8px;border-bottom:1px solid rgba(var(--a),.1);margin-bottom:4px}
 .aiasks{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
 .aiasks .btn{height:auto;padding:9px 10px;text-align:left;white-space:normal;font-size:12px}
+
+/* v0.23 — download status */
+.dbadge{display:inline-flex;align-items:center;gap:4px;font:700 9.5px var(--mono);letter-spacing:.12em;padding:3px 8px;border-radius:999px;margin-left:8px;vertical-align:2px;white-space:nowrap}
+.dbadge.run{background:rgba(var(--a),.16);color:var(--acc)}
+.dbadge.wait{background:rgba(255,255,255,.06);color:var(--dim)}
+.dbadge.warn{background:rgba(255,182,58,.14);color:#ffb63a}
+.dbadge.ok{background:rgba(var(--a),.14);color:var(--acc)}
+.dbadge.bad{background:rgba(255,84,112,.14);color:#ff5470}
+.upd.st-run{border-left:3px solid var(--acc)}
+.upd.st-wait{border-left:3px solid rgba(255,255,255,.15)}
+.dhist{margin-top:14px;border:1px solid rgba(var(--a),.12);border-radius:14px;padding:10px 12px;background:rgba(var(--a),.02)}
+.dh-head{display:flex;align-items:center;gap:4px;margin-bottom:6px}
+.dh-head .hud{margin-right:6px}
+.dh-head .btn{margin-left:auto;height:26px;padding:0 10px;font-size:11px}
+.dh-row{display:flex;align-items:center;gap:10px;padding:7px 2px;border-top:1px solid rgba(var(--a),.07)}
+.dh-row>i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:700 12px var(--mono);font-style:normal;flex:none}
+.dh-row.done>i{background:rgba(var(--a),.18);color:var(--acc)}
+.dh-row.failed>i{background:rgba(255,84,112,.18);color:#ff5470}
+.dh-row.cancelled>i{background:rgba(255,255,255,.07);color:var(--dim)}
+.dh-row>span{flex:1;min-width:0;display:flex;flex-direction:column}
+.dh-row b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dh-row small{font:10.5px var(--mono);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dh-row.failed small{color:#ff8a9c}
+.dh-row .btn{height:28px;padding:0 10px;font-size:11px}
+.dh-row b{font:600 13px system-ui,sans-serif!important;color:#eafff3!important;letter-spacing:0!important}

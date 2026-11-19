@@ -38,18 +38,8 @@ def items():
 
 
 def _deps(job):
-    try:
-        import numpy  # noqa: F401
-        import PIL  # noqa: F401
-        import pmtiles  # noqa: F401
-        return
-    except Exception:
-        pass
-    job["msg"] = "installing image tools (Pillow, NumPy, pmtiles)…"
-    r = subprocess.run([sys.executable, "-m", "pip", "install", "--quiet", "pillow", "numpy", "pmtiles"],
-                       capture_output=True, text=True, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-    if r.returncode != 0:
-        raise RuntimeError("pip: " + (r.stderr or r.stdout)[-300:])
+    import more
+    more.ensure_pkgs(["numpy", "PIL", "pmtiles"], ["pillow", "numpy", "pmtiles"], job, "image tools (Pillow, NumPy, pmtiles)")
 
 
 def _tile_lat(y, z):

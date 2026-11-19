@@ -506,6 +506,7 @@ def _worker():
             job["status"] = "klaar"
             job["msg"] = ""
             EXTRA_CACHE["t"] = 0
+            record(item_id, job, "done")
         except Exception as e:
             tries = job.get("tries", 0) + 1
             job["tries"] = tries
@@ -516,9 +517,47 @@ def _worker():
                 threading.Timer(wait, _requeue, args=(item_id, item)).start()
             else:
                 job["status"] = "fout"
-                job["msg"] = str(e)
+                job["msg"] = "cancelled" if job.get("cancel") else str(e)
+                record(item_id, job, "cancelled" if job.get("cancel") else "failed", str(e))
         finally:
             save_queue()
+
+
+HIST_LOCK = threading.Lock()
+
+
+def _hist_file():
+    return os.path.join(N.DL_DIR, "history.json")
+
+
+def history():
+    try:
+        with open(_hist_file(), encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
+def record(item_id, job, status, err=""):
+    """Keep a short list of finished / failed downloads so you can see what happened."""
+    with HIST_LOCK:
+        h = [x for x in history() if x.get("id") != item_id]
+        h.insert(0, {"id": item_id, "title": job.get("title", item_id), "status": status, "size": job.get("total") or 0,
+                     "error": (err or "")[:200], "tries": job.get("tries", 0), "t": int(time.time())})
+        try:
+            os.makedirs(N.DL_DIR, exist_ok=True)
+            with open(_hist_file(), "w", encoding="utf-8") as f:
+                json.dump(h[:40], f, indent=1)
+        except OSError:
+            pass
+
+
+def clear_history():
+    with HIST_LOCK:
+        try:
+            os.remove(_hist_file())
+        except OSError:
+            pass
 
 
 def _requeue(item_id, item):
