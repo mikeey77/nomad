@@ -48,10 +48,10 @@ def _tile_lat(y, z):
 
 
 def build(job, vid):
+    _deps(job)                      # install Pillow/NumPy first — importing them before this was the bug
     import numpy as np
     from PIL import Image
     Image.MAX_IMAGE_PIXELS = None
-    _deps(job)
     title, _, files, maxz, _ = VARIANTS[vid]
     tmpdir = os.path.join(N.DL_DIR, "satellite-build")
     os.makedirs(tmpdir, exist_ok=True)
