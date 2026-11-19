@@ -163,8 +163,8 @@ def translate_fast(text, src, dst, emit):
 
 # ───────── language detection (offline, simple but good enough) ─────────
 STOPS = {
-    "en": "the and is are of to in that it you for was with on as have not this be at by what your from they will can",
-    "nl": "de het een en is van dat niet je ik zijn op te met voor er maar ook als wat dan bij nog kan geen wij jij hij",
+    "en": "the and is are of to in that it you for was with on as have not this be at by what your from they will can how do does i my a an where when why which who should could would me it's i'm don't there their about",
+    "nl": "de het een en is van dat niet je ik zijn op te met voor er maar ook als wat dan bij nog kan geen wij jij hij hoe moet mijn waar wanneer waarom welke wie mag kun kunnen",
     "de": "der die das und ist nicht ich ein eine zu mit sie es auf für den dem sich auch wie wir aber noch kann",
     "fr": "le la les et est un une des pas je que en du dans pour qui il elle nous vous sur avec ce mais très",
     "es": "el la los las y es un una de que no en por para con se lo como pero muy está yo tú usted nosotros",
@@ -192,6 +192,8 @@ def detect(text):
     best, score = "en", 0
     for lang, s in STOPS.items():
         n = sum(1 for w in words if w in s)
+        if lang == "pl" and not re.search(r"[ąćęłńśźż]", t.lower()):
+            n -= 1                      # "i", "a", "w" also appear in English
         if n > score:
             best, score = lang, n
     return best

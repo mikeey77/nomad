@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.24.0"
+VERSION = "0.24.1"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -406,6 +406,38 @@ def supports_think(model):
     return any(k in (model or "") for k in THINK_MODELS)
 
 
+LANG_NAMES = {"en": "English", "nl": "Dutch (Nederlands)", "de": "German", "fr": "French", "es": "Spanish", "it": "Italian",
+              "pt": "Portuguese", "pl": "Polish", "tr": "Turkish", "ru": "Russian", "uk": "Ukrainian", "ar": "Arabic", "zh": "Chinese", "ja": "Japanese"}
+SYNONYMS = {"tire": ["tyre"], "tyre": ["tire"], "band": ["lekke", "wiel"], "flat": ["puncture"], "car": ["vehicle"], "auto": ["car"],
+            "fix": ["repair"], "repair": ["fix"], "water": ["drinking"], "purify": ["purification"], "fire": ["firestarting"]}
+LANG3 = {"en": "eng", "nl": "nld", "de": "deu", "fr": "fra", "es": "spa", "it": "ita", "pt": "por"}
+
+
+def _stem(w):
+    for suf in ("ing", "ies", "es", "s", "en", "e"):
+        if len(w) > len(suf) + 3 and w.endswith(suf):
+            return w[:-len(suf)]
+    return w
+
+
+def relevance(kw, title, text):
+    """0..1: how well a passage matches the question. Title hits count more; generic verbs count less."""
+    if not kw:
+        return 0
+    tl, xl = title.lower(), text.lower()
+    weak = {"change", "make", "use", "get", "do", "best", "way", "need", "work", "good", "know", "find", "help"}
+    tot = got = 0.0
+    for w in kw:
+        wt = 0.4 if w in weak else 1.0
+        tot += wt
+        forms = [_stem(w)] + [_stem(x) for x in SYNONYMS.get(w, [])]
+        if any(f in tl for f in forms):
+            got += wt * 1.0
+        elif any(f in xl for f in forms):
+            got += wt * 0.7
+    return got / tot
+
+
 def keywords(q, n=6):
     words = re.findall(r"[\w'-]{2,}", q.lower())
     out = [w for w in words if w not in STOP and not w.isdigit() or (w.isdigit() and len(w) == 4)]
@@ -440,7 +472,7 @@ def rag_search(question, emit, deep=False):
     from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
     kw = keywords(question)
     budget = 12.0 if deep else 4.0
-    per, limit, chars = (3, 8, 1800) if deep else (2, 5, 1300)
+    per, limit, chars = (5, 8, 1800) if deep else (4, 5, 1300)
     books = sorted(BOOKS.values(), key=book_order)
     emit({"status": "search", "kw": kw, "books": len(books)})
     hits, t0 = [], time.time()
@@ -458,7 +490,32 @@ def rag_search(question, emit, deep=False):
         emit({"status": "timeout", "skipped": [futs[f].title for f in pending]})
     pool.shutdown(wait=False, cancel_futures=True)
     order = {bk.id: i for i, bk in enumerate(books)}
-    hits.sort(key=lambda h: order.get(h["book"], 99))
+    try:
+        import fast
+        qlang = LANG3.get(fast.detect(question), "")
+    except Exception:
+        qlang = ""
+    # read the candidates, score how well they really match, keep only the good ones (best first)
+    scored = []
+    for h in hits[:24]:
+        bk = BOOKS.get(h["book"])
+        if not bk:
+            continue
+        try:
+            txt = plain_text(bk, h["path"], chars)
+        except Exception:
+            txt = ""
+        if not txt:
+            continue
+        r = relevance(kw, h.get("title", ""), txt)
+        if re.match(r"(lijst van|list of|liste der|index of)", h.get("title", ""), re.I):
+            r *= 0.4
+        if qlang and qlang in (bk.language or ""):
+            r += 0.05
+        r -= order.get(h["book"], 50) * 0.002
+        scored.append((r, h, bk, txt))
+    scored.sort(key=lambda x: -x[0])
+    good = [x for x in scored if x[0] >= 0.6][:limit]
     sources, ctx = [], []
     try:  # your own documents first — they are the most personal answer
         import docs
@@ -471,14 +528,7 @@ def rag_search(question, emit, deep=False):
             emit({"source": src})
     except Exception:
         pass
-    for h in hits[:limit]:
-        bk = BOOKS.get(h["book"])
-        if not bk:
-            continue
-        try:
-            txt = plain_text(bk, h["path"], chars)
-        except Exception:
-            txt = ""
+    for r, h, bk, txt in good:
         if txt:
             src = {"book": bk.id, "path": h["path"], "title": h["title"], "bookTitle": bk.title}
             sources.append(src)
@@ -1637,8 +1687,17 @@ class Handler(BaseHTTPRequestHandler):
             except Exception:
                 pass
 
-        system = ("You are NOMAD, a helpful offline assistant. Answer in the user's language, "
-                  "clearly and to the point.")
+        q_last = (msgs[-1].get("content", "") if msgs else "")[:400]
+        try:
+            import fast
+            lang = LANG_NAMES.get(fast.detect(q_last), "the same language as the user's question")
+        except Exception:
+            lang = "the same language as the user's question"
+        system = ("You are NOMAD, a practical offline assistant for everyday life, repairs, travel, health and self-reliance. "
+                  f"Always answer in {lang} — the language of the user's last message, even when the sources are in another language. "
+                  "Give clear, concrete, step-by-step help for ordinary practical tasks (changing a tyre, fixing things, cooking, "
+                  "first aid, gardening, electricity, navigation…) — these are normal questions, never refuse them and never send "
+                  "the user to a professional instead of answering; mention a safety tip where it matters. Be concise.")
         if think and not supports_think(model):
             system += " Think step by step before you answer, then give a clear final answer."
         sources, ctx = [], []
@@ -1656,7 +1715,8 @@ class Handler(BaseHTTPRequestHandler):
             sources, ctx = rag_search(question, emit, deep=think)
         if ctx:
             system += ("\n\nUse the following excerpts from the user's offline library as your source. "
-                       "Mention which source you used. If the answer is not in them, say so honestly.\n\n" + "\n\n".join(ctx))
+                       "Mention which source you used. Ignore excerpts that are not about the question. If the excerpts don't cover it, "
+                       "answer from your own knowledge and say so.\n\n" + "\n\n".join(ctx))
         emit({"sources": sources})
         emit({"status": "answer", "model": model})
         payload = {"model": model, "stream": True, "keep_alive": "30m",
