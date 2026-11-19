@@ -29,7 +29,7 @@ from html import unescape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-VERSION = "0.24.4"
+VERSION = "0.24.5"
 
 APP = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(APP)
@@ -560,16 +560,29 @@ pause
 """
 
 
+MOBILE_NAME = "5  Android + any browser - NOMAD.html"
+PWA_URL = "https://mikeey77.github.io/nomad/mobile/"
+SHORTCUTS = {   # clear starter per operating system, sorted to the top of the NOMAD folder
+    "win": "1  Windows - Start NOMAD.bat",
+    "mac": "2  Mac - Start NOMAD.command",
+    "lin": "3  Linux - Start NOMAD.sh",
+    "ios": "4  iPhone + iPad - open NOMAD.html",
+}
+OLD_STARTERS = ("Android + any browser - NOMAD.html", "Start NOMAD (backup).bat", "Start NOMAD (Mac).command", "Start NOMAD (Linux).sh", "NOMAD-mobile.html")
+
 START_HERE = """PROJECT NOMAD - start here
 =========================
+Pick the file for your device (they are at the top of this folder):
 
-Windows PC / laptop .......... double-click  NOMAD.exe
-                               (no exe? use "Start NOMAD (backup).bat")
-Mac .......................... double-click  "Start NOMAD (Mac).command"
-Linux ........................ run           "Start NOMAD (Linux).sh"
-Phone / tablet / any browser . open          NOMAD-mobile.html
-                               then tap "Open files" and pick the .zim files in data/library
-                               and world.pmtiles in data/maps/world
+  1  Windows - Start NOMAD.bat ............... Windows PC / laptop (same as NOMAD.exe)
+  2  Mac - Start NOMAD.command ............... Mac (first time: right-click > Open)
+  3  Linux - Start NOMAD.sh .................. Linux
+  4  iPhone + iPad - open NOMAD.html ......... opens the NOMAD app page in Safari:
+                                               Share > Add to Home Screen, then it works offline
+  5  Android + any browser - NOMAD.html ...... Android phone/tablet, Chromebook, any computer:
+                                               open in Chrome/Firefox, tap "Open files" and pick
+                                               the .zim files in data/library and
+                                               data/maps/world/world.pmtiles
 
 Everything works WITHOUT internet and without Wi-Fi.
 - Your profile (inventory, favorites, pins, notes) lives on this SSD in data/nomad-user.json,
@@ -590,43 +603,53 @@ if command -v python3 >/dev/null 2>&1; then
     sleep 4; open_url "http://localhost:8090"; wait; exit 0
   fi
 fi
-echo "Python/libzim not available - opening NOMAD-mobile.html (works fully offline, no install)."
-open_url "NOMAD-mobile.html"
+echo "Python/libzim not available - opening the no-install version (works fully offline)."
+open_url "5  Android + any browser - NOMAD.html"
 """
+
+IOS_PAGE = """<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NOMAD for iPhone and iPad</title><meta http-equiv="refresh" content="0;url=%s"></head>
+<body style="background:#05100b;color:#d6efe2;font:17px/1.55 -apple-system,system-ui,sans-serif;padding:60px 26px">
+<div style="font:700 13px ui-monospace,monospace;letter-spacing:.3em;color:#2ecf85">PROJECT NOMAD</div>
+<h2 style="color:#fff">NOMAD for iPhone and iPad</h2>
+<p>1. Open <a style="color:#2ecf85" href="%s">%s</a> in <b>Safari</b> (needs internet once).</p>
+<p>2. Tap <b>Share &rarr; Add to Home Screen</b>.</p>
+<p>3. Open NOMAD from your home screen &mdash; it now works offline. Tap <b>Open files</b> and pick files from this SSD.</p>
+<p style="color:#6f9a85;font-size:15px">Nl: open de link in Safari &rarr; Deel &rarr; Zet op beginscherm. Daarna werkt NOMAD offline.</p>
+</body></html>
+""" % (PWA_URL, PWA_URL, PWA_URL)
 
 
 def write_starters():
-    """'START HERE.txt' plus Mac and Linux starters, so the SSD works on any computer."""
-    for name, body, nl in (("START HERE.txt", START_HERE, "\r\n"), ("Start NOMAD (Mac).command", UNIX_START, "\n"),
-                           ("Start NOMAD (Linux).sh", UNIX_START, "\n")):
+    """Clear starters per operating system at the top of the NOMAD folder, plus START HERE.txt."""
+    files = (("0  START HERE.txt", START_HERE, "\r\n"), (SHORTCUTS["mac"], UNIX_START, "\n"), (SHORTCUTS["lin"], UNIX_START, "\n"),
+             (SHORTCUTS["ios"], IOS_PAGE, "\n"), (SHORTCUTS["win"], RESCUE_BAT, "\r\n"))
+    for name, body, nl in files:
         f = os.path.join(ROOT, name)
         try:
             if not os.path.isfile(f) or open(f, encoding="utf-8", errors="replace").read().replace("\r\n", "\n") != body:
                 with open(f, "w", encoding="utf-8", newline=nl) as h:
                     h.write(body)
-                if not name.endswith(".txt"):
+                if name.endswith((".command", ".sh")):
                     os.chmod(f, 0o755)
+        except OSError:
+            pass
+    for old in OLD_STARTERS + ("START HERE.txt",):
+        try:
+            if os.path.isfile(os.path.join(ROOT, old)):
+                os.remove(os.path.join(ROOT, old))
         except OSError:
             pass
 
 
 def write_rescue():
     write_starters()
-    if os.name != "nt":
-        return
-    f = os.path.join(ROOT, "Start NOMAD (backup).bat")
-    try:
-        if not os.path.isfile(f) or open(f, encoding="utf-8", errors="replace").read() != RESCUE_BAT.replace("\n", "\r\n"):
-            with open(f, "w", encoding="utf-8", newline="\r\n") as h:
-                h.write(RESCUE_BAT)
-    except OSError:
-        pass
 
 
 def copy_mobile():
     """Keep NOMAD-mobile.html (phone reader, no server needed) next to NOMAD.exe up to date."""
     src = os.path.join(APP, "mobile", "NOMAD-mobile.html")
-    dst = os.path.join(ROOT, "NOMAD-mobile.html")
+    dst = os.path.join(ROOT, MOBILE_NAME)
     try:
         if os.path.isfile(src) and (not os.path.isfile(dst) or os.path.getsize(dst) != os.path.getsize(src)
                                     or open(dst, "rb").read() != open(src, "rb").read()):
